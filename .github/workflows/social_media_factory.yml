@@ -1,0 +1,40 @@
+name: AI Cinematic Factory
+
+on:
+  schedule:
+    # Run 8 times a day (every 3 hours)
+    - cron: '0 */3 * * *'
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install System Dependencies (ffmpeg & fonts)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg fonts-liberation fonts-noto fonts-freefont-ttf
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Execute Social Media Factory Pipeline
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+        META_USER_ACCESS_TOKEN: ${{ secrets.META_USER_ACCESS_TOKEN }}
+        INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+      run: |
+        python main.py
