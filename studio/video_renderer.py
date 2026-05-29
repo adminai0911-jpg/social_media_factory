@@ -51,8 +51,8 @@ def fetch_pexels_videos(keywords, pexels_key):
     # We want vertical clips
     base_url = "https://api.pexels.com/videos/search"
     
-    # We attempt to download 1 video per keyword to create a dynamic composite
-    for i, keyword in enumerate(keywords[:3]):
+    # We attempt to download 1 video per keyword up to 10 keywords for massive variety
+    for i, keyword in enumerate(keywords[:10]):
         logger.info(f"Querying Pexels for keyword: '{keyword}'...")
         params = {
             "query": keyword,
@@ -73,9 +73,10 @@ def fetch_pexels_videos(keywords, pexels_key):
                 
             # Grab the best video file (vertical orientation with HD size)
             selected_video = videos[0]
-            video_files = selected_video.get("video_files", [])
+            # Sort all video files by resolution (width * height) descending
+            video_files = sorted(video_files, key=lambda x: x.get("width", 0) * x.get("height", 0), reverse=True)
             
-            # Find a vertical video file link
+            # Find the highest quality vertical video file link
             download_url = None
             for file in video_files:
                 if file.get("width") and file.get("height"):
@@ -84,7 +85,7 @@ def fetch_pexels_videos(keywords, pexels_key):
                         break
             
             if not download_url and video_files:
-                # Fallback to the first video file
+                # Fallback to the absolute highest quality video available if no vertical is found
                 download_url = video_files[0]["link"]
                 
             if download_url:
@@ -111,14 +112,19 @@ def normalize_and_stitch(downloaded_clips, target_duration):
     Scales, crops to 1080x1920 vertical format, sets FPS to 30, and stitches 
     clips together using FFmpeg filters. Truncates or loops to match target duration.
     """
-    logger.info("Normalizing b-roll clips (Aspect Ratio, FPS, Resolution)...")
+    logger.info("Normalizing b-roll clips and applying intelligent rapid-cuts...")
     normalized_clips = []
+    
+    # Calculate exact duration each clip should be to match the total audio perfectly
+    clip_duration = target_duration / max(1, len(downloaded_clips))
+    logger.info(f"Rapid-Cut Editor: Slicing each of the {len(downloaded_clips)} clips to exactly {clip_duration:.2f} seconds.")
     
     for i, clip in enumerate(downloaded_clips):
         norm_output = f"norm_clip_{i}.mp4"
         # Scale & crop to exactly 2160x3840 (True 4K Vertical), force 30fps
+        # Trim from 00:00:01 to skip static intros, taking exactly clip_duration
         cmd = [
-            "ffmpeg", "-y", "-i", clip,
+            "ffmpeg", "-y", "-ss", "00:00:01", "-t", str(clip_duration), "-i", clip,
             "-vf", "scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840,setsar=1",
             "-r", "30", "-an", "-c:v", "libx264", "-preset", "fast", norm_output
         ]

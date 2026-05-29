@@ -128,12 +128,12 @@ Winning Hook (MUST be the first sentence): {winning_hook}
 {promo_instruction}
 
 Strict Requirements:
-1. The script must be complete within 15-20 seconds when read (around 35 to 55 words).
+1. The script must be complete within 40-50 seconds when read (around 80 to 100 words). This is for DEEP VALUE and HIGH TRUST.
 2. START WITH THE WINNING HOOK exactly as provided.
-3. Tell a high-retention micro-story that builds suspense.
+3. Tell a high-retention micro-story that builds suspense, explains the topic deeply, and provides massive value.
 4. MUST USE A LOOP ENDING.
 5. The spoken script must be ONLY in Hindi (Devanagari). No english characters or symbols.
-6. Provide three highly descriptive English search queries for Pexels to pull relevant cinematic vertical (9:16) stock b-roll clips.
+6. Provide EXACTLY 10 highly descriptive English search queries for Pexels to pull relevant cinematic vertical (9:16) stock b-roll clips. These 10 keywords MUST represent the chronological flow of the story so the visuals match the voiceover perfectly!
 7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. Make it punchy (e.g., "ये 1 गलती मत करना!").
 8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. Drastically vary length/style. Include a strong CTA ("Tag a friend", "Save this").
 9. ANTI-SPAM HASHTAG VARIANCE: Provide EXACTLY 3-5 unique, hyper-relevant hashtags.
