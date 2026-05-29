@@ -48,17 +48,16 @@ async def generate_narration_and_subtitles(text, voice="hi-IN-SwaraNeural"):
     logger.info(f"Subtitles (SRT) successfully generated and saved to '{SRT_OUTPUT}'")
 
 def build_hindi_script():
-    logger.info("Initializing Gemini API script generation...")
+    logger.info("Initializing Brain 2 & Brain 3...")
     
     # Ensure trend file exists
     if not os.path.exists(TREND_FILE):
-        logger.warning(f"'{TREND_FILE}' not found. Generating default trend info...")
-        # Create a fallback current_trend.json if missing
+        logger.warning(f"'{TREND_FILE}' not found. Generating fallback...")
         fallback = {
             "topic": "Digital India AI Evolution",
             "traffic": "500K+",
-            "summary": "Artificial Intelligence adoption sky-rockets across India, changing how businesses operate.",
-            "news_snippets": ["India launches national AI program", "AI tools driving efficiency in India"],
+            "summary": "Artificial Intelligence adoption sky-rockets across India.",
+            "news_snippets": ["India launches national AI program"],
             "region": "IN"
         }
         with open(TREND_FILE, "w", encoding="utf-8") as f:
@@ -67,66 +66,88 @@ def build_hindi_script():
     with open(TREND_FILE, "r", encoding="utf-8") as f:
         trend_data = json.load(f)
 
-    # Configure Gemini API
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         logger.error("GEMINI_API_KEY environment variable is not set!")
         raise ValueError("Missing GEMINI_API_KEY")
         
     genai.configure(api_key=api_key)
-    
-    # Prompt engineering for addictive short-form AI Cinematic script in Hindi
-    prompt = f"""
-You are an elite, highly creative viral content architect specializing in fast-paced, high-retention AI Cinematic Reels for Indian audiences.
-Your goal is to transform the following theme into an addictive 15-20 second script translated into highly conversational, snappy Hindi (written in clean Devanagari script).
-
-Theme: {trend_data['topic']}
-Context: {trend_data['summary']}
-Inspiration: {", ".join(trend_data.get('news_snippets', []))}
-
-Strict Requirements:
-1. The script must be complete within 15-20 seconds when read (around 35 to 55 words).
-2. START WITH A VIRAL 1-3 SECOND HOOK using a proven formula: Contrarian, Mistake, Numbered List, Question, or Curiosity (e.g., "सब कहते हैं...", "ये एक गलती...", "३ तरीके...", "क्या आप...").
-3. Tell a high-retention micro-story that builds suspense, so the viewer stays past 3 seconds.
-4. MUST USE A LOOP ENDING (The last sentence must seamlessly connect back to the first sentence).
-5. The spoken script must be ONLY in Hindi (Devanagari script) and MUST NOT contain any english words in Latin script, symbols, bullet points, numbers in digits, or emojis in the text.
-6. Provide three highly descriptive English search queries for Pexels to pull relevant high-quality, cinematic vertical (9:16) stock b-roll clips.
-7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. This will be burnt massively onto the video in the first 2 seconds. Make it punchy (e.g., "ये 1 गलती मत करना!").
-8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. You MUST drastically vary the length and style of this caption every single time you are called (sometimes 1 short punchy sentence, sometimes a long mini-blog, sometimes emoji-heavy, sometimes no emojis). Include a strong CTA ("Tag a friend", "Save this").
-9. ANTI-SPAM HASHTAG VARIANCE: Provide EXACTLY 3-5 hashtags. You MUST choose completely different, hyper-relevant hashtags every time to avoid Instagram shadowbans. Do not reuse the same generic tags.
-
-You MUST return your response in the following precise JSON schema format:
-{{
-  "thumbnail_text": "2-4 word clickbait hindi phrase",
-  "script_text": "आपके 15 सेकंड का हिंदी ऑडियो नरेशन बिना किसी इंग्लिश शब्द या सिंबल के यहाँ होगा।",
-  "pexels_keywords": ["specific cinematic vertical stock video query 1", "specific cinematic vertical stock video query 2", "specific cinematic vertical stock video query 3"],
-  "instagram_caption": "धमाकेदार हिंदी कैप्शन जिसमें CTA (उदा: शेयर करें) शामिल हो। 🔥🚀",
-  "instagram_hashtags": "#InstaIndia #TrendingHindi #ViralReels #ReelsIndia"
-}}
-"""
-
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
-        )
+        # ---------------------------------------------------------
+        # PHASE 2: Brain 2 (The Hook Optimizer)
+        # ---------------------------------------------------------
+        logger.info("Executing Brain 2: The Hook Optimizer...")
+        brain_2_prompt = f"""
+You are Brain 2 (The Hook Optimizer).
+Your task is to study the top-performing reels in the following niche and break down the hook structure.
+Theme: {trend_data['topic']}
+Context: {trend_data['summary']}
+
+Generate 5 NEW hook variations (in Hindi) that are curiosity-driven, emotionally charged, and optimized to stop scrolling instantly.
+Focus on triggers like Surprise, Fear, Ego, Urgency, or Desire.
+They must be aggressive and under 2 seconds when spoken.
+
+Return exactly 5 hooks in this JSON schema:
+{{
+  "hooks": [
+    {{"trigger": "Fear", "hook_text": "Hindi hook text..."}},
+    {{"trigger": "Ego", "hook_text": "Hindi hook text..."}}
+  ]
+}}
+"""
+        response_2 = model.generate_content(brain_2_prompt, generation_config={"response_mime_type": "application/json"})
+        hooks_data = json.loads(response_2.text).get("hooks", [])
+        if not hooks_data: raise ValueError("Brain 2 failed to generate hooks.")
         
-        script_json = json.loads(response.text)
-        logger.info("Successfully generated scripted assets from Gemini.")
-        logger.info(f"Generated Script: {script_json['script_text']}")
-        logger.info(f"Pexels Keywords: {script_json['pexels_keywords']}")
+        # Brain 2 picks the most aggressive hook
+        winning_hook = hooks_data[0]["hook_text"]
+        logger.info(f"Brain 2 Selected Hook: {winning_hook}")
+
+        # ---------------------------------------------------------
+        # PHASE 3: Brain 3 (The Scriptwriter)
+        # ---------------------------------------------------------
+        logger.info("Executing Brain 3: The Scriptwriter...")
+        brain_3_prompt = f"""
+You are Brain 3 (The Viral Scriptwriter).
+Take the following Theme and the Winning Hook to write an addictive 15-20 second Hindi script.
+
+Theme: {trend_data['topic']}
+Context: {trend_data['summary']}
+Winning Hook (MUST be the first sentence): {winning_hook}
+
+Strict Requirements:
+1. The script must be complete within 15-20 seconds when read (around 35 to 55 words).
+2. START WITH THE WINNING HOOK exactly as provided.
+3. Tell a high-retention micro-story that builds suspense.
+4. MUST USE A LOOP ENDING.
+5. The spoken script must be ONLY in Hindi (Devanagari). No english characters or symbols.
+6. Provide three highly descriptive English search queries for Pexels to pull relevant cinematic vertical (9:16) stock b-roll clips.
+7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. Make it punchy (e.g., "ये 1 गलती मत करना!").
+8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. Drastically vary length/style. Include a strong CTA ("Tag a friend", "Save this").
+9. ANTI-SPAM HASHTAG VARIANCE: Provide EXACTLY 3-5 unique, hyper-relevant hashtags.
+
+Return response in this JSON schema:
+{{
+  "thumbnail_text": "2-4 word clickbait hindi phrase",
+  "script_text": "आपके 15 सेकंड का हिंदी ऑडियो नरेशन...",
+  "pexels_keywords": ["query 1", "query 2", "query 3"],
+  "instagram_caption": "धमाकेदार हिंदी कैप्शन... 🔥",
+  "instagram_hashtags": "#InstaIndia #TrendingHindi #ViralReels"
+}}
+"""
+        response_3 = model.generate_content(brain_3_prompt, generation_config={"response_mime_type": "application/json"})
+        script_json = json.loads(response_3.text)
+        logger.info("Brain 3 successfully generated the viral script.")
         
-        # Save assets for downstream render/publishing
         with open(SCRIPT_OUTPUT, "w", encoding="utf-8") as sf:
             json.dump(script_json, sf, ensure_ascii=False, indent=2)
             
         return script_json
         
     except Exception as e:
-        logger.error(f"Failed to generate content from Gemini API: {e}")
-        # Return fallback script to keep the system robust and fault-tolerant
+        logger.error(f"Brain execution failed: {e}")
         fallback_script = {
             "thumbnail_text": "यह 1 गलती मत करना!",
             "script_text": "क्या आपको पता है कि भारत में एआई क्रांति कितनी तेजी से बढ़ रही है? छोटे व्यापारी अब एआई टूल्स का उपयोग करके अपना बिजनेस दोगुना कर रहे हैं। तकनीक की दुनिया में आगे रहने के लिए हमें अभी फॉलो करें!",
@@ -136,7 +157,6 @@ You MUST return your response in the following precise JSON schema format:
         }
         with open(SCRIPT_OUTPUT, "w", encoding="utf-8") as sf:
             json.dump(fallback_script, sf, ensure_ascii=False, indent=2)
-        logger.warning("Saved fallback scripted assets due to Gemini API failure.")
         return fallback_script
 
 def run():

@@ -116,10 +116,10 @@ def normalize_and_stitch(downloaded_clips, target_duration):
     
     for i, clip in enumerate(downloaded_clips):
         norm_output = f"norm_clip_{i}.mp4"
-        # Scale & crop to exactly 1080x1920, force 30fps, remove audio track
+        # Scale & crop to exactly 2160x3840 (True 4K Vertical), force 30fps
         cmd = [
             "ffmpeg", "-y", "-i", clip,
-            "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1",
+            "-vf", "scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840,setsar=1",
             "-r", "30", "-an", "-c:v", "libx264", "-preset", "fast", norm_output
         ]
         
@@ -179,7 +179,7 @@ def generate_placeholder_video(duration):
     # Generates a premium dark aesthetic moving gradient
     cmd = [
         "ffmpeg", "-y", "-f", "lavfi",
-        "-i", f"color=c=0x111116:s=1080x1920:d={duration}:r=30",
+        "-i", f"color=c=0x111116:s=2160x3840:d={duration}:r=30",
         "-vf", "geq=r='r(X,Y)*0.9':g='g(X,Y)*0.95':b='b(X,Y)*1.05'", # premium cool tint filter
         "-c:v", "libx264", "-pix_fmt", "yuv420p", placeholder_output
     ]
@@ -201,12 +201,12 @@ def compile_final_reel(broll_video, thumbnail_text=""):
         with open(ass_file, "w", encoding="utf-8") as f:
             f.write(f"""[Script Info]
 ScriptType: v4.00+
-PlayResX: 1080
-PlayResY: 1920
+PlayResX: 2160
+PlayResY: 3840
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Thumbnail,Liberation Sans,120,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,8,4,5,10,10,10,1
+Style: Thumbnail,Liberation Sans,250,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,12,6,5,20,20,20,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -219,7 +219,7 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
     cmd_merge = [
         "ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT,
         "-vf", "eq=contrast=1.07:saturation=1.12:brightness=0.01,noise=alls=2:allf=t",
-        "-c:v", "libx264", "-preset", "medium", "-b:v", "12M", "-maxrate", "14M", "-bufsize", "24M", "-r", "30",
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "24M", "-maxrate", "30M", "-bufsize", "48M", "-r", "30",
         "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-map", "0:v:0", "-map", "1:a:0",
         "-shortest", temp_output
     ]
@@ -233,11 +233,8 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
 
     logger.info("Burning dynamic, word-by-word yellow subtitles...")
     
-    # Subtitle Style Parameters: 
-    # Alignment=2 (Bottom Center), Fontname=Liberation Sans (safe linux font), Fontsize=24, 
-    # PrimaryColour=&H00FFFF (Stark vibrant yellow active word highlighting style), 
-    # OutlineColour=&H000000 (Vibrant black outline), Outline=2, BorderStyle=1, MarginV=280 (Instagram UI Safezone)
-    style = "Alignment=2,Fontname=Liberation Sans,Fontsize=24,PrimaryColour=&H00FFFF,OutlineColour=&H000000,Outline=2.5,BorderStyle=1,MarginV=280"
+    # Subtitle Style Parameters for 4K
+    style = "Alignment=2,Fontname=Liberation Sans,Fontsize=50,PrimaryColour=&H00FFFF,OutlineColour=&H000000,Outline=5.0,BorderStyle=1,MarginV=560"
     
     # Ensure srt path is formatted correctly for FFmpeg subtitles filter
     srt_filter_path = SRT_INPUT.replace("\\", "/").replace(":", "\\:")
@@ -246,7 +243,7 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
     cmd_subs = [
         "ffmpeg", "-y", "-i", temp_output,
         "-vf", f"ass={ass_filter_path},subtitles={srt_filter_path}:force_style='{style}'",
-        "-c:v", "libx264", "-preset", "medium", "-b:v", "12M", "-maxrate", "14M", "-bufsize", "24M", "-r", "30",
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "24M", "-maxrate", "30M", "-bufsize", "48M", "-r", "30",
         "-c:a", "copy", "-map_metadata", "-1", "-movflags", "+faststart", FINAL_REEL
     ]
     
