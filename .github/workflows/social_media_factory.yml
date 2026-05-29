@@ -2,8 +2,9 @@ name: AI Cinematic Factory
 
 on:
   schedule:
-    # Run 3 times a day at Peak IST times (9:00 AM, 2:00 PM, 8:00 PM) to avoid self-cannibalization
-    - cron: '30 3,8,14 * * *'
+    # Triggers at the START of the jitter windows: 8:30 AM, 1:30 PM, 7:30 PM IST.
+    # The Python script will then randomly delay the post by up to 60+ minutes.
+    - cron: '0 3,8,14 * * *'
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 jobs:

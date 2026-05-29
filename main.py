@@ -64,13 +64,23 @@ def execute_pipeline():
     """
     logger.info("--- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---")
     
-    # ANTI-SPAM HUMAN JITTER:
-    # Bots execute precisely on schedule. We sleep randomly for 1 to 15 minutes 
-    # to simulate a human opening the app and uploading.
+    # ADVANCED HUMAN JITTER:
+    # GitHub Actions wakes this server up at exactly 8:30am, 1:30pm, and 7:30pm.
     import time
     import random
-    jitter_seconds = random.randint(60, 900)
-    logger.info(f"Anti-Bot Jitter: Sleeping for {jitter_seconds} seconds before execution...")
+    
+    # 15% chance to post at a completely weird, unusual time (simulating a messy human schedule)
+    is_unusual_time = random.random() < 0.15 
+    
+    if is_unusual_time:
+        jitter_seconds = random.randint(3600, 10800) # Sleep for 1 to 3 hours!
+        logger.info(f"Advanced Jitter: Triggering UNUSUAL POST TIME. Sleeping for {jitter_seconds//60} minutes...")
+    else:
+        # Standard window: Sleep anywhere between 0 and 60 minutes
+        # This spreads the post randomly across the 8:30-9:30, 1:30-2:30 windows.
+        jitter_seconds = random.randint(0, 3600)
+        logger.info(f"Advanced Jitter: Standard window delay. Sleeping for {jitter_seconds//60} minutes...")
+        
     time.sleep(jitter_seconds)
     
     verify_environment()
