@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 """
-CINEMATIC STUDIO ENGINE — Phase 9
+CINEMATIC STUDIO ENGINE — Phase 10 (The Human Editor)
 
-Key fixes and upgrades:
-1. FIXED: xfade cumulative offset bug (was dropping 9/10 clips → caused 6-second video)
-2. FIXED: subtitle burn font issue on Linux (uses available liberation/freefont fonts)  
-3. UPGRADED: Audio-driven visual sync — SRT timestamps determine exact clip durations
-4. UPGRADED: Targets 60-second video (matches longer script from Brain 3)
-5. UPGRADED: Smart xfade chain uses CUMULATIVE offsets (industry-standard method)
+Core upgrades for perfect voice-visual sync and seamless transitions:
+
+1. SRT-DRIVEN TIMING: Parses subtitles.srt to get actual word timestamps.
+   Divides audio into 10 segments based on REAL speech timing, not equal math.
+   Each Pexels clip plays for EXACTLY as long as its corresponding speech segment.
+
+2. PER-CLIP COLOR NORMALIZATION: Applies identical warm cinematic grade to EVERY clip
+   individually before stitching. All clips look like they come from the same camera.
+   This makes clip transitions invisible to the human eye.
+
+3. SEAMLESS 0.6s XFADE: Longer dissolve makes transitions feel like one continuous film.
+
+4. SMART DUPLICATE PREVENTION: Never downloads the same Pexels video twice.
+
+5. SUBTITLE BURN: Uses relative paths (cross-platform: works on Windows & Linux).
 """
 
 import os
@@ -36,11 +45,11 @@ MUSIC_URLS = [
     "https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3",
 ]
 
-XFADE_DURATION = 0.35  # seconds per dissolve transition
+XFADE_DURATION = 0.6   # longer = more seamless and invisible transitions
 
 
 # ──────────────────────────────────────────────────────────
-# AUDIO ANALYSIS
+# STEP 1: AUDIO ANALYSIS
 # ──────────────────────────────────────────────────────────
 
 def get_audio_duration():
@@ -52,79 +61,102 @@ def get_audio_duration():
         logger.info(f"Audio duration: {dur:.2f}s")
         return dur
     except Exception as e:
-        logger.error(f"ffprobe failed: {e}. Defaulting to 55s.")
+        logger.error(f"ffprobe failed: {e}. Using 55s default.")
         return 55.0
 
 
 # ──────────────────────────────────────────────────────────
-# AUDIO-DRIVEN CLIP DURATION CALCULATOR
+# STEP 2: SRT-DRIVEN CLIP TIMING
 # ──────────────────────────────────────────────────────────
 
-def parse_srt_timestamps(srt_path):
+def parse_srt_word_times(srt_path):
     """
-    Parses an SRT subtitle file and returns a list of (start_sec, end_sec) tuples
-    for each subtitle entry.
+    Parses the SRT subtitle file and returns a list of (start_sec, end_sec) tuples
+    for every subtitle entry (each entry = one word from edge-tts).
     """
-    entries = []
     if not os.path.exists(srt_path):
-        return entries
+        return []
 
     def ts_to_sec(ts):
-        # Format: 00:00:01,234
         try:
-            ts = ts.replace(",", ".")
-            parts = ts.strip().split(":")
-            h, m, s = float(parts[0]), float(parts[1]), float(parts[2])
-            return h * 3600 + m * 60 + s
+            ts = ts.strip().replace(",", ".")
+            h, m, s = ts.split(":")
+            return float(h) * 3600 + float(m) * 60 + float(s)
         except Exception:
             return 0.0
 
+    entries = []
     with open(srt_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    blocks = content.strip().split("\n\n")
-    for block in blocks:
-        lines = block.strip().splitlines()
-        if len(lines) >= 2:
-            arrow_line = next((l for l in lines if "-->" in l), None)
-            if arrow_line:
-                parts = arrow_line.split("-->")
-                if len(parts) == 2:
-                    start = ts_to_sec(parts[0].strip())
-                    end   = ts_to_sec(parts[1].strip())
-                    entries.append((start, end))
+    for block in content.strip().split("\n\n"):
+        lines = [l.strip() for l in block.strip().splitlines()]
+        arrow_line = next((l for l in lines if "-->" in l), None)
+        if arrow_line:
+            parts = arrow_line.split("-->")
+            if len(parts) == 2:
+                entries.append((ts_to_sec(parts[0]), ts_to_sec(parts[1])))
 
     return entries
 
 
-def calculate_scene_durations(total_duration, num_clips):
+def calculate_srt_segment_durations(num_clips, total_audio_duration):
     """
-    Divides total audio duration into num_clips equal segments.
-    Accounts for the xfade overlaps so the final stitched video
-    matches total_duration exactly.
+    Divides the actual audio into num_clips segments using SRT word timestamps.
+    Returns a list of per-clip durations (in seconds) where each duration
+    represents exactly how long that clip should play while that part of the
+    script is being spoken.
     
-    Returns a list of per-clip durations.
+    Strategy:
+    - Parse SRT word timestamps
+    - Split words into num_clips equal groups
+    - Each group's duration = last word end time - first word start time
+    - Pad slightly to cover xfade overlap
     """
-    # Each xfade eats XFADE_DURATION seconds from the seam between two clips.
-    # Total duration = sum(clip_durations) - (n-1) * XFADE_DURATION
-    # => each clip_duration = (total + (n-1)*XFADE) / n
-    n = max(1, num_clips)
-    overlap_total = (n - 1) * XFADE_DURATION
-    clip_dur = (total_duration + overlap_total) / n
-    clip_dur = max(clip_dur, 3.0)  # minimum 3s per clip
-    logger.info(f"Scene Calculator: {n} clips × {clip_dur:.2f}s (with {XFADE_DURATION}s xfade overlap)")
-    return [clip_dur] * n
+    word_times = parse_srt_word_times(SRT_INPUT)
+
+    if not word_times or num_clips <= 0:
+        # Fallback: equal division accounting for xfade overlaps
+        n            = max(1, num_clips)
+        overlap      = (n - 1) * XFADE_DURATION
+        clip_dur     = (total_audio_duration + overlap) / n
+        logger.info(f"SRT fallback: {n} equal clips × {clip_dur:.2f}s")
+        return [max(clip_dur, 2.5)] * n
+
+    # Split word entries into num_clips groups
+    n             = min(num_clips, len(word_times))
+    words_per_seg = max(1, len(word_times) // n)
+    segments      = []
+
+    for i in range(n):
+        start_idx  = i * words_per_seg
+        end_idx    = start_idx + words_per_seg if i < n - 1 else len(word_times)
+        seg_words  = word_times[start_idx:end_idx]
+        if not seg_words:
+            continue
+        seg_start  = seg_words[0][0]
+        seg_end    = seg_words[-1][1]
+        raw_dur    = seg_end - seg_start
+        # Add xfade overlap so the final stitched total equals the audio duration
+        padded_dur = raw_dur + XFADE_DURATION
+        segments.append(max(padded_dur, 2.5))
+
+    if not segments:
+        segments = [total_audio_duration / num_clips] * num_clips
+
+    logger.info(f"SRT Timing: {len(segments)} clips — durations: {[round(d,2) for d in segments]}")
+    return segments
 
 
 # ──────────────────────────────────────────────────────────
-# PEXELS HIGH-QUALITY DOWNLOAD
+# STEP 3: PEXELS HIGH-QUALITY DOWNLOAD
 # ──────────────────────────────────────────────────────────
 
 def fetch_pexels_videos(keywords, pexels_key):
-    headers  = {"Authorization": pexels_key}
-    base_url = "https://api.pexels.com/videos/search"
-    downloaded  = []
-    used_ids    = set()
+    headers   = {"Authorization": pexels_key}
+    base_url  = "https://api.pexels.com/videos/search"
+    downloaded = []
+    used_ids   = set()
 
     for i, keyword in enumerate(keywords[:10]):
         logger.info(f"[{i+1}/10] Pexels: '{keyword}'")
@@ -147,14 +179,14 @@ def fetch_pexels_videos(keywords, pexels_key):
             if not selected:
                 selected = videos[0]
 
-            # Sort files by total pixels → highest quality first
+            # Sort by total pixels → highest quality first
             files_sorted = sorted(
                 selected.get("video_files", []),
                 key=lambda f: f.get("width", 0) * f.get("height", 0),
                 reverse=True
             )
 
-            # Prefer vertical, else take best available
+            # Prefer vertical file
             download_url = None
             chosen_res   = "?"
             for f in files_sorted:
@@ -189,28 +221,38 @@ def fetch_pexels_videos(keywords, pexels_key):
 
 
 # ──────────────────────────────────────────────────────────
-# CLIP NORMALISER (Ken Burns + trim)
+# STEP 4: PER-CLIP NORMALIZATION WITH COLOR MATCHING
 # ──────────────────────────────────────────────────────────
 
 def normalise_clip(src, dst, duration_s):
     """
-    Crops & scales source clip to 1080x1920 (portrait).
-    Sets FPS to 30 and trims to EXACT duration_s seconds.
-    Skips first 1 second to avoid static stock-footage title cards.
-    
-    NO Ken Burns/zoompan — the natural motion from the Pexels video plays through.
-    Real moving video footage is always better than an artificial zoom on a static frame.
+    1. Skips first 1 second (avoids static stock title cards).
+    2. Scales & crops to exactly 1080x1920 portrait.
+    3. Applies a CONSISTENT warm cinematic color grade to ALL clips.
+       This is the key to seamless transitions — if every clip has the
+       same color temperature and contrast, the human eye cannot see the cut.
+    4. Sets to 30 FPS.
+    5. Trims to EXACT duration_s seconds.
     """
+    # Consistent warm cinematic grade applied to EVERY clip individually
+    # eq: slight contrast/warmth boost
+    # hue: push slightly warm (yellower/orange)
+    per_clip_grade = (
+        "eq=contrast=1.08:saturation=1.12:brightness=0.01:gamma=0.98,"
+        "hue=h=3:s=1.05"   # 3 degree hue shift toward warmth
+    )
+
     vf = (
         f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
         f"crop={TARGET_W}:{TARGET_H},"
-        f"setsar=1"
+        f"setsar=1,"
+        f"{per_clip_grade}"
     )
 
     cmd = [
         "ffmpeg", "-y",
-        "-ss", "1",               # skip boring static intro second
-        "-t", str(duration_s),    # take exactly what we need
+        "-ss", "1",
+        "-t", str(duration_s),
         "-i", src,
         "-vf", vf,
         "-r", str(TARGET_FPS),
@@ -223,62 +265,32 @@ def normalise_clip(src, dst, duration_s):
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except Exception as e:
-        logger.error(f"Clip normalise failed for {src}: {e}")
+        logger.error(f"Normalise failed for {src}: {e}")
         return False
 
 
+# ──────────────────────────────────────────────────────────
+# STEP 5: SEAMLESS XFADE CHAIN (CUMULATIVE OFFSETS)
+# ──────────────────────────────────────────────────────────
 
-# ──────────────────────────────────────────────────────────
-# XFADE CHAIN — FIXED CUMULATIVE OFFSET
-# ──────────────────────────────────────────────────────────
+def get_clip_duration(clip_path):
+    cmd = ["ffprobe", "-i", clip_path, "-show_entries", "format=duration",
+           "-v", "quiet", "-of", "csv=p=0"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return float(r.stdout.strip())
+    except Exception:
+        return 3.5
+
 
 def build_xfade_chain(norm_clips, target_duration):
     """
     Chains all clips with smooth xfade dissolve transitions.
-    
-    THE FIX: offsets must be CUMULATIVE (sum of all previous clip durations
-    minus already-consumed overlaps). The old code used each clip's individual
-    duration as the offset which caused wrong timing and dropped clips.
+    Uses CUMULATIVE offsets — the correct FFmpeg xfade chaining method.
+    offset_N = sum(clip_durations[0..N-1]) - N * XFADE_DURATION
     """
     n = len(norm_clips)
     if n == 1:
-        return None, "[0:v]", norm_clips
-
-    # Probe actual duration of each normalised clip
-    clip_durations = []
-    for c in norm_clips:
-        dur_cmd = ["ffprobe", "-i", c, "-show_entries", "format=duration",
-                   "-v", "quiet", "-of", "csv=p=0"]
-        try:
-            r = subprocess.run(dur_cmd, capture_output=True, text=True, check=True)
-            clip_durations.append(float(r.stdout.strip()))
-        except Exception:
-            clip_durations.append(target_duration / n)
-
-    filter_parts  = []
-    prev_label    = "[0:v]"
-    cumulative    = 0.0
-
-    for i in range(1, n):
-        # Cumulative offset = sum of all previous clip durations minus overlaps already consumed
-        cumulative += clip_durations[i - 1] - XFADE_DURATION
-        offset      = max(0.01, cumulative)
-        curr_label  = f"[xf{i}]"
-
-        filter_parts.append(
-            f"{prev_label}[{i}:v]xfade=transition=fade"
-            f":duration={XFADE_DURATION}:offset={offset:.3f}{curr_label}"
-        )
-        prev_label = curr_label
-
-    return ";".join(filter_parts), prev_label, norm_clips
-
-
-def stitch_with_xfade(norm_clips, target_duration):
-    if not norm_clips:
-        return None
-
-    if len(norm_clips) == 1:
         out = "stitched_broll.mp4"
         subprocess.run(
             ["ffmpeg", "-y", "-i", norm_clips[0], "-t", str(target_duration), "-c", "copy", out],
@@ -286,16 +298,34 @@ def stitch_with_xfade(norm_clips, target_duration):
         )
         return out
 
-    filter_str, final_label, clips = build_xfade_chain(norm_clips, target_duration)
+    # Probe actual durations of normalized clips
+    clip_durations = [get_clip_duration(c) for c in norm_clips]
+
+    filter_parts = []
+    prev_label   = "[0:v]"
+    cumulative   = 0.0
+
+    for i in range(1, n):
+        cumulative  += clip_durations[i - 1] - XFADE_DURATION
+        offset       = max(0.01, cumulative)
+        curr_label   = f"[xf{i}]"
+        filter_parts.append(
+            f"{prev_label}[{i}:v]xfade=transition=fade"
+            f":duration={XFADE_DURATION}:offset={offset:.4f}{curr_label}"
+        )
+        prev_label = curr_label
+
     input_args = []
-    for c in clips:
+    for c in norm_clips:
         input_args.extend(["-i", c])
 
-    stitched = "stitched_broll.mp4"
+    filter_str = ";".join(filter_parts)
+    stitched   = "stitched_broll.mp4"
+
     cmd = [
         "ffmpeg", "-y", *input_args,
         "-filter_complex", filter_str,
-        "-map", final_label,
+        "-map", prev_label,
         "-t", str(target_duration),
         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
         "-pix_fmt", "yuv420p",
@@ -304,15 +334,14 @@ def stitch_with_xfade(norm_clips, target_duration):
 
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        logger.info(f"xfade chain stitched → '{stitched}'")
+        logger.info(f"Seamless xfade chain → '{stitched}'")
         return stitched
     except Exception as e:
-        logger.warning(f"xfade chain failed ({e}). Using hard-cut concat fallback...")
+        logger.warning(f"xfade failed ({e}). Using hard-cut fallback.")
         return hard_cut_concat(norm_clips, target_duration)
 
 
 def hard_cut_concat(norm_clips, target_duration):
-    """Safe fallback: simple hard-cut concat."""
     with open("clips.txt", "w") as f:
         for c in norm_clips:
             f.write(f"file '{c}'\n")
@@ -326,7 +355,7 @@ def hard_cut_concat(norm_clips, target_duration):
 
 
 # ──────────────────────────────────────────────────────────
-# BACKGROUND MUSIC
+# STEP 6: BACKGROUND MUSIC
 # ──────────────────────────────────────────────────────────
 
 def fetch_background_music():
@@ -340,7 +369,7 @@ def fetch_background_music():
             with urllib.request.urlopen(req, timeout=20) as r, open(BG_MUSIC_FILE, "wb") as o:
                 o.write(r.read())
             if os.path.getsize(BG_MUSIC_FILE) > 10_000:
-                logger.info("Music OK.")
+                logger.info("BG music downloaded.")
                 return True
         except Exception as e:
             logger.warning(f"Music URL failed: {e}")
@@ -348,7 +377,7 @@ def fetch_background_music():
 
 
 # ──────────────────────────────────────────────────────────
-# PLACEHOLDER VIDEO
+# STEP 7: PLACEHOLDER (fallback if Pexels fails)
 # ──────────────────────────────────────────────────────────
 
 def generate_placeholder_video(duration):
@@ -364,13 +393,13 @@ def generate_placeholder_video(duration):
 
 
 # ──────────────────────────────────────────────────────────
-# FINAL COMPILE — color grade + audio + subtitles
+# STEP 8: FINAL COMPILE — final grade + audio + subtitles
 # ──────────────────────────────────────────────────────────
 
 def compile_final_reel(broll_video, thumbnail_text=""):
     temp = "temp_merged.mp4"
 
-    # ── Thumbnail hook overlay (first 2.5 seconds) ──
+    # Thumbnail hook overlay (first 2.5 seconds)
     ass_file  = "thumbnail.ass"
     safe_text = thumbnail_text.replace("\\", "\\\\").replace("'", "\\'").replace(",", "\\,")
     try:
@@ -389,24 +418,25 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:00.00,0:00:02.50,Hook,,0,0,0,,{safe_text}
 """)
     except Exception as e:
-        logger.warning(f"Thumbnail ASS failed: {e}")
+        logger.warning(f"ASS file failed: {e}")
 
-    has_music    = fetch_background_music()
-    # Cinematic color grade: warm contrast + vibrant saturation + vignette
-    color_grade  = "eq=contrast=1.10:saturation=1.20:brightness=0.02:gamma=0.97,vignette=PI/5"
+    has_music = fetch_background_music()
+
+    # Final color grade: slight overall warm boost + vignette on top of per-clip grade
+    final_grade = "eq=contrast=1.04:saturation=1.05:brightness=0.01,vignette=PI/6"
 
     cmd = ["ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT]
     if has_music:
         cmd.extend(["-stream_loop", "-1", "-i", BG_MUSIC_FILE])
         fc = (
-            f"[0:v]{color_grade}[v];"
+            f"[0:v]{final_grade}[v];"
             f"[1:a]volume=1.0[tts];"
             f"[2:a]volume=0.12[bg];"
             f"[tts][bg]amix=inputs=2:duration=first:dropout_transition=3[a]"
         )
         cmd.extend(["-filter_complex", fc, "-map", "[v]", "-map", "[a]"])
     else:
-        cmd.extend(["-vf", color_grade, "-map", "0:v:0", "-map", "1:a:0"])
+        cmd.extend(["-vf", final_grade, "-map", "0:v:0", "-map", "1:a:0"])
 
     cmd.extend([
         "-c:v", "libx264", "-preset", "medium",
@@ -423,38 +453,30 @@ Dialogue: 0,0:00:00.00,0:00:02.50,Hook,,0,0,0,,{safe_text}
         logger.error(f"Merge failed: {e}")
         raise
 
-    # ── Subtitle burning ──
-    # Use relative filenames only — avoids Windows/Linux path escaping issues with FFmpeg filters
-    # FFmpeg is always invoked from the factory working directory where these files are created
+    # Subtitle burn — use relative filenames for cross-platform compatibility
     logger.info("Burning word-by-word subtitles...")
-    
     style = (
         "Alignment=2,Fontname=Arial,Fontsize=20,"
         "PrimaryColour=&H00FFFF00,OutlineColour=&H00000000,"
         "Outline=3,Shadow=1,BorderStyle=1,MarginV=80"
     )
-
-    # On Windows, FFmpeg subtitle filter needs the path with escaped colons
-    # The safest approach is to use just the filename (relative) since cwd is set
-    srt_path = os.path.basename(SRT_INPUT)    # e.g. "subtitles.srt"
-    ass_path = os.path.basename(ass_file)     # e.g. "thumbnail.ass"
+    srt_rel = os.path.basename(SRT_INPUT)
+    ass_rel = os.path.basename(ass_file)
 
     cmd_subs = [
         "ffmpeg", "-y", "-i", temp,
-        "-vf", f"ass={ass_path},subtitles={srt_path}:force_style='{style}'",
+        "-vf", f"ass={ass_rel},subtitles={srt_rel}:force_style='{style}'",
         "-c:v", "libx264", "-preset", "medium",
         "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
         "-r", str(TARGET_FPS),
         "-c:a", "copy", "-map_metadata", "-1", "-movflags", "+faststart",
         FINAL_REEL
     ]
-
     try:
-        subprocess.run(cmd_subs, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=os.getcwd())
+        subprocess.run(cmd_subs, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         logger.info(f"✅ FINAL REEL READY WITH SUBTITLES: '{FINAL_REEL}'")
     except Exception as e:
-        logger.warning(f"Subtitle burn failed ({e}). Saving clean version without subtitles.")
+        logger.warning(f"Subtitle burn failed ({e}). Saving without subtitles.")
         import shutil
         shutil.copy(temp, FINAL_REEL)
         logger.info(f"✅ FINAL REEL READY (no subtitles): '{FINAL_REEL}'")
@@ -468,19 +490,19 @@ Dialogue: 0,0:00:00.00,0:00:02.50,Hook,,0,0,0,,{safe_text}
 
 def cleanup_temp_files():
     logger.info("Cleaning up temp files...")
-    kill = ["raw_clip_", "norm_clip_", "clips.txt", "stitched_broll.mp4",
-            "temp_merged.mp4", "thumbnail.ass"]
-    for f in os.listdir("."):
-        for p in kill:
-            if f == p or f.startswith(p):
+    kill_prefixes = ["raw_clip_", "norm_clip_", "clips.txt",
+                     "stitched_broll.mp4", "temp_merged.mp4", "thumbnail.ass"]
+    for fname in os.listdir("."):
+        for p in kill_prefixes:
+            if fname == p or fname.startswith(p):
                 try:
-                    os.remove(f)
+                    os.remove(fname)
                 except OSError:
                     pass
 
 
 # ──────────────────────────────────────────────────────────
-# MAIN RENDER FUNCTION
+# MAIN RENDER
 # ──────────────────────────────────────────────────────────
 
 def render():
@@ -490,41 +512,42 @@ def render():
     with open(SCRIPT_INPUT, "r", encoding="utf-8") as f:
         script_data = json.load(f)
 
-    duration   = get_audio_duration()
-    pexels_key = os.environ.get("PEXELS_API_KEY")
-    keywords   = script_data.get("pexels_keywords", [])
+    total_duration = get_audio_duration()
+    pexels_key     = os.environ.get("PEXELS_API_KEY")
+    keywords       = script_data.get("pexels_keywords", [])
+    num_keywords   = len(keywords)
 
-    logger.info(f"Target video duration: {duration:.2f}s | Keywords: {len(keywords)}")
+    logger.info(f"Target duration: {total_duration:.2f}s | Keywords: {num_keywords}")
 
     if not pexels_key or not keywords:
-        logger.warning("No Pexels key or no keywords. Using placeholder.")
-        broll = generate_placeholder_video(duration)
+        logger.warning("No Pexels key or keywords. Using placeholder.")
+        broll = generate_placeholder_video(total_duration)
     else:
+        # Step A: Download clips
         downloaded = fetch_pexels_videos(keywords, pexels_key)
 
         if not downloaded:
-            logger.warning("No Pexels clips downloaded. Using placeholder.")
-            broll = generate_placeholder_video(duration)
+            logger.warning("No Pexels clips. Using placeholder.")
+            broll = generate_placeholder_video(total_duration)
         else:
-            # Calculate per-clip durations accounting for xfade overlaps
-            clip_durations = calculate_scene_durations(duration, len(downloaded))
+            # Step B: Calculate SRT-driven clip durations (voice sync)
+            clip_durations = calculate_srt_segment_durations(len(downloaded), total_duration)
 
-            # Normalise each clip with Ken Burns zoom
+            # Step C: Normalise each clip with consistent color grade
             norm_clips = []
             for i, (src, dur) in enumerate(zip(downloaded, clip_durations)):
                 dst = f"norm_clip_{i}.mp4"
-                logger.info(f"Ken Burns clip {i+1}/{len(downloaded)} ({dur:.2f}s): {src}")
+                logger.info(f"Normalising clip {i+1}/{len(downloaded)} → {dur:.2f}s | '{keywords[i] if i < len(keywords) else ''}'")
                 if normalise_clip(src, dst, dur):
                     norm_clips.append(dst)
                 else:
-                    logger.warning(f"Clip {i+1} failed. Skipping.")
+                    logger.warning(f"Clip {i+1} failed — skipping.")
 
             if not norm_clips:
-                broll = generate_placeholder_video(duration)
+                broll = generate_placeholder_video(total_duration)
             else:
-                broll = stitch_with_xfade(norm_clips, duration)
-                if not broll:
-                    broll = generate_placeholder_video(duration)
+                # Step D: Stitch with seamless 0.6s dissolve transitions
+                broll = build_xfade_chain(norm_clips, total_duration)
 
     compile_final_reel(broll, script_data.get("thumbnail_text", ""))
 

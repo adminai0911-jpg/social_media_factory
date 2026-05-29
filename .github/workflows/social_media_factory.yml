@@ -4,11 +4,9 @@ on:
   schedule:
     # Triggers at the START of the jitter windows: 8:30 AM, 1:30 PM, 7:30 PM IST.
     # The Python script will then randomly delay the post by up to 60+ minutes.
-    # ANTI-BAN WARMUP PHASE: Post only 1 time a day (1:30 PM IST)
-    - cron: '0 8 * * *'
-    
-    # AFTER 7 DAYS, DELETE THE LINE ABOVE AND UNCOMMENT THE LINE BELOW (3x a day)
-    # - cron: '0 3,8,14 * * *'
+    # FULL SPEED: 3x per day — 8:30 AM, 2:00 PM, 8:00 PM IST
+    # Account is 20+ days old. Warmup complete. Maximum reach mode.
+    - cron: '0 3,8,14 * * *'
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 jobs:
