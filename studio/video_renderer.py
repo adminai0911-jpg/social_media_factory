@@ -194,31 +194,26 @@ def fetch_pexels_videos(keywords, pexels_key):
 
 def normalise_clip(src, dst, duration_s):
     """
-    1. Skips the first 1 second (avoids static stock intros).
-    2. Scales & crops to 1080x1920.
-    3. Applies Ken Burns slow zoom (1.00 → 1.08).
-    4. Trims to exact duration_s.
+    Crops & scales source clip to 1080x1920 (portrait).
+    Sets FPS to 30 and trims to EXACT duration_s seconds.
+    Skips first 1 second to avoid static stock-footage title cards.
+    
+    NO Ken Burns/zoompan — the natural motion from the Pexels video plays through.
+    Real moving video footage is always better than an artificial zoom on a static frame.
     """
-    total_frames = int(duration_s * TARGET_FPS)
-    zoom_expr    = f"'min(zoom+0.0012,1.08)'"
-    x_expr       = "iw/2-(iw/zoom/2)"
-    y_expr       = "ih/2-(ih/zoom/2)"
-
     vf = (
         f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
         f"crop={TARGET_W}:{TARGET_H},"
-        f"zoompan=z={zoom_expr}:x={x_expr}:y={y_expr}"
-        f":d={total_frames}:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS},"
         f"setsar=1"
     )
 
     cmd = [
         "ffmpeg", "-y",
-        "-ss", "1",
-        "-t", str(duration_s + 2),
+        "-ss", "1",               # skip boring static intro second
+        "-t", str(duration_s),    # take exactly what we need
         "-i", src,
         "-vf", vf,
-        "-t", str(duration_s),
+        "-r", str(TARGET_FPS),
         "-an",
         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
         "-pix_fmt", "yuv420p",
@@ -228,21 +223,9 @@ def normalise_clip(src, dst, duration_s):
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except Exception as e:
-        logger.warning(f"Ken Burns failed for {src}: {e}. Trying simple crop...")
-        fallback = [
-            "ffmpeg", "-y", "-ss", "1", "-t", str(duration_s), "-i", src,
-            "-vf", f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
-                   f"crop={TARGET_W}:{TARGET_H},setsar=1",
-            "-r", str(TARGET_FPS), "-an",
-            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-            "-pix_fmt", "yuv420p", dst
-        ]
-        try:
-            subprocess.run(fallback, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
-        except Exception as e2:
-            logger.error(f"Clip normalise failed entirely: {e2}")
-            return False
+        logger.error(f"Clip normalise failed for {src}: {e}")
+        return False
+
 
 
 # ──────────────────────────────────────────────────────────
