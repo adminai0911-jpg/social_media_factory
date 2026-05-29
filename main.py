@@ -132,9 +132,10 @@ def execute_pipeline():
     from publisher.meta_api import run as run_meta_publisher
     run_meta_publisher()
     
-    # 4b. Publish to Facebook Reels
+    # 4b. Publish to Facebook Reels (use dedicated Facebook caption from Brain 3)
     logger.info("Publishing to Facebook Reels...")
-    publish_to_facebook("final_reel.mp4", full_caption)
+    fb_caption = script_data.get("facebook_caption", full_caption)
+    publish_to_facebook("final_reel.mp4", fb_caption)
     
     # 4c. Publish to YouTube Shorts
     logger.info("Publishing to YouTube Shorts...")
