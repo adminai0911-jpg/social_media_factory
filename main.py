@@ -108,7 +108,15 @@ def execute_pipeline():
     from publisher.facebook_api import publish_to_facebook
     from publisher.youtube_api import publish_to_youtube
     
-    caption = script_data.get("instagram_caption", "Amazing Video")
+    import json
+    try:
+        with open("script_output.json", "r", encoding="utf-8") as f:
+            script_data = json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to load script_output.json: {e}")
+        script_data = {}
+        
+    caption = script_data.get("instagram_caption", "Amazing Video! 🔥")
     tags = script_data.get("instagram_hashtags", "#viral")
     full_caption = f"{caption}\n\n{tags}"
     

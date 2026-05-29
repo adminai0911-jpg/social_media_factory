@@ -73,3 +73,6 @@ https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/READM
 --- PIPELINE SUCCESSFULLY EXECUTED ---
 Finished Run at 29-05-2026  9:02:52.55 
 Starting Autonomous Factory Run at 29-05-2026 14:00:02.06 
+2026-05-29 14:00:03,206 - SocialMediaFactoryMaster - INFO - Starting master orchestrator in direct CLI mode...
+2026-05-29 14:00:03,206 - SocialMediaFactoryMaster - INFO - --- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---
+2026-05-29 14:00:03,206 - SocialMediaFactoryMaster - INFO - Advanced Jitter: Standard window delay. Sleeping for 47 minutes...

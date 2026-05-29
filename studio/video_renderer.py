@@ -220,9 +220,13 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
     BG_MUSIC_FILE = "bg_music.mp3"
     logger.info("Fetching trending Sigma/Motivation background track...")
     try:
-        # Download a royalty-free cinematic track placeholder (or the user can place their own bg_music.mp3 in the directory)
         if not os.path.exists(BG_MUSIC_FILE):
-            urllib.request.urlretrieve("https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3", BG_MUSIC_FILE)
+            req = urllib.request.Request(
+                "https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3",
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            )
+            with urllib.request.urlopen(req) as response, open(BG_MUSIC_FILE, 'wb') as out_file:
+                out_file.write(response.read())
     except Exception as e:
         logger.warning(f"Failed to fetch BG music: {e}. Proceeding without background music.")
         
