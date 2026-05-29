@@ -2,8 +2,8 @@ name: AI Cinematic Factory
 
 on:
   schedule:
-    # Run 8 times a day (every 3 hours)
-    - cron: '0 */3 * * *'
+    # Run 3 times a day at Peak IST times (9:00 AM, 2:00 PM, 8:00 PM) to avoid self-cannibalization
+    - cron: '30 3,8,14 * * *'
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 jobs:

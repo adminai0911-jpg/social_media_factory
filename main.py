@@ -63,6 +63,16 @@ def execute_pipeline():
     Executes the 4-step pipeline end-to-end.
     """
     logger.info("--- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---")
+    
+    # ANTI-SPAM HUMAN JITTER:
+    # Bots execute precisely on schedule. We sleep randomly for 1 to 15 minutes 
+    # to simulate a human opening the app and uploading.
+    import time
+    import random
+    jitter_seconds = random.randint(60, 900)
+    logger.info(f"Anti-Bot Jitter: Sleeping for {jitter_seconds} seconds before execution...")
+    time.sleep(jitter_seconds)
+    
     verify_environment()
     
     # 1. Trend Scouting

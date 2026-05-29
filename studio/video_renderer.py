@@ -247,7 +247,7 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
         "ffmpeg", "-y", "-i", temp_output,
         "-vf", f"ass={ass_filter_path},subtitles={srt_filter_path}:force_style='{style}'",
         "-c:v", "libx264", "-preset", "medium", "-b:v", "12M", "-maxrate", "14M", "-bufsize", "24M", "-r", "30",
-        "-c:a", "copy", FINAL_REEL
+        "-c:a", "copy", "-map_metadata", "-1", "-movflags", "+faststart", FINAL_REEL
     ]
     
     try:

@@ -92,7 +92,8 @@ Strict Requirements:
 5. The spoken script must be ONLY in Hindi (Devanagari script) and MUST NOT contain any english words in Latin script, symbols, bullet points, numbers in digits, or emojis in the text.
 6. Provide three highly descriptive English search queries for Pexels to pull relevant high-quality, cinematic vertical (9:16) stock b-roll clips.
 7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. This will be burnt massively onto the video in the first 2 seconds. Make it punchy (e.g., "ये 1 गलती मत करना!").
-8. Design an engagement-rich Hindi caption featuring a strong Call-To-Action (CTA) like "Tag a friend" or "Save this", followed by EXACTLY 3-5 highly relevant hashtags.
+8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. You MUST drastically vary the length and style of this caption every single time you are called (sometimes 1 short punchy sentence, sometimes a long mini-blog, sometimes emoji-heavy, sometimes no emojis). Include a strong CTA ("Tag a friend", "Save this").
+9. ANTI-SPAM HASHTAG VARIANCE: Provide EXACTLY 3-5 hashtags. You MUST choose completely different, hyper-relevant hashtags every time to avoid Instagram shadowbans. Do not reuse the same generic tags.
 
 You MUST return your response in the following precise JSON schema format:
 {{
