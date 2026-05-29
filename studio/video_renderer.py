@@ -424,20 +424,24 @@ Dialogue: 0,0:00:00.00,0:00:02.50,Hook,,0,0,0,,{safe_text}
         raise
 
     # ── Subtitle burning ──
-    # Use Arial font (always available on Linux via fonts-liberation)
+    # Use relative filenames only — avoids Windows/Linux path escaping issues with FFmpeg filters
+    # FFmpeg is always invoked from the factory working directory where these files are created
+    logger.info("Burning word-by-word subtitles...")
+    
     style = (
         "Alignment=2,Fontname=Arial,Fontsize=20,"
         "PrimaryColour=&H00FFFF00,OutlineColour=&H00000000,"
         "Outline=3,Shadow=1,BorderStyle=1,MarginV=80"
     )
 
-    # Fix Windows path issues for FFmpeg filter arguments
-    srt_abs = os.path.abspath(SRT_INPUT).replace("\\", "/").replace(":", "\\:")
-    ass_abs = os.path.abspath(ass_file).replace("\\", "/").replace(":", "\\:")
+    # On Windows, FFmpeg subtitle filter needs the path with escaped colons
+    # The safest approach is to use just the filename (relative) since cwd is set
+    srt_path = os.path.basename(SRT_INPUT)    # e.g. "subtitles.srt"
+    ass_path = os.path.basename(ass_file)     # e.g. "thumbnail.ass"
 
     cmd_subs = [
         "ffmpeg", "-y", "-i", temp,
-        "-vf", f"ass={ass_abs},subtitles={srt_abs}:force_style='{style}'",
+        "-vf", f"ass={ass_path},subtitles={srt_path}:force_style='{style}'",
         "-c:v", "libx264", "-preset", "medium",
         "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
         "-r", str(TARGET_FPS),
@@ -446,8 +450,9 @@ Dialogue: 0,0:00:00.00,0:00:02.50,Hook,,0,0,0,,{safe_text}
     ]
 
     try:
-        subprocess.run(cmd_subs, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        logger.info(f"✅ FINAL REEL READY: '{FINAL_REEL}'")
+        subprocess.run(cmd_subs, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       cwd=os.getcwd())
+        logger.info(f"✅ FINAL REEL READY WITH SUBTITLES: '{FINAL_REEL}'")
     except Exception as e:
         logger.warning(f"Subtitle burn failed ({e}). Saving clean version without subtitles.")
         import shutil
