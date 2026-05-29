@@ -115,8 +115,8 @@ Return exactly 5 hooks in this JSON schema:
         is_promo = random.random() < 0.20
         promo_instruction = ""
         if is_promo:
-            logger.info("Brain 3: Generating ManyChat Keyword Affiliate Script!")
-            promo_instruction = "IMPORTANT: This is a Monetization Promo Script! You must pitch a secret AI tool or guide that makes money. NEVER say 'link in bio'. You MUST end the spoken script exactly with: 'Follow me and comment the word PROFIT and I will DM you the secret tool!'. Also, in the instagram_caption, explicitly tell them to follow you and comment 'PROFIT' for the link."
+            logger.info("Brain 3: Generating Psychological Follow-Gate Script!")
+            promo_instruction = "IMPORTANT: This is a Monetization Promo Script! You must pitch a secret AI tool or guide that makes money. You MUST end the spoken script exactly with: 'Follow me right now so you do not lose access, and click the link in my bio to get the secret tool!'. Also, in the instagram_caption, explicitly tell them to follow you and click the link in your bio."
             
         brain_3_prompt = f"""
 You are Brain 3 (The Viral Scriptwriter).
