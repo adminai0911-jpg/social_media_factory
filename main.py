@@ -105,10 +105,28 @@ def execute_pipeline():
         
     # 4. Meta Instagram Publishing
     logger.info("\n--- STEP 4: INSTAGRAM METADATA PUBLISHING ---")
-    from publisher.meta_api import run as run_publisher
-    run_publisher()
-    logger.info("Step 4 Complete: Reels uploaded and published on Instagram!")
-        
+    from publisher.facebook_api import publish_to_facebook
+    from publisher.youtube_api import publish_to_youtube
+    
+    caption = script_data.get("instagram_caption", "Amazing Video")
+    tags = script_data.get("instagram_hashtags", "#viral")
+    full_caption = f"{caption}\n\n{tags}"
+    
+    # 4a. Publish to Instagram (Meta API)
+    logger.info("Publishing to Instagram...")
+    from publisher.meta_api import run as run_meta_publisher
+    run_meta_publisher()
+    
+    # 4b. Publish to Facebook Reels
+    logger.info("Publishing to Facebook Reels...")
+    publish_to_facebook("final_reel.mp4", full_caption)
+    
+    # 4c. Publish to YouTube Shorts
+    logger.info("Publishing to YouTube Shorts...")
+    # Extract just the tags list for YT without hashtags
+    yt_tags = [t.strip('#') for t in tags.split() if t.startswith('#')]
+    publish_to_youtube("final_reel.mp4", script_data.get("thumbnail_text", "Must Watch"), caption, yt_tags)
+    
     logger.info("\n--- PIPELINE SUCCESSFULLY EXECUTED ---")
 
 @app.route("/", methods=["GET", "POST"])

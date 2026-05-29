@@ -109,6 +109,15 @@ Return exactly 5 hooks in this JSON schema:
         # PHASE 3: Brain 3 (The Scriptwriter)
         # ---------------------------------------------------------
         logger.info("Executing Brain 3: The Scriptwriter...")
+        
+        # 20% Affiliate Promo Logic
+        import random
+        is_promo = random.random() < 0.20
+        promo_instruction = ""
+        if is_promo:
+            logger.info("Brain 3: Generating Affiliate Promo Script!")
+            promo_instruction = "IMPORTANT: This is a Monetization Promo Script! You must pitch a secret AI tool that makes money or saves time. You MUST explicitly tell the viewer to 'Click the link in my bio' to get it."
+            
         brain_3_prompt = f"""
 You are Brain 3 (The Viral Scriptwriter).
 Take the following Theme and the Winning Hook to write an addictive 15-20 second Hindi script.
@@ -116,6 +125,7 @@ Take the following Theme and the Winning Hook to write an addictive 15-20 second
 Theme: {trend_data['topic']}
 Context: {trend_data['summary']}
 Winning Hook (MUST be the first sentence): {winning_hook}
+{promo_instruction}
 
 Strict Requirements:
 1. The script must be complete within 15-20 seconds when read (around 35 to 55 words).
@@ -125,7 +135,7 @@ Strict Requirements:
 5. The spoken script must be ONLY in Hindi (Devanagari). No english characters or symbols.
 6. Provide three highly descriptive English search queries for Pexels to pull relevant cinematic vertical (9:16) stock b-roll clips.
 7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. Make it punchy (e.g., "ये 1 गलती मत करना!").
-8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. Drastically vary length/style. Include a strong CTA ("Tag a friend", "Save this").
+8. ANTI-SPAM CAPTION VARIANCE: Design a highly engaging Hindi caption. Drastically vary length/style. Include a strong CTA ("Tag a friend", "Save this" or "Click link in bio").
 9. ANTI-SPAM HASHTAG VARIANCE: Provide EXACTLY 3-5 unique, hyper-relevant hashtags.
 
 Return response in this JSON schema:

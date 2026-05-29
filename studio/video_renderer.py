@@ -215,14 +215,41 @@ Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
     except Exception as e:
         logger.error(f"Failed to generate thumbnail ASS: {e}")
 
-    # Combine video and audio, apply visual enhancement
+    # --- AUDIO MIXING (VIRALITY VIRAL BACKGROUND MUSIC) ---
+    import urllib.request
+    BG_MUSIC_FILE = "bg_music.mp3"
+    logger.info("Fetching trending Sigma/Motivation background track...")
+    try:
+        # Download a royalty-free cinematic track placeholder (or the user can place their own bg_music.mp3 in the directory)
+        if not os.path.exists(BG_MUSIC_FILE):
+            urllib.request.urlretrieve("https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3", BG_MUSIC_FILE)
+    except Exception as e:
+        logger.warning(f"Failed to fetch BG music: {e}. Proceeding without background music.")
+        
     cmd_merge = [
-        "ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT,
-        "-vf", "eq=contrast=1.07:saturation=1.12:brightness=0.01,noise=alls=2:allf=t",
-        "-c:v", "libx264", "-preset", "medium", "-b:v", "24M", "-maxrate", "30M", "-bufsize", "48M", "-r", "30",
-        "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-map", "0:v:0", "-map", "1:a:0",
-        "-shortest", temp_output
+        "ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT
     ]
+    
+    # If we successfully got background music, add it to the mix
+    if os.path.exists(BG_MUSIC_FILE):
+        cmd_merge.extend(["-stream_loop", "-1", "-i", BG_MUSIC_FILE])
+        # Mix TTS (100% volume) and BG Music (15% volume)
+        filter_complex = "[1:a]volume=1.0[a1];[2:a]volume=0.15[a2];[a1][a2]amix=inputs=2:duration=first:dropout_transition=2[a]"
+        cmd_merge.extend([
+            "-filter_complex", f"eq=contrast=1.07:saturation=1.12:brightness=0.01,noise=alls=2:allf=t;{filter_complex}",
+            "-map", "0:v:0", "-map", "[a]"
+        ])
+    else:
+        cmd_merge.extend([
+            "-vf", "eq=contrast=1.07:saturation=1.12:brightness=0.01,noise=alls=2:allf=t",
+            "-map", "0:v:0", "-map", "1:a:0"
+        ])
+        
+    cmd_merge.extend([
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "24M", "-maxrate", "30M", "-bufsize", "48M", "-r", "30",
+        "-c:a", "aac", "-b:a", "128k", "-ar", "48000",
+        "-shortest", temp_output
+    ])
     
     try:
         subprocess.run(cmd_merge, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
