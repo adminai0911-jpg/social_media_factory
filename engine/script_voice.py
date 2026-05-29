@@ -158,21 +158,30 @@ Emotional Core: {trend_data.get('emotional_trigger', 'Curiosity')}
 Opening Hook — use this WORD FOR WORD as the very first sentence: {winning_hook}
 {promo_instruction}
 
-SCRIPT STRUCTURE (4 mandatory scenes):
-SCENE 1 (0-4s)   — Hook: Use the opening hook exactly. Shock. Freeze the scroll.
-SCENE 2 (4-18s)  — Tension: Introduce the problem, pain point, or shocking fact. Create desire.
-SCENE 3 (18-40s) — Value: Deliver the secret, twist, or insight. Build deep trust.
-SCENE 4 (40-48s) — Loop End: Last line connects back to the hook, forcing a re-watch.
+SCRIPT STRUCTURE: Write a script structured in 4 SCENES:
+SCENE 1 (0-5s)   — Hook: Use the opening hook WORD FOR WORD. Make them freeze.
+SCENE 2 (5-20s)  — Tension: Build pain, shock, or intense desire.
+SCENE 3 (20-52s) — Deep Value: Deliver the real insight, secret, or story. This is the longest part — give them real substance they cannot find elsewhere.
+SCENE 4 (52-60s) — Loop End: The last sentence connects back to the opening hook, forcing re-watch.
 
 ABSOLUTE RULES:
-1. script_text: Pure Devanagari Hindi only. ZERO English letters, ZERO roman numerals, ZERO symbols.
-   One continuous flowing spoken narrative. No bullet points. No line breaks inside the text.
-   Target 85-100 Hindi words (42-50 seconds when spoken).
-
+1. script_text: Pure Devanagari Hindi only. ZERO English letters, ZERO symbols.
+   One continuous flowing spoken narrative. No line breaks inside the text.
+   TARGET: 120 to 130 Hindi words (58 to 65 seconds when spoken). Make it FULL and DETAILED.
 2. pexels_keywords: EXACTLY 10 English search queries.
-   CRITICAL: Each keyword MUST describe what should appear VISUALLY ON SCREEN at that exact 5-second moment of the script.
-   Map them scene by scene: keywords 1-2 for Scene 1, keywords 3-5 for Scene 2, keywords 6-9 for Scene 3, keyword 10 for Scene 4.
-   Format: "[specific visual description] vertical cinematic portrait"
+   CRITICAL SYNC RULE: Each keyword must describe EXACTLY what should appear VISUALLY on screen
+   at that specific 6-second window of the script.
+   Keyword 1 = what happens visually during seconds 0-6 (Scene 1 hook)
+   Keyword 2 = what happens visually during seconds 6-12 (Scene 2 start)
+   Keyword 3 = what happens visually during seconds 12-18 (Scene 2 tension)
+   Keyword 4 = what happens visually during seconds 18-24 (Scene 3 value start)
+   Keyword 5 = what happens visually during seconds 24-30
+   Keyword 6 = what happens visually during seconds 30-36
+   Keyword 7 = what happens visually during seconds 36-42
+   Keyword 8 = what happens visually during seconds 42-48
+   Keyword 9 = what happens visually during seconds 48-54
+   Keyword 10 = what happens visually during seconds 54-60 (Scene 4 loop)
+   Make each keyword highly descriptive: "[subject doing action] vertical cinematic portrait"
    Example: "young indian man shocked looking at phone screen vertical cinematic"
 
 3. instagram_caption: Feel like a REAL human wrote it. Emotionally engaging. Vary length every time.
