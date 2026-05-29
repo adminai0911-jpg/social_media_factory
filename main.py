@@ -117,8 +117,12 @@ def execute_pipeline():
         script_data = {}
         
     caption = script_data.get("instagram_caption", "Amazing Video! 🔥")
-    tags = script_data.get("instagram_hashtags", "#viral")
-    full_caption = f"{caption}\n\n{tags}"
+    tags = script_data.get("instagram_hashtags", ["#viral"])
+    if isinstance(tags, str):
+        tags = tags.split()
+    
+    tags_str = " ".join(tags)
+    full_caption = f"{caption}\n\n{tags_str}"
     
     # 4a. Publish to Instagram (Meta API)
     logger.info("Publishing to Instagram...")
@@ -132,7 +136,7 @@ def execute_pipeline():
     # 4c. Publish to YouTube Shorts
     logger.info("Publishing to YouTube Shorts...")
     # Extract just the tags list for YT without hashtags
-    yt_tags = [t.strip('#') for t in tags.split() if t.startswith('#')]
+    yt_tags = [t.strip('#') for t in tags if t.startswith('#')]
     publish_to_youtube("final_reel.mp4", script_data.get("thumbnail_text", "Must Watch"), caption, yt_tags)
     
     logger.info("\n--- PIPELINE SUCCESSFULLY EXECUTED ---")
