@@ -186,20 +186,41 @@ def generate_placeholder_video(duration):
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return placeholder_output
 
-def compile_final_reel(broll_video):
+def compile_final_reel(broll_video, thumbnail_text=""):
     """
     Merges normalized b-roll video with narration audio, applies subtle 
     contrast/grain filters, and burns word-by-word yellow highlighted subtitles.
+    Also burns a massive thumbnail text hook for the first 2 seconds.
     """
     logger.info("Merging audio track and applying color grading filters...")
     temp_output = "temp_reel_no_subs.mp4"
     
-    # Combine video and audio, apply visual enhancement (eq filter + minor noise/grain layer to bypass duplication)
+    # Generate ASS file for the massive thumbnail text (0 to 2 seconds)
+    ass_file = "thumbnail.ass"
+    try:
+        with open(ass_file, "w", encoding="utf-8") as f:
+            f.write(f"""[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Thumbnail,Liberation Sans,120,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,8,4,5,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:02.00,Thumbnail,,0,0,0,,{thumbnail_text}
+""")
+    except Exception as e:
+        logger.error(f"Failed to generate thumbnail ASS: {e}")
+
+    # Combine video and audio, apply visual enhancement
     cmd_merge = [
         "ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT,
         "-vf", "eq=contrast=1.07:saturation=1.12:brightness=0.01,noise=alls=2:allf=t",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "22",
-        "-c:a", "aac", "-b:a", "192k", "-map", "0:v:0", "-map", "1:a:0",
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "12M", "-maxrate", "14M", "-bufsize", "24M", "-r", "30",
+        "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-map", "0:v:0", "-map", "1:a:0",
         "-shortest", temp_output
     ]
     
@@ -220,11 +241,12 @@ def compile_final_reel(broll_video):
     
     # Ensure srt path is formatted correctly for FFmpeg subtitles filter
     srt_filter_path = SRT_INPUT.replace("\\", "/").replace(":", "\\:")
+    ass_filter_path = ass_file.replace("\\", "/").replace(":", "\\:")
     
     cmd_subs = [
         "ffmpeg", "-y", "-i", temp_output,
-        "-vf", f"subtitles={srt_filter_path}:force_style='{style}'",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+        "-vf", f"ass={ass_filter_path},subtitles={srt_filter_path}:force_style='{style}'",
+        "-c:v", "libx264", "-preset", "medium", "-b:v", "12M", "-maxrate", "14M", "-bufsize", "24M", "-r", "30",
         "-c:a", "copy", FINAL_REEL
     ]
     
@@ -243,7 +265,7 @@ def compile_final_reel(broll_video):
 
 def cleanup_temp_files():
     logger.info("Cleaning up temporary render components...")
-    temp_patterns = ["raw_clip_", "norm_clip_", "clips.txt", "stitched_broll.mp4", "final_broll.mp4", "temp_reel_no_subs.mp4"]
+    temp_patterns = ["raw_clip_", "norm_clip_", "clips.txt", "stitched_broll.mp4", "final_broll.mp4", "temp_reel_no_subs.mp4", "thumbnail.ass"]
     for file in os.listdir("."):
         for pattern in temp_patterns:
             if file.startswith(pattern):
@@ -273,7 +295,8 @@ def render():
         else:
             broll = generate_placeholder_video(duration)
             
-    compile_final_reel(broll)
+    thumbnail_text = script_data.get("thumbnail_text", "")
+    compile_final_reel(broll, thumbnail_text)
 
 if __name__ == "__main__":
     render()

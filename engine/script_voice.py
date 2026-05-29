@@ -78,27 +78,29 @@ def build_hindi_script():
     # Prompt engineering for addictive short-form AI Cinematic script in Hindi
     prompt = f"""
 You are an elite, highly creative viral content architect specializing in fast-paced, high-retention AI Cinematic Reels for Indian audiences.
-Your goal is to transform the following theme into an addictive, dark, motivational, or mysterious 15-second script translated into highly conversational, snappy Hindi (written in clean Devanagari script).
+Your goal is to transform the following theme into an addictive 15-20 second script translated into highly conversational, snappy Hindi (written in clean Devanagari script).
 
 Theme: {trend_data['topic']}
 Context: {trend_data['summary']}
 Inspiration: {", ".join(trend_data.get('news_snippets', []))}
 
 Strict Requirements:
-1. The script must be short and complete within exactly 15 seconds when read (around 35 to 45 words maximum).
-2. START WITH A VIRAL 1-SECOND HOOK (e.g., "क्या आपको पता है...", "ये एक गलती...", "२०३५ में...").
-3. Tell a deep, emotional, or mysterious micro-story.
+1. The script must be complete within 15-20 seconds when read (around 35 to 55 words).
+2. START WITH A VIRAL 1-3 SECOND HOOK using a proven formula: Contrarian, Mistake, Numbered List, Question, or Curiosity (e.g., "सब कहते हैं...", "ये एक गलती...", "३ तरीके...", "क्या आप...").
+3. Tell a high-retention micro-story that builds suspense, so the viewer stays past 3 seconds.
 4. MUST USE A LOOP ENDING (The last sentence must seamlessly connect back to the first sentence).
 5. The spoken script must be ONLY in Hindi (Devanagari script) and MUST NOT contain any english words in Latin script, symbols, bullet points, numbers in digits, or emojis in the text.
-6. Provide three highly descriptive English search queries for Pexels to pull relevant high-quality, cinematic, dark, luxury, or sci-fi vertical (9:16) stock b-roll clips (e.g., "dark luxury mansion vertical", "futuristic cyberpunk city vertical", "sad man raining vertical").
-7. Design a clickbait, engagement-rich Hindi caption with 5 high-velocity hashtags for Instagram.
+6. Provide three highly descriptive English search queries for Pexels to pull relevant high-quality, cinematic vertical (9:16) stock b-roll clips.
+7. Design a 2 to 4 word, highly clickbait Hindi phrase for the `thumbnail_text`. This will be burnt massively onto the video in the first 2 seconds. Make it punchy (e.g., "ये 1 गलती मत करना!").
+8. Design an engagement-rich Hindi caption featuring a strong Call-To-Action (CTA) like "Tag a friend" or "Save this", followed by EXACTLY 3-5 highly relevant hashtags.
 
 You MUST return your response in the following precise JSON schema format:
 {{
-  "script_text": "आपके 15 सेकंड का हिंदी ऑडियो नरेशन बिना किसी इंग्लिश शब्द, सिंबल, या इमोजी के यहाँ होगा।",
+  "thumbnail_text": "2-4 word clickbait hindi phrase",
+  "script_text": "आपके 15 सेकंड का हिंदी ऑडियो नरेशन बिना किसी इंग्लिश शब्द या सिंबल के यहाँ होगा।",
   "pexels_keywords": ["specific cinematic vertical stock video query 1", "specific cinematic vertical stock video query 2", "specific cinematic vertical stock video query 3"],
-  "instagram_caption": "धमाकेदार हिंदी कैप्शन जो ऑडियंस को अट्रैक्ट करे। 🔥🚀",
-  "instagram_hashtags": "#InstaIndia #TrendingHindi #ViralTrends #ReelsIndia #DigitalIndia"
+  "instagram_caption": "धमाकेदार हिंदी कैप्शन जिसमें CTA (उदा: शेयर करें) शामिल हो। 🔥🚀",
+  "instagram_hashtags": "#InstaIndia #TrendingHindi #ViralReels #ReelsIndia"
 }}
 """
 
@@ -125,9 +127,10 @@ You MUST return your response in the following precise JSON schema format:
         logger.error(f"Failed to generate content from Gemini API: {e}")
         # Return fallback script to keep the system robust and fault-tolerant
         fallback_script = {
+            "thumbnail_text": "यह 1 गलती मत करना!",
             "script_text": "क्या आपको पता है कि भारत में एआई क्रांति कितनी तेजी से बढ़ रही है? छोटे व्यापारी अब एआई टूल्स का उपयोग करके अपना बिजनेस दोगुना कर रहे हैं। तकनीक की दुनिया में आगे रहने के लिए हमें अभी फॉलो करें!",
             "pexels_keywords": ["cyberpunk dynamic mumbai street", "indian software engineer typing", "artificial intelligence network loop"],
-            "instagram_caption": "भारत में AI का तहलका! क्या आपका बिजनेस रेडी है? 🇮🇳💻",
+            "instagram_caption": "भारत में AI का तहलका! क्या आपका बिजनेस रेडी है? हमें फॉलो करें और इस रील को सेव करें! 🇮🇳💻",
             "instagram_hashtags": "#AIRevolution #TechIndia #DigitalIndia #ReelsIndia #HindiTech"
         }
         with open(SCRIPT_OUTPUT, "w", encoding="utf-8") as sf:

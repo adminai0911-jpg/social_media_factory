@@ -19,24 +19,29 @@ OUTPUT_FILE = "current_trend.json"
 
 CINEMATIC_THEMES = [
     {
-        "topic": "The Hidden AI Matrix",
-        "summary": "A dark mystery about how AI is quietly controlling the world in 2035.",
-        "news_snippets": ["In 2035, humans stopped sleeping.", "The simulation is breaking."]
-    },
-    {
         "topic": "Zero to Millionaire (Luxury Motivation)",
         "summary": "An emotional rags-to-riches story highlighting discipline, wealth, and luxury.",
         "news_snippets": ["He was poor... until this happened.", "The 1% rule that changes everything."]
     },
     {
-        "topic": "The Last Human",
-        "summary": "A gripping sci-fi hook about the last person on earth discovering a hidden truth.",
-        "news_snippets": ["The last man on Earth heard a knock on the door.", "What they didn't tell you about the future."]
+        "topic": "Desi Student & Office Life (Relatable Skit)",
+        "summary": "A highly relatable, slightly humorous take on the struggles of Indian student or corporate office life.",
+        "news_snippets": ["When your boss messages you at 6 PM.", "Indian parents when you score 99%."]
     },
     {
-        "topic": "Psychology of Success",
-        "summary": "Deep psychological facts that feel illegal to know about human behavior and wealth.",
-        "news_snippets": ["3 psychological tricks that feel illegal.", "Why the rich stay quiet."]
+        "topic": "Illegal Tech & AI Hacks (Educational)",
+        "summary": "Mind-blowing hidden websites, AI tools, or phone tricks that feel illegal to know.",
+        "news_snippets": ["3 AI tools that feel illegal.", "This hidden website saves 10 hours daily."]
+    },
+    {
+        "topic": "Deep Spiritual & Psychological Truths",
+        "summary": "A deep, motivational teaching blending modern psychology with ancient wisdom, driving heavy saves/shares.",
+        "news_snippets": ["Why you should stay quiet about your goals.", "The real truth about karma and success."]
+    },
+    {
+        "topic": "The Hidden AI Matrix (Mystery)",
+        "summary": "A dark, fast-paced mystery about how AI or technology is secretly changing human society in 2026.",
+        "news_snippets": ["In 2026, humans stopped thinking.", "The secret the 1% is hiding from you."]
     }
 ]
 

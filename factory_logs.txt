@@ -1,0 +1,74 @@
+Starting Autonomous Factory Run at 29-05-2026  9:00:06.52 
+2026-05-29 09:00:08,964 - SocialMediaFactoryMaster - INFO - Starting master orchestrator in direct CLI mode...
+2026-05-29 09:00:08,964 - SocialMediaFactoryMaster - INFO - --- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---
+2026-05-29 09:00:08,965 - SocialMediaFactoryMaster - WARNING - Missing essential configuration variables: GCP_GCS_BUCKET_NAME
+2026-05-29 09:00:08,965 - SocialMediaFactoryMaster - WARNING - The pipeline might fail during downstream operations.
+2026-05-29 09:00:08,965 - SocialMediaFactoryMaster - INFO - 
+--- STEP 1: SCOUTING VIRAL INDIA TRENDS ---
+2026-05-29 09:00:08,998 - TrendScout - INFO - Initializing Cinematic Theme Generator...
+2026-05-29 09:00:08,998 - TrendScout - INFO - Selected Cinematic Theme: Psychology of Success
+2026-05-29 09:00:08,999 - TrendScout - INFO - Successfully exported theme to 'current_trend.json'
+2026-05-29 09:00:09,000 - SocialMediaFactoryMaster - INFO - Step 1 Complete: Trend cached.
+2026-05-29 09:00:09,000 - SocialMediaFactoryMaster - INFO - 
+--- STEP 2: CREATING SCRIPT & NEURAL TTS AUDIO ---
+C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\engine\script_voice.py:15: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-05-29 09:00:18,531 - ScriptVoiceEngine - INFO - Initializing Gemini API script generation...
+2026-05-29 09:00:19,768 - ScriptVoiceEngine - ERROR - Failed to generate content from Gemini API: 403 Your API key was reported as leaked. Please use another API key.
+2026-05-29 09:00:19,769 - ScriptVoiceEngine - WARNING - Saved fallback scripted assets due to Gemini API failure.
+2026-05-29 09:00:19,772 - ScriptVoiceEngine - INFO - Generating TTS Audio via edge-tts with voice 'hi-IN-SwaraNeural'...
+2026-05-29 09:00:20,795 - ScriptVoiceEngine - INFO - TTS Audio file saved to 'audio_narration.mp3'
+2026-05-29 09:00:20,796 - ScriptVoiceEngine - INFO - Subtitles (SRT) successfully generated and saved to 'subtitles.srt'
+2026-05-29 09:00:20,805 - SocialMediaFactoryMaster - INFO - Step 2 Complete: Script, b-roll keywords, and TTS complete.
+2026-05-29 09:00:20,805 - SocialMediaFactoryMaster - INFO - 
+--- STEP 3: DOWNLOADING B-ROLL & COMPILING REEL ---
+2026-05-29 09:00:20,837 - StudioRenderer - INFO - Calculating audio narration duration using ffprobe...
+2026-05-29 09:00:21,435 - StudioRenderer - INFO - Audio narration duration: 16.70 seconds.
+2026-05-29 09:00:21,435 - StudioRenderer - INFO - Querying Pexels for keyword: 'cyberpunk dynamic mumbai street'...
+2026-05-29 09:00:22,120 - StudioRenderer - INFO - Downloading b-roll clip from: https://videos.pexels.com/video-files/36100111/15309281_360_...
+2026-05-29 09:00:22,752 - StudioRenderer - INFO - Saved raw b-roll clip: 'raw_clip_0.mp4'
+2026-05-29 09:00:22,752 - StudioRenderer - INFO - Querying Pexels for keyword: 'indian software engineer typing'...
+2026-05-29 09:00:23,373 - StudioRenderer - INFO - Downloading b-roll clip from: https://videos.pexels.com/video-files/8266177/8266177-hd_720...
+2026-05-29 09:00:25,141 - StudioRenderer - INFO - Saved raw b-roll clip: 'raw_clip_1.mp4'
+2026-05-29 09:00:25,142 - StudioRenderer - INFO - Querying Pexels for keyword: 'artificial intelligence network loop'...
+2026-05-29 09:00:25,778 - StudioRenderer - INFO - Downloading b-roll clip from: https://videos.pexels.com/video-files/35066823/14854002_360_...
+2026-05-29 09:00:27,525 - StudioRenderer - INFO - Saved raw b-roll clip: 'raw_clip_2.mp4'
+2026-05-29 09:00:27,528 - StudioRenderer - INFO - Normalizing b-roll clips (Aspect Ratio, FPS, Resolution)...
+2026-05-29 09:01:04,032 - StudioRenderer - INFO - Normalized clip saved: 'norm_clip_0.mp4'
+2026-05-29 09:01:18,388 - StudioRenderer - INFO - Normalized clip saved: 'norm_clip_1.mp4'
+2026-05-29 09:01:33,841 - StudioRenderer - INFO - Normalized clip saved: 'norm_clip_2.mp4'
+2026-05-29 09:01:33,842 - StudioRenderer - INFO - Concatenating normalized b-roll clips...
+2026-05-29 09:01:34,037 - StudioRenderer - INFO - Final stitched & trimmed b-roll complete: 'final_broll.mp4'
+2026-05-29 09:01:34,037 - StudioRenderer - INFO - Merging audio track and applying color grading filters...
+2026-05-29 09:02:00,373 - StudioRenderer - INFO - Video-audio merge complete.
+2026-05-29 09:02:00,373 - StudioRenderer - INFO - Burning dynamic, word-by-word yellow subtitles...
+2026-05-29 09:02:00,440 - StudioRenderer - ERROR - Failed to burn subtitles: Command '['ffmpeg', '-y', '-i', 'temp_reel_no_subs.mp4', '-vf', "subtitles=subtitles.srt:force_style='Alignment=2,Fontname=Liberation Sans,Fontsize=24,PrimaryColour=&H00FFFF,OutlineColour=&H000000,Outline=2.5,BorderStyle=1,MarginV=280'", '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-c:a', 'copy', 'final_reel.mp4']' returned non-zero exit status 3199971767.
+2026-05-29 09:02:00,440 - StudioRenderer - WARNING - Subtitle burn failed. Falling back to copy video without subtitles.
+2026-05-29 09:02:00,446 - StudioRenderer - INFO - Cleaning up temporary render components...
+2026-05-29 09:02:00,455 - SocialMediaFactoryMaster - INFO - Step 3 Complete: HD vertical reel compiled with custom dynamic subtitles.
+2026-05-29 09:02:00,455 - SocialMediaFactoryMaster - INFO - 
+--- STEP 4: INSTAGRAM METADATA PUBLISHING ---
+2026-05-29 09:02:00,545 - MetaPublisher - INFO - Uploading 'final_reel.mp4' to Cloudinary...
+2026-05-29 09:02:05,511 - MetaPublisher - INFO - Cloudinary Upload completed successfully. Public ID: social_media_factory/ar7dqxfip1m8wvwps3c8
+2026-05-29 09:02:05,512 - MetaPublisher - INFO - Initializing Reels Media Container on Meta Servers...
+2026-05-29 09:02:07,586 - MetaPublisher - INFO - Reels Media Container created successfully! Container ID: 18128343172537789
+2026-05-29 09:02:07,586 - MetaPublisher - INFO - Polling Meta server status until video processing is completed...
+2026-05-29 09:02:24,010 - MetaPublisher - INFO - Raw Status Data: {'status_code': 'IN_PROGRESS', 'id': '18128343172537789'}
+2026-05-29 09:02:24,011 - MetaPublisher - INFO - Polling Attempt 1/20 | Status Code: IN_PROGRESS
+2026-05-29 09:02:39,920 - MetaPublisher - INFO - Raw Status Data: {'status_code': 'FINISHED', 'id': '18128343172537789'}
+2026-05-29 09:02:39,920 - MetaPublisher - INFO - Polling Attempt 2/20 | Status Code: FINISHED
+2026-05-29 09:02:39,920 - MetaPublisher - INFO - Reel video parsing finished. Proceeding to publish event!
+2026-05-29 09:02:39,921 - MetaPublisher - INFO - Triggering final Reels publish event...
+2026-05-29 09:02:49,769 - MetaPublisher - INFO - SUCCESS! Reel posted live to Instagram. Post ID: 17868945516541734
+2026-05-29 09:02:50,282 - MetaPublisher - INFO - Cleaned up temporary file 'social_media_factory/ar7dqxfip1m8wvwps3c8' from Cloudinary.
+2026-05-29 09:02:50,282 - SocialMediaFactoryMaster - INFO - Step 4 Complete: Reels uploaded and published on Instagram!
+2026-05-29 09:02:50,282 - SocialMediaFactoryMaster - INFO - 
+--- PIPELINE SUCCESSFULLY EXECUTED ---
+Finished Run at 29-05-2026  9:02:52.55 
