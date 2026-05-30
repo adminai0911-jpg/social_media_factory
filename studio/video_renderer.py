@@ -14,6 +14,7 @@ Core upgrades:
 import os
 import json
 import logging
+import requests
 import subprocess
 import urllib.request
 import urllib.parse
@@ -98,28 +99,71 @@ def calculate_srt_segment_durations(num_clips, total_audio_duration):
 
 
 # ──────────────────────────────────────────────────────────
-# PHASE 11: AI IMAGE GENERATOR (Pollinations.ai)
+# PHASE 11: HIGH-RES PHOTO PARALLAX (Pexels)
 # ──────────────────────────────────────────────────────────
 
 def fetch_ai_images(prompts):
     """
-    Calls the free Pollinations.ai endpoint to generate exact custom visuals.
-    Returns list of downloaded image paths.
+    Fetches exact-match high-res photography from Pexels Photo API.
+    We use Photos instead of Videos because Photo search is 100x more accurate 
+    and specific, ensuring the visual perfectly matches the voice script.
+    These photos are then animated into cinematic video via Ken Burns Parallax.
     """
+    pexels_key = os.environ.get("PEXELS_API_KEY")
+    if not pexels_key:
+        logger.error("Missing PEXELS_API_KEY")
+        return []
+
+    headers = {"Authorization": pexels_key}
+    base_url = "https://api.pexels.com/v1/search"
     downloaded = []
+    used_ids = set()
+
     for i, prompt in enumerate(prompts[:10]):
-        safe_prompt = urllib.parse.quote(prompt)
-        url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width={TARGET_W}&height={TARGET_H}&nologo=true"
-        img_path = f"ai_image_{i}.jpg"
+        # Clean prompt for Pexels search (remove long descriptive fluff, keep core subject)
+        # Brain 3 prompts are like "Hyper-realistic cinematic photography of a shocked indian man"
+        # We simplify it for Pexels search.
+        clean_query = prompt.replace("Hyper-realistic cinematic photography of", "").replace("8k resolution", "").replace("photorealistic", "").strip()
+        # Take the first 5 words to ensure broad enough search
+        search_query = " ".join(clean_query.split()[:6])
         
-        logger.info(f"[{i+1}/10] Generating AI Image: {prompt[:60]}...")
+        logger.info(f"[{i+1}/10] Fetching Photo: '{search_query}'")
+        params = {"query": search_query, "orientation": "portrait", "per_page": 5}
+        
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=30) as r, open(img_path, "wb") as o:
-                o.write(r.read())
+            resp = requests.get(base_url, headers=headers, params=params, timeout=15)
+            resp.raise_for_status()
+            photos = resp.json().get("photos", [])
+            
+            if not photos:
+                logger.warning(f"  No photo found for '{search_query}'.")
+                continue
+
+            # Pick first non-duplicate photo
+            selected = None
+            for p in photos:
+                if p["id"] not in used_ids:
+                    selected = p
+                    used_ids.add(p["id"])
+                    break
+            if not selected:
+                selected = photos[0]
+
+            # Fetch the highest quality portrait version
+            download_url = selected["src"]["portrait"]
+            img_path = f"ai_image_{i}.jpg"
+            
+            logger.info(f"  Downloading image...")
+            vr = requests.get(download_url, stream=True, timeout=30)
+            vr.raise_for_status()
+            with open(img_path, "wb") as out:
+                for chunk in vr.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        out.write(chunk)
             downloaded.append(img_path)
+            
         except Exception as e:
-            logger.error(f"  AI Image generation failed: {e}")
+            logger.error(f"  Photo fetch failed: {e}")
             
     return downloaded
 
