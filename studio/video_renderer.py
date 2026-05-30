@@ -202,20 +202,20 @@ def get_dynamic_typography(master_word, target_dur):
     alpha_str = "1.0"
     
     if anim_type == "zoom":
-        size_str = "min(80+t*30, 140)"
+        size_str = "min(80+t*30\\,140)"
         x_pos = "(w-tw)/2" # Needs tw for dynamic size
         y_pos = "(h-th)/2"
     elif anim_type == "slide_left":
-        x_pos = "min(t*1000, (w-text_w)/2)"
+        x_pos = "min(t*1000\\,(w-text_w)/2)"
     elif anim_type == "slide_right":
-        x_pos = "max(w-t*1000, (w-text_w)/2)"
+        x_pos = "max(w-t*1000\\,(w-text_w)/2)"
     elif anim_type == "fade":
-        alpha_str = "min(t*2, 1.0)"
+        alpha_str = "min(t*2\\,1.0)"
         
     # Outline and shadow instead of a box, for raw clean text
     outline = "borderw=5:bordercolor=black:shadowcolor=black@0.8:shadowx=6:shadowy=6"
     
-    drawtext = f"drawtext=text='{mw_clean}':fontcolor={color}:fontsize={size_str}:fontfile='{font}':x={x_pos}:y={y_pos}:alpha={alpha_str}:{outline}:enable='between(t,0.2,{target_dur-0.2})'"
+    drawtext = f"drawtext=text='{mw_clean}':fontcolor={color}:fontsize={size_str}:fontfile='{font}':x={x_pos}:y={y_pos}:alpha={alpha_str}:{outline}:enable='between(t\\,0.2\\,{target_dur-0.2})'"
     return f",{drawtext}"
 
 def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
@@ -224,8 +224,8 @@ def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
     else:
         grade = "eq=contrast=1.1:saturation=0.8:brightness=-0.02:gamma=0.95:gamma_r=0.9:gamma_b=1.1"
         
-    # Visual Hypnosis: Continuous 3% per second zoom-in
-    hypnosis_zoom = f"zoompan=z='1+0.03*t':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS}"
+    # Visual Hypnosis: Continuous slow zoom-in
+    hypnosis_zoom = f"zoompan=z='min(zoom+0.0015\\,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS}"
         
     vf = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
     vf += get_dynamic_typography(master_word, target_dur)
