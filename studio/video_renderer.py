@@ -232,9 +232,20 @@ def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
         "-pix_fmt", "yuv420p", dst
     ]
     try:
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if r.returncode != 0:
+            logger.error(f"FFmpeg normalize failed: {r.stderr}")
+            # Try again without text (failsafe)
+            vf_no_text = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
+            cmd_no_text = cmd[:]
+            cmd_no_text[cmd_no_text.index("-vf") + 1] = vf_no_text
+            r2 = subprocess.run(cmd_no_text, capture_output=True, text=True)
+            if r2.returncode != 0:
+                logger.error(f"FFmpeg normalize failsafe ALSO failed: {r2.stderr}")
+                return False
         return True
-    except:
+    except Exception as e:
+        logger.error(f"FFmpeg exception: {e}")
         return False
 
 def build_hardcut_chain(norm_clips):
@@ -247,7 +258,9 @@ def build_hardcut_chain(norm_clips):
     with open("clips.txt", "w") as f:
         for c in chain_list: f.write(f"file '{c}'\n")
     out = "stitched_broll.mp4"
-    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "clips.txt", "-c", "copy", out], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    r = subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "clips.txt", "-c", "copy", out], capture_output=True, text=True)
+    if r.returncode != 0:
+        logger.error(f"Concat failed: {r.stderr}")
     
     cut_times = []
     cumulative = 0.0
