@@ -145,10 +145,18 @@ def fetch_clip_dynamically_youtube(query):
 
 def fallback_clip():
     clips = []
-    for root, _, files in os.walk("broll"):
-        for f in files:
-            if f.endswith(".mp4"): clips.append(os.path.join(root, f))
-    return random.choice(clips) if clips else None
+    if os.path.exists("broll"):
+        for root, _, files in os.walk("broll"):
+            for f in files:
+                if f.endswith(".mp4"): clips.append(os.path.join(root, f))
+    if clips: return random.choice(clips)
+    
+    # Ultra-Fallback: Generate synthetic background to prevent pipeline crash
+    out = f"temp_fallback_{random.randint(1000,9999)}.mp4"
+    c = random.choice(["black", "darkblue", "indigo", "darkred", "#111111"])
+    cmd = ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={c}:s=1080x1920:d=5", "-c:v", "libx264", "-preset", "ultrafast", out]
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return out if os.path.exists(out) else None
 
 def get_dynamic_typography(master_word, target_dur):
     if not master_word: return ""

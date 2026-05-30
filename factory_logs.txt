@@ -179,3 +179,41 @@ Starting Autonomous Factory Run at 30-05-2026 14:00:02.87
 2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - Starting master orchestrator in direct CLI mode...
 2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - --- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---
 2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - Advanced Jitter: Standard window delay. Sleeping for 59 minutes...
+2026-05-30 14:59:41,370 - SocialMediaFactoryMaster - WARNING - Missing essential configuration variables: GCP_GCS_BUCKET_NAME
+2026-05-30 14:59:41,387 - SocialMediaFactoryMaster - WARNING - The pipeline might fail during downstream operations.
+2026-05-30 14:59:41,388 - SocialMediaFactoryMaster - INFO - 
+--- STEP 1: SCOUTING VIRAL INDIA TRENDS ---
+C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\scrapers\trend_scout.py:14: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-05-30 14:59:45,438 - Brain_1_TrendAnalyzer - INFO - Initializing Brain 1 (The Ultimate Trend Analyzer)...
+2026-05-30 14:59:45,438 - Brain_1_TrendAnalyzer - INFO - Brain 1 Niche Rotation: Today's niche is 'Wealth Building, Side Hustles, and Passive Income in India'
+2026-05-30 14:59:45,759 - Brain_1_TrendAnalyzer - ERROR - Brain 1 Gemini API failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2026-05-30 14:59:45,761 - SocialMediaFactoryMaster - INFO - Step 1 Complete: Trend cached.
+2026-05-30 14:59:45,761 - SocialMediaFactoryMaster - INFO - 
+--- STEP 2: CREATING SCRIPT & NEURAL TTS AUDIO ---
+2026-05-30 14:59:46,584 - SocialMediaFactoryMaster - CRITICAL - CLI Pipeline execution failed: cannot import name 'genai' from 'google' (unknown location)
+Traceback (most recent call last):
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\main.py", line 171, in <module>
+    execute_pipeline()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\main.py", line 96, in execute_pipeline
+    from engine.script_voice import run as run_script_voice
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\engine\script_voice.py", line 7, in <module>
+    from google import genai
+ImportError: cannot import name 'genai' from 'google' (unknown location)
+Finished Run at 30-05-2026 14:59:48.86 
