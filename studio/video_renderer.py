@@ -143,7 +143,7 @@ def fetch_clip_dynamically_youtube(query):
         return None
     return None
 
-def fallback_clip():
+def fallback_clip(target_dur=10.0):
     clips = []
     if os.path.exists("broll"):
         for root, _, files in os.walk("broll"):
@@ -154,8 +154,13 @@ def fallback_clip():
     # Ultra-Fallback: Generate synthetic background to prevent pipeline crash
     out = f"temp_fallback_{random.randint(1000,9999)}.mp4"
     c = random.choice(["black", "darkblue", "indigo", "darkred", "gray"])
-    cmd = ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={c}:s=1080x1920:d=5", "-c:v", "libx264", "-preset", "ultrafast", out]
-    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    cmd = ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={c}:s=1080x1920:d={target_dur+1}", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", out]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if r.returncode != 0:
+            logger.error(f"Fallback generation failed: {r.stderr}")
+    except Exception as e:
+        logger.error(f"Fallback generation exception: {e}")
     return out if os.path.exists(out) else None
 
 def get_dynamic_typography(master_word, target_dur):
@@ -377,7 +382,7 @@ def render():
         
         src = fetch_clip_dynamically_youtube(query)
         if not src: 
-            src = fallback_clip()
+            src = fallback_clip(dur)
             logger.info(f"Using generic fallback.")
             
         if not src: continue
