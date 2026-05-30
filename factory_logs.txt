@@ -145,3 +145,37 @@ Starting Autonomous Factory Run at 30-05-2026  9:00:02.38
 2026-05-30 09:00:03,148 - SocialMediaFactoryMaster - INFO - Starting master orchestrator in direct CLI mode...
 2026-05-30 09:00:03,148 - SocialMediaFactoryMaster - INFO - --- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---
 2026-05-30 09:00:03,148 - SocialMediaFactoryMaster - INFO - Advanced Jitter: Triggering UNUSUAL POST TIME. Sleeping for 79 minutes...
+2026-05-30 10:19:12,345 - SocialMediaFactoryMaster - WARNING - Missing essential configuration variables: GCP_GCS_BUCKET_NAME
+2026-05-30 10:19:12,468 - SocialMediaFactoryMaster - WARNING - The pipeline might fail during downstream operations.
+2026-05-30 10:19:12,474 - SocialMediaFactoryMaster - INFO - 
+--- STEP 1: SCOUTING VIRAL INDIA TRENDS ---
+C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\scrapers\trend_scout.py:14: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+2026-05-30 10:19:19,610 - Brain_1_TrendAnalyzer - INFO - Initializing Brain 1 (The Ultimate Trend Analyzer)...
+2026-05-30 10:19:19,611 - Brain_1_TrendAnalyzer - INFO - Brain 1 Niche Rotation: Today's niche is 'Wealth Building, Side Hustles, and Passive Income in India'
+2026-05-30 10:19:20,808 - Brain_1_TrendAnalyzer - ERROR - Brain 1 Gemini API failed: 403 Your API key was reported as leaked. Please use another API key.
+2026-05-30 10:19:20,810 - SocialMediaFactoryMaster - INFO - Step 1 Complete: Trend cached.
+2026-05-30 10:19:20,810 - SocialMediaFactoryMaster - INFO - 
+--- STEP 2: CREATING SCRIPT & NEURAL TTS AUDIO ---
+2026-05-30 10:19:21,709 - SocialMediaFactoryMaster - CRITICAL - CLI Pipeline execution failed: No module named 'google.genai'
+Traceback (most recent call last):
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\main.py", line 171, in <module>
+    execute_pipeline()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\main.py", line 96, in execute_pipeline
+    from engine.script_voice import run as run_script_voice
+  File "C:\Users\drsau\.gemini\antigravity-ide\scratch\social_media_factory\engine\script_voice.py", line 38, in <module>
+    import google.genai as genai
+ModuleNotFoundError: No module named 'google.genai'
+Finished Run at 30-05-2026 10:19:24.05 
+Starting Autonomous Factory Run at 30-05-2026 14:00:02.87 
+2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - Starting master orchestrator in direct CLI mode...
+2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - --- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---
+2026-05-30 14:00:04,231 - SocialMediaFactoryMaster - INFO - Advanced Jitter: Standard window delay. Sleeping for 59 minutes...
