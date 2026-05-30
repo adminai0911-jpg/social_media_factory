@@ -405,13 +405,16 @@ def compile_final(broll, cut_times, thumbnail_text=""):
     srt_rel = os.path.basename(SRT_INPUT)
     style = (
         "Alignment=2,Fontname=Arial,Fontsize=28,Bold=-1,"
-        "PrimaryColour=&H0000FFFF,"  # Yellow
-        "OutlineColour=&H00000000,"  # Black outline
+        "PrimaryColour=&H0000FFFF,"
+        "OutlineColour=&H00000000,"
         "Outline=5,Shadow=2,BorderStyle=1,MarginV=100"
     )
+    # Use absolute path with forward slashes (works on both Windows and Linux)
+    srt_abs = os.path.abspath(SRT_INPUT).replace("\\", "/").replace(":", "\\:")
+    
     cmd_subs = [
         "ffmpeg", "-y", "-i", temp_out,
-        "-vf", f"subtitles={srt_rel}:force_style='{style}'",
+        "-vf", f"subtitles='{srt_abs}':force_style='{style}'",
         "-c:v", "libx264", "-preset", "medium",
         "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
         "-r", str(TARGET_FPS),
@@ -421,14 +424,37 @@ def compile_final(broll, cut_times, thumbnail_text=""):
         FINAL_REEL
     ]
     try:
-        subprocess.run(cmd_subs, check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                       cwd=os.getcwd())
-        logger.info(f"✅ FINAL MASTERPIECE REEL: '{FINAL_REEL}'")
+        result = subprocess.run(cmd_subs, capture_output=True, text=True, cwd=os.getcwd())
+        if result.returncode == 0:
+            logger.info(f"✅ FINAL MASTERPIECE WITH SUBTITLES: '{FINAL_REEL}'")
+        else:
+            # Log the actual error for debugging
+            logger.warning(f"Subtitle attempt 1 failed. Error: {result.stderr[-500:]}")
+            # Attempt 2: Use relative path without escaping (Linux-style, works on GitHub Actions)
+            cmd_subs2 = [
+                "ffmpeg", "-y", "-i", temp_out,
+                "-vf", f"subtitles={srt_rel}:force_style='{style}'",
+                "-c:v", "libx264", "-preset", "medium",
+                "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
+                "-r", str(TARGET_FPS),
+                "-c:a", "copy",
+                "-map_metadata", "-1",
+                "-movflags", "+faststart",
+                FINAL_REEL
+            ]
+            result2 = subprocess.run(cmd_subs2, capture_output=True, text=True, cwd=os.getcwd())
+            if result2.returncode == 0:
+                logger.info(f"✅ FINAL MASTERPIECE WITH SUBTITLES (attempt 2): '{FINAL_REEL}'")
+            else:
+                logger.warning(f"Subtitle attempt 2 failed: {result2.stderr[-300:]}")
+                import shutil
+                shutil.copy(temp_out, FINAL_REEL)
+                logger.info(f"✅ FINAL MASTERPIECE (no subs — works on GitHub): '{FINAL_REEL}'")
     except Exception as e:
-        logger.warning(f"Subtitle burn failed ({e}) — saving without subs.")
+        logger.warning(f"Subtitle burn exception: {e}")
         import shutil
         shutil.copy(temp_out, FINAL_REEL)
+        logger.info(f"✅ FINAL MASTERPIECE (no subs): '{FINAL_REEL}'")
 
     _cleanup()
 
