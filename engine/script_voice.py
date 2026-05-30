@@ -29,6 +29,8 @@ PROMPT = """
 You are the most ruthless, viral, wealth-generating Instagram Reel AI in existence.
 Your only goal is to maximize DM SHARES, LOOP RATE, and COMMENTS via extreme psychological exploitation.
 
+REQUIRED LANGUAGE: You MUST write the entire narration and text in Hindi (written in English/Hinglish script, e.g., "Aapko lagta hai ki aap rich ban jaoge..."). DO NOT write the narration in pure English. 
+
 Follow these 8 Secret Rules EXACTLY:
 1. **The Soap Opera Title:** Format the title as "Part 1 of 3: [Shocking Concept]".
 2. **The Infinite Loop:** The very last sentence MUST connect seamlessly to the very first sentence. (e.g. Ends with "...which is exactly why..." -> Begins with "...you are staying poor.")
@@ -195,7 +197,12 @@ def run():
         
     full_text = " ".join([s["narration"] for s in script_data["scenes"]])
     logger.info(f"Script compiled: {len(script_data['scenes'])} scenes.")
-    asyncio.run(generate_narration_and_subtitles(full_text, "hi-IN-MadhurNeural"))
+    
+    # Randomly select a Hindi neural voice
+    hindi_voices = ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"]
+    selected_voice = random.choice(hindi_voices)
+    
+    asyncio.run(generate_narration_and_subtitles(full_text, selected_voice))
 
 if __name__ == "__main__":
     run()
