@@ -153,7 +153,7 @@ def fallback_clip():
     
     # Ultra-Fallback: Generate synthetic background to prevent pipeline crash
     out = f"temp_fallback_{random.randint(1000,9999)}.mp4"
-    c = random.choice(["black", "darkblue", "indigo", "darkred", "#111111"])
+    c = random.choice(["black", "darkblue", "indigo", "darkred", "gray"])
     cmd = ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={c}:s=1080x1920:d=5", "-c:v", "libx264", "-preset", "ultrafast", out]
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return out if os.path.exists(out) else None
@@ -167,7 +167,11 @@ def get_dynamic_typography(master_word, target_dur):
     color = random.choice(colors)
     
     # Fonts available on Windows. Emojis work best with default Arial or Segoe UI
-    fonts = ["C\\:/Windows/Fonts/arialbd.ttf", "C\\:/Windows/Fonts/impact.ttf"]
+    import platform
+    if platform.system() == "Windows":
+        fonts = ["C\\:/Windows/Fonts/arialbd.ttf", "C\\:/Windows/Fonts/impact.ttf"]
+    else:
+        fonts = ["/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"]
     font = random.choice(fonts)
     
     # Randomly position text in different quadrants to not block the center
