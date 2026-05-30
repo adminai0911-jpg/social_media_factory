@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """
-THE ULTIMATE Script & Voice Engine — Phase 8
+THE ULTIMATE Script & Voice Engine — Phase 11 (AI Documentary Engine)
 
 Brain 2: Generates 10 hook variations, scores each on Scroll-Stop Power (1-10), picks the highest.
-Brain 3: Writes a 4-SCENE synchronized script (42-50s), generates 10 SCENE-SYNCHRONIZED Pexels
-         keywords (each keyword maps exactly to what is being said at that moment),
-         anti-ban captions, YouTube title/tags, and Facebook-optimized caption.
+Brain 3: Writes a 4-SCENE synchronized script (60s), generates 10 SCENE-SYNCHRONIZED AI Image Prompts
+         (Midjourney style) that describe exactly what should be on screen.
 TTS:     Alternates randomly between female (SwaraNeural) and male (MadhurNeural) voice.
-         20% chance of Follow-Gate monetization promo mode.
 """
 
 import os
@@ -26,16 +24,10 @@ SCRIPT_OUTPUT = "script_output.json"
 AUDIO_OUTPUT  = "audio_narration.mp3"
 SRT_OUTPUT    = "subtitles.srt"
 
-# Two premium voices — random selection prevents "robot account" pattern detection
 VOICES = [
     {"name": "hi-IN-SwaraNeural",  "gender": "Female"},
     {"name": "hi-IN-MadhurNeural", "gender": "Male"},
 ]
-
-
-# ──────────────────────────────────────────────────────────
-# TTS ENGINE
-# ──────────────────────────────────────────────────────────
 
 async def generate_narration_and_subtitles(text, voice):
     logger.info(f"Generating TTS with voice '{voice}'...")
@@ -50,33 +42,24 @@ async def generate_narration_and_subtitles(text, voice):
                 submaker.feed(chunk)
 
     logger.info(f"Audio saved: '{AUDIO_OUTPUT}'")
-
     with open(SRT_OUTPUT, "w", encoding="utf-8") as srt_file:
         srt_file.write(submaker.get_srt())
     logger.info(f"Subtitles saved: '{SRT_OUTPUT}'")
 
-
-# ──────────────────────────────────────────────────────────
-# BRAIN 2 + BRAIN 3
-# ──────────────────────────────────────────────────────────
-
 def build_hindi_script():
-    logger.info("Initializing Brains 2 & 3...")
+    logger.info("Initializing Brains 2 & 3 (AI Documentary Mode)...")
 
-    # Load trend file
     if not os.path.exists(TREND_FILE):
         logger.warning("No trend file found. Using fallback trend.")
-        fallback = {
+        fallback_trend = {
             "topic": "AI Tools se Ghar Baithe Paise Kamao",
             "virality_score": 9,
             "emotional_trigger": "Greed",
             "summary": "How ordinary Indians are earning 50,000 rupees per month using free AI tools from home without any boss or office.",
-            "news_snippets": ["यह सच जानकर आप हैरान हो जाएंगे!", "क्या आप भी यह जानते हैं?"],
-            "niche": "Wealth Building",
-            "region": "IN"
+            "niche": "Wealth Building"
         }
         with open(TREND_FILE, "w", encoding="utf-8") as f:
-            json.dump(fallback, f, ensure_ascii=False, indent=2)
+            json.dump(fallback_trend, f, ensure_ascii=False, indent=2)
 
     with open(TREND_FILE, "r", encoding="utf-8") as f:
         trend_data = json.load(f)
@@ -89,186 +72,117 @@ def build_hindi_script():
     model = genai.GenerativeModel("gemini-2.5-flash")
 
     try:
-        # ════════════════════════════════════════════════
-        # BRAIN 2 — Hook Optimizer (10 hooks, scored)
-        # ════════════════════════════════════════════════
+        # BRAIN 2
         logger.info("Executing Brain 2: Hook Optimizer...")
-
         brain_2_prompt = f"""
-You are Brain 2 (The Hook Optimizer) for viral Indian short-form content.
-
+You are Brain 2 (The Hook Optimizer).
 Topic: {trend_data['topic']}
 Context: {trend_data['summary']}
-Emotional Trigger: {trend_data.get('emotional_trigger', 'Curiosity')}
 
-Generate exactly 10 DEVASTATING scroll-stopping hooks in Hindi (Devanagari only).
-Rules:
-- Each hook must stop someone from scrolling within 0.5 seconds.
-- Hooks must be 3 to 8 words maximum. Just a punch, not a sentence.
-- Exploit one trigger per hook: Fear, Greed, Ego, Curiosity, Shock, or Belonging.
-- Score each from 1 to 10 on Scroll-Stop Power.
-
+Generate 10 DEVASTATING scroll-stopping hooks in Hindi (Devanagari only).
+Hooks must be 3 to 8 words max. Score each from 1-10.
 Return ONLY this JSON:
 {{
   "hooks": [
-    {{"trigger": "Fear", "hook_text": "Hindi hook here...", "score": 9}},
-    {{"trigger": "Greed", "hook_text": "Hindi hook here...", "score": 8}}
+    {{"hook_text": "Hindi hook...", "score": 9}}
   ]
 }}
 """
-        r2 = model.generate_content(
-            brain_2_prompt,
-            generation_config={"response_mime_type": "application/json"}
-        )
+        r2 = model.generate_content(brain_2_prompt, generation_config={"response_mime_type": "application/json"})
         hooks_data = json.loads(r2.text).get("hooks", [])
-
-        if not hooks_data:
-            raise ValueError("Brain 2 returned zero hooks.")
-
-        # Pick the highest-scored hook
+        if not hooks_data: raise ValueError("Brain 2 returned zero hooks.")
         hooks_sorted = sorted(hooks_data, key=lambda x: x.get("score", 0), reverse=True)
         winning_hook = hooks_sorted[0]["hook_text"]
-        logger.info(f"Brain 2 Winner (score {hooks_sorted[0].get('score')}/10): {winning_hook}")
+        logger.info(f"Brain 2 Winner: {winning_hook}")
 
-        # ════════════════════════════════════════════════
-        # BRAIN 3 — Master Scriptwriter (scene-synced)
-        # ════════════════════════════════════════════════
-        logger.info("Executing Brain 3: Master Scriptwriter...")
-
-        # 20% monetization promo, 80% pure value content
+        # BRAIN 3
+        logger.info("Executing Brain 3: Master Scriptwriter & AI Prompt Engineer...")
         is_promo = random.random() < 0.20
         promo_instruction = ""
         if is_promo:
-            logger.info("Brain 3: PROMO MODE — Follow-Gate script!")
             promo_instruction = """
-MONETIZATION MODE (Follow-Gate):
-- Pitch a secret AI tool or method that earns money from home.
-- NEVER say "link in bio" — Instagram AI flags and suppresses this phrase.
-- End Scene 4 with (in natural Hindi): "Follow karo abhi, bio mein link hai, kal gayab ho sakta hai!"
+MONETIZATION MODE:
+- End Scene 4 with: "Follow karo abhi, bio mein link hai, kal gayab ho sakta hai!"
 - In instagram_caption write: "Bio mein link hai! Kal delete ho sakta hai. Jaldi dekho 🔥 Follow karo!"
 """
 
         brain_3_prompt = f"""
-You are Brain 3 (The Master Viral Scriptwriter) for premium Indian short-form video content.
-
+You are Brain 3 (The Master Viral Scriptwriter & AI Art Director).
 Theme: {trend_data['topic']}
-Niche: {trend_data.get('niche', 'General')}
-Context: {trend_data['summary']}
-Emotional Core: {trend_data.get('emotional_trigger', 'Curiosity')}
-Opening Hook — use this WORD FOR WORD as the very first sentence: {winning_hook}
+Opening Hook: {winning_hook}
 {promo_instruction}
 
-SCRIPT STRUCTURE: Write a script structured in 4 SCENES:
-SCENE 1 (0-5s)   — Hook: Use the opening hook WORD FOR WORD. Make them freeze.
-SCENE 2 (5-20s)  — Tension: Build pain, shock, or intense desire.
-SCENE 3 (20-52s) — Deep Value: Deliver the real insight, secret, or story. This is the longest part — give them real substance they cannot find elsewhere.
-SCENE 4 (52-60s) — Loop End: The last sentence connects back to the opening hook, forcing re-watch.
+SCRIPT STRUCTURE: 4 Scenes (60 seconds total)
+SCENE 1 (0-5s) Hook: {winning_hook}
+SCENE 2 (5-20s) Tension
+SCENE 3 (20-52s) Deep Value
+SCENE 4 (52-60s) Loop End
 
-ABSOLUTE RULES:
-1. script_text: Pure Devanagari Hindi only. ZERO English letters, ZERO symbols.
-   One continuous flowing spoken narrative. No line breaks inside the text.
-   TARGET: 120 to 130 Hindi words (58 to 65 seconds when spoken). Make it FULL and DETAILED.
-2. pexels_keywords: EXACTLY 10 English search queries.
-   CRITICAL SYNC RULE: Each keyword must describe EXACTLY what should appear VISUALLY on screen
-   at that specific 6-second window of the script.
-   Keyword 1 = what happens visually during seconds 0-6 (Scene 1 hook)
-   Keyword 2 = what happens visually during seconds 6-12 (Scene 2 start)
-   Keyword 3 = what happens visually during seconds 12-18 (Scene 2 tension)
-   Keyword 4 = what happens visually during seconds 18-24 (Scene 3 value start)
-   Keyword 5 = what happens visually during seconds 24-30
-   Keyword 6 = what happens visually during seconds 30-36
-   Keyword 7 = what happens visually during seconds 36-42
-   Keyword 8 = what happens visually during seconds 42-48
-   Keyword 9 = what happens visually during seconds 48-54
-   Keyword 10 = what happens visually during seconds 54-60 (Scene 4 loop)
-   Make each keyword highly descriptive: "[subject doing action] vertical cinematic portrait"
-   Example: "young indian man shocked looking at phone screen vertical cinematic"
+RULES:
+1. script_text: Pure Devanagari Hindi. 120-130 words.
+2. ai_image_prompts: EXACTLY 10 English image generation prompts for Pollinations AI (Midjourney style).
+   CRITICAL: These prompts dictate the visual for each 6-second chunk of the script.
+   Make them hyper-detailed, dramatic, 8k cinematic photography, indian context.
+   Format: "Hyper-realistic cinematic photography of [subject doing action in setting], dramatic lighting, 8k resolution, photorealistic"
+3. instagram_caption: Human-feel Hindi.
+4. instagram_hashtags: 5 specific niche hashtags.
+5. youtube_title & youtube_tags: For Shorts SEO.
+6. facebook_caption: Storytelling format.
 
-3. instagram_caption: Feel like a REAL human wrote it. Emotionally engaging. Vary length every time.
-   CTA must rotate between: "Tag karo ✊", "Save kar lo 📌", "Kaun dekhna chahega yeh? 👇"
-   NEVER use: #viral #trending #reels #instagram (these are shadow-banned triggers).
-
-4. instagram_hashtags: EXACTLY 5 unique, NICHE-SPECIFIC hashtags. Never generic ones.
-
-5. youtube_title: Hindi curiosity-gap title. Under 65 characters. Makes someone click immediately.
-
-6. youtube_tags: 5 specific Hindi/English topic tags (not generic words).
-
-7. facebook_caption: Slightly longer than Instagram. More storytelling, less emoji. Warm, trustworthy tone.
-
-Return ONLY valid JSON in this exact schema (no extra text outside the JSON):
+Return ONLY JSON:
 {{
-  "thumbnail_text": "2-4 word clickbait Hindi phrase",
-  "script_text": "Full 85-100 word Devanagari Hindi spoken script...",
-  "pexels_keywords": [
-    "scene 1 visual — vertical cinematic portrait",
-    "scene 1 visual — vertical cinematic portrait",
-    "scene 2 visual — vertical cinematic portrait",
-    "scene 2 visual — vertical cinematic portrait",
-    "scene 2 visual — vertical cinematic portrait",
-    "scene 3 visual — vertical cinematic portrait",
-    "scene 3 visual — vertical cinematic portrait",
-    "scene 3 visual — vertical cinematic portrait",
-    "scene 3 visual — vertical cinematic portrait",
-    "scene 4 visual — vertical cinematic portrait"
+  "thumbnail_text": "2-4 word Hindi",
+  "script_text": "Full script...",
+  "ai_image_prompts": [
+    "prompt 1", "prompt 2", "prompt 3", "prompt 4", "prompt 5",
+    "prompt 6", "prompt 7", "prompt 8", "prompt 9", "prompt 10"
   ],
-  "instagram_caption": "Human-feel Hindi caption with emoji and CTA...",
-  "instagram_hashtags": ["#NicheTag1", "#NicheTag2", "#NicheTag3", "#NicheTag4", "#NicheTag5"],
-  "youtube_title": "Curiosity-gap Hindi title under 65 chars...",
-  "youtube_tags": ["specific tag 1", "specific tag 2", "specific tag 3", "specific tag 4", "specific tag 5"],
-  "facebook_caption": "Slightly longer, storytelling Hindi caption for Facebook..."
+  "instagram_caption": "...",
+  "instagram_hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
+  "youtube_title": "...",
+  "youtube_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "facebook_caption": "..."
 }}
 """
-        r3 = model.generate_content(
-            brain_3_prompt,
-            generation_config={"response_mime_type": "application/json"}
-        )
+        r3 = model.generate_content(brain_3_prompt, generation_config={"response_mime_type": "application/json"})
         script_json = json.loads(r3.text)
-        logger.info(f"Brain 3 complete. Thumbnail: '{script_json.get('thumbnail_text', 'N/A')}'")
-
+        
         with open(SCRIPT_OUTPUT, "w", encoding="utf-8") as sf:
             json.dump(script_json, sf, ensure_ascii=False, indent=2)
-
         return script_json
 
     except Exception as e:
-        logger.error(f"Brain execution failed: {e}. Using high-quality fallback script.")
+        logger.error(f"Brain failed: {e}. Using Phase 11 fallback.")
         fallback = {
-            "thumbnail_text": "यह 1 राज़ जान लो",
+            "thumbnail_text": "यह 1 राज़",
             "script_text": "क्या आपको पता है कि भारत में हर महीने लाखों लोग सिर्फ AI टूल्स से पैसे कमा रहे हैं? बिना ऑफिस, बिना बॉस, सिर्फ अपने फोन से। सोचो, एक साधारण इंसान घर बैठे पचास हजार रुपये कमा रहा है। पर एक गलती है जो सब करते हैं और वो गलती शुरुआत में होती है। जो लोग यह जानते हैं वो आगे बढ़ते हैं। क्या तुम जानना चाहते हो? शुरुआत से देखो।",
-            "pexels_keywords": [
-                "shocked young indian man looking at phone vertical cinematic",
-                "person sitting alone at night thinking vertical cinematic",
-                "indian family struggling financially stressed vertical cinematic",
-                "freelancer working on laptop at home india vertical cinematic",
-                "money growing graph on computer screen vertical cinematic",
-                "successful indian entrepreneur smiling office vertical cinematic",
-                "person typing fast on laptop earning money vertical cinematic",
-                "smartphone showing bank notification wealth vertical cinematic",
-                "young indian celebrating success fist pump vertical cinematic",
-                "person looking at horizon sunrise freedom india vertical cinematic"
+            "ai_image_prompts": [
+                "Hyper-realistic cinematic photography of a shocked young indian man looking at a glowing smartphone screen in a dark neon lit room, dramatic lighting, 8k resolution",
+                "Cinematic documentary shot of an indian person sitting alone in the shadows looking worried, moody cinematic lighting, highly detailed",
+                "Hyper-realistic photography of an indian family looking stressed around a kitchen table with unpaid bills, cinematic shadows, 8k",
+                "Cinematic shot of a successful young indian freelancer working on a sleek laptop at home, golden hour sunlight streaming through window",
+                "Photorealistic image of a glowing green holographic stock market graph growing exponentially, futuristic finance concept, 8k",
+                "Hyper-realistic portrait of a successful confident indian entrepreneur smiling in a modern high-rise luxury office overlooking Mumbai, 8k",
+                "Cinematic close up of hands typing rapidly on a glowing keyboard with digital glowing currency floating around, hyper-detailed",
+                "Photorealistic extreme close up of a smartphone screen showing a massive bank balance notification, held by an indian hand, neon background",
+                "Hyper-realistic dynamic shot of a young indian man celebrating success with a victorious fist pump, golden hour sunlight, cinematic depth of field",
+                "Cinematic breathtaking photography of a person standing on a mountain peak looking at a beautiful sunrise over an indian metropolis, representing ultimate freedom, 8k"
             ],
-            "instagram_caption": "यह 1 गलती मत करना दोस्त! 🚨\n\nजो लोग यह जानते हैं वो आगे हैं, जो नहीं जानते वो पीछे। Save कर लो यह video — काम आएगा! 📌\n\nअपने उस दोस्त को Tag करो जिसे यह जानना चाहिए 👇",
+            "instagram_caption": "यह 1 गलती मत करना! 🚨\nSave कर लो यह video — काम आएगा! 📌",
             "instagram_hashtags": ["#GharSeKamao", "#AIIndia2026", "#PaiseKaRaaz", "#IndianFreelancer", "#DigitalKamaiIndia"],
             "youtube_title": "यह राज़ जो कोई नहीं बताता | AI से पैसे कैसे कमाएं",
-            "youtube_tags": ["ai tools india", "ghar se paise kaise kamaye", "passive income hindi", "digital earning india", "online business india"],
-            "facebook_caption": "दोस्तों, क्या आपको पता है कि आज भारत में लाखों लोग घर बैठे AI की मदद से हर महीने अच्छी कमाई कर रहे हैं? लेकिन एक गलती है जो सब शुरुआत में करते हैं। यह video देखो और अपने दोस्तों को Share करो। 🙏"
+            "youtube_tags": ["ai tools india", "ghar se paise kaise kamaye", "digital earning india"],
+            "facebook_caption": "दोस्तों, क्या आपको पता है कि आज भारत में लाखों लोग घर बैठे AI की मदद से हर महीने अच्छी कमाई कर रहे हैं? यह video देखो!"
         }
         with open(SCRIPT_OUTPUT, "w", encoding="utf-8") as sf:
             json.dump(fallback, sf, ensure_ascii=False, indent=2)
         return fallback
 
-
-# ──────────────────────────────────────────────────────────
-# ENTRY POINT
-# ──────────────────────────────────────────────────────────
-
 def run():
-    script_data  = build_hindi_script()
+    script_data = build_hindi_script()
     voice_choice = random.choice(VOICES)
     logger.info(f"Voice: {voice_choice['gender']} — {voice_choice['name']}")
     asyncio.run(generate_narration_and_subtitles(script_data["script_text"], voice_choice["name"]))
-
 
 if __name__ == "__main__":
     run()
