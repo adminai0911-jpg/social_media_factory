@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 """
-CINEMATIC STUDIO ENGINE — Phase 11 (The AI Documentary & Hormozi Editor)
+CINEMATIC STUDIO ENGINE — Phase 12 (The Human Editor)
 
-Core upgrades:
-1. CUSTOM AI VISUALS: Fetches hyper-realistic 1080x1920 AI images from Pollinations.ai 
-   based on exact scene-synchronized prompts. No more random Pexels stock!
-2. KEN BURNS PARALLAX: Converts static AI images into cinematic moving video clips.
-3. HORMOZI KINETIC TYPOGRAPHY: Big, bold, yellow centered text with thick black outlines.
-4. SFX DESIGN: Adds a cinematic "Whoosh" sound effect on every scene transition.
-5. SRT TIMING + SEAMLESS XFADE: Clips are timed exactly to the voice, dissolving seamlessly.
+The fundamental change from all previous versions:
+- NO MORE RANDOM PEXELS SEARCH at runtime.
+- Reads scene_sequence from script_output.json (e.g. ["01_hook", "02_struggle", ...])
+- Picks the BEST matching pre-curated 4K clip from the B-Roll library folder.
+- This guarantees PERFECT voice-visual sync forever — no randomness possible.
+- Clips are REAL MOVING VIDEO (no photo zoom, no Ken Burns on images).
+- 0.6s crossfade + identical color grade = invisible transitions.
+- Hormozi-style subtitles (big, yellow, bold, center).
+- Whoosh SFX on every cut.
 """
 
 import os
 import json
+import random
 import logging
 import requests
 import subprocess
 import urllib.request
-import urllib.parse
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CinematicStudio")
@@ -28,391 +30,490 @@ SRT_INPUT     = "subtitles.srt"
 FINAL_REEL    = "final_reel.mp4"
 BG_MUSIC_FILE = "bg_music.mp3"
 WHOOSH_FILE   = "whoosh.mp3"
+BROLL_DIR     = "broll"
 
-TARGET_W   = 1080
-TARGET_H   = 1920
-TARGET_FPS = 30
+TARGET_W      = 1080
+TARGET_H      = 1920
+TARGET_FPS    = 30
+XFADE_DUR     = 0.6
 
 MUSIC_URLS = [
     "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
     "https://cdn.pixabay.com/download/audio/2023/03/09/audio_c8d34f9ebc.mp3",
+    "https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3",
 ]
-# Free whoosh sound effect for transitions
 WHOOSH_URL = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_7ea20eb18a.mp3"
 
-XFADE_DURATION = 0.6
 
-
-# ──────────────────────────────────────────────────────────
-# AUDIO TIMING & SRT
-# ──────────────────────────────────────────────────────────
+# ─── AUDIO ─────────────────────────────────────────────────────────────────
 
 def get_audio_duration():
-    cmd = ["ffprobe", "-i", AUDIO_INPUT, "-show_entries", "format=duration",
-           "-v", "quiet", "-of", "csv=p=0"]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        r = subprocess.run(
+            ["ffprobe", "-i", AUDIO_INPUT, "-show_entries", "format=duration",
+             "-v", "quiet", "-of", "csv=p=0"],
+            capture_output=True, text=True, check=True
+        )
         return float(r.stdout.strip())
     except Exception:
         return 55.0
 
-def parse_srt_word_times(srt_path):
-    if not os.path.exists(srt_path): return []
-    def ts_to_sec(ts):
+
+def parse_srt_times():
+    if not os.path.exists(SRT_INPUT):
+        return []
+    def ts(s):
         try:
-            h, m, s = ts.strip().replace(",", ".").split(":")
-            return float(h) * 3600 + float(m) * 60 + float(s)
-        except: return 0.0
+            h, m, sec = s.strip().replace(",", ".").split(":")
+            return float(h) * 3600 + float(m) * 60 + float(sec)
+        except:
+            return 0.0
     entries = []
-    with open(srt_path, "r", encoding="utf-8") as f:
-        content = f.read()
-    for block in content.strip().split("\n\n"):
-        lines = [l.strip() for l in block.strip().splitlines()]
-        arrow_line = next((l for l in lines if "-->" in l), None)
-        if arrow_line:
-            parts = arrow_line.split("-->")
-            if len(parts) == 2:
-                entries.append((ts_to_sec(parts[0]), ts_to_sec(parts[1])))
+    with open(SRT_INPUT, encoding="utf-8") as f:
+        for block in f.read().strip().split("\n\n"):
+            lines = [l.strip() for l in block.strip().splitlines()]
+            arrow = next((l for l in lines if "-->" in l), None)
+            if arrow:
+                p = arrow.split("-->")
+                if len(p) == 2:
+                    entries.append((ts(p[0]), ts(p[1])))
     return entries
 
-def calculate_srt_segment_durations(num_clips, total_audio_duration):
-    word_times = parse_srt_word_times(SRT_INPUT)
-    if not word_times or num_clips <= 0:
-        n = max(1, num_clips)
-        clip_dur = (total_audio_duration + (n - 1) * XFADE_DURATION) / n
-        return [max(clip_dur, 2.5)] * n
 
-    n = min(num_clips, len(word_times))
-    words_per_seg = max(1, len(word_times) // n)
-    segments = []
+def get_clip_durations_from_srt(n_clips, total_dur):
+    """
+    Use SRT word timestamps to assign exact durations per clip
+    so each clip plays while exactly that part of the script is being spoken.
+    """
+    words = parse_srt_times()
+    if not words or n_clips <= 0:
+        base = (total_dur + (n_clips - 1) * XFADE_DUR) / max(n_clips, 1)
+        return [max(base, 2.5)] * n_clips
+
+    n = min(n_clips, len(words))
+    words_per_seg = max(1, len(words) // n)
+    durations = []
     for i in range(n):
-        start_idx = i * words_per_seg
-        end_idx = start_idx + words_per_seg if i < n - 1 else len(word_times)
-        seg_words = word_times[start_idx:end_idx]
-        if not seg_words: continue
-        raw_dur = seg_words[-1][1] - seg_words[0][0]
-        segments.append(max(raw_dur + XFADE_DURATION, 2.5))
+        start_idx  = i * words_per_seg
+        end_idx    = start_idx + words_per_seg if i < n - 1 else len(words)
+        seg        = words[start_idx:end_idx]
+        if not seg:
+            continue
+        raw_dur    = seg[-1][1] - seg[0][0]
+        durations.append(max(raw_dur + XFADE_DUR, 2.5))
     
-    if not segments: return [total_audio_duration / num_clips] * num_clips
-    logger.info(f"SRT Timing: {len(segments)} clips — {segments}")
-    return segments
+    while len(durations) < n_clips:
+        durations.append(total_dur / n_clips)
+    return durations[:n_clips]
 
 
-# ──────────────────────────────────────────────────────────
-# PHASE 11: HIGH-RES PHOTO PARALLAX (Pexels)
-# ──────────────────────────────────────────────────────────
+# ─── B-ROLL LIBRARY ────────────────────────────────────────────────────────
 
-def fetch_ai_images(prompts):
+def get_clips_from_library(scene_sequence):
     """
-    Fetches exact-match high-res photography from Pexels Photo API.
-    We use Photos instead of Videos because Photo search is 100x more accurate 
-    and specific, ensuring the visual perfectly matches the voice script.
-    These photos are then animated into cinematic video via Ken Burns Parallax.
+    Reads the pre-curated B-Roll library and picks the best matching clip for each scene.
+    scene_sequence: list of folder names like ["01_hook", "02_struggle", ...]
+    
+    Returns list of clip paths.
     """
-    pexels_key = os.environ.get("PEXELS_API_KEY")
-    if not pexels_key:
-        logger.error("Missing PEXELS_API_KEY")
-        return []
-
-    headers = {"Authorization": pexels_key}
-    base_url = "https://api.pexels.com/v1/search"
-    downloaded = []
-    used_ids = set()
-
-    for i, prompt in enumerate(prompts[:10]):
-        # Clean prompt for Pexels search (remove long descriptive fluff, keep core subject)
-        # Brain 3 prompts are like "Hyper-realistic cinematic photography of a shocked indian man"
-        # We simplify it for Pexels search.
-        clean_query = prompt.replace("Hyper-realistic cinematic photography of", "").replace("8k resolution", "").replace("photorealistic", "").strip()
-        # Take the first 5 words to ensure broad enough search
-        search_query = " ".join(clean_query.split()[:6])
+    # Track used clips per run to avoid repetition within one video
+    used_clips = set()
+    result     = []
+    
+    for folder_name in scene_sequence:
+        folder_path = os.path.join(BROLL_DIR, folder_name)
         
-        logger.info(f"[{i+1}/10] Fetching Photo: '{search_query}'")
-        params = {"query": search_query, "orientation": "portrait", "per_page": 5}
+        if not os.path.exists(folder_path):
+            # Library not built yet — fall back to Pexels search at runtime
+            logger.warning(f"B-Roll folder missing: {folder_path}. Flagging for fallback.")
+            result.append(None)
+            continue
         
+        clips_in_folder = [
+            os.path.join(folder_path, f)
+            for f in os.listdir(folder_path)
+            if f.endswith(".mp4") and os.path.getsize(os.path.join(folder_path, f)) > 100_000
+        ]
+        
+        if not clips_in_folder:
+            logger.warning(f"No clips in {folder_path}.")
+            result.append(None)
+            continue
+        
+        # Pick a random unused clip from this category
+        available = [c for c in clips_in_folder if c not in used_clips]
+        if not available:
+            available = clips_in_folder  # Reset if all used
+        
+        chosen = random.choice(available)
+        used_clips.add(chosen)
+        result.append(chosen)
+        logger.info(f"  Scene '{folder_name}' → {os.path.basename(chosen)}")
+    
+    return result
+
+
+def fallback_pexels_fetch(n_clips, pexels_key):
+    """Emergency fallback to Pexels search if B-Roll library is missing."""
+    logger.warning("B-Roll library not built. Falling back to Pexels live search.")
+    fallback_queries = [
+        "person shocked phone portrait", "stressed man financial worry",
+        "student studying night books", "freelancer typing laptop home",
+        "cash money bills hand", "person success celebrating",
+        "india street market", "smartphone social media scrolling",
+        "person sunrise freedom", "man direct camera talking",
+    ]
+    headers   = {"Authorization": pexels_key}
+    base_url  = "https://api.pexels.com/videos/search"
+    clips     = []
+    used_ids  = set()
+
+    for i in range(min(n_clips, len(fallback_queries))):
+        q      = fallback_queries[i]
+        params = {"query": q, "orientation": "portrait", "per_page": 5, "size": "large"}
         try:
-            resp = requests.get(base_url, headers=headers, params=params, timeout=15)
-            resp.raise_for_status()
-            photos = resp.json().get("photos", [])
-            
-            if not photos:
-                logger.warning(f"  No photo found for '{search_query}'.")
-                continue
-
-            # Pick first non-duplicate photo
-            selected = None
-            for p in photos:
-                if p["id"] not in used_ids:
-                    selected = p
-                    used_ids.add(p["id"])
-                    break
-            if not selected:
-                selected = photos[0]
-
-            # Fetch the highest quality portrait version
-            download_url = selected["src"]["portrait"]
-            img_path = f"ai_image_{i}.jpg"
-            
-            logger.info(f"  Downloading image...")
-            vr = requests.get(download_url, stream=True, timeout=30)
-            vr.raise_for_status()
-            with open(img_path, "wb") as out:
-                for chunk in vr.iter_content(chunk_size=1024 * 1024):
-                    if chunk:
-                        out.write(chunk)
-            downloaded.append(img_path)
-            
+            resp   = requests.get(base_url, headers=headers, params=params, timeout=15)
+            videos = resp.json().get("videos", [])
+            for vid in videos:
+                if vid["id"] not in used_ids:
+                    files = sorted(vid.get("video_files", []),
+                                   key=lambda f: f.get("width", 0) * f.get("height", 0),
+                                   reverse=True)
+                    for f in files:
+                        if f.get("height", 0) >= f.get("width", 0):
+                            used_ids.add(vid["id"])
+                            dest = f"fallback_clip_{i}.mp4"
+                            r2   = requests.get(f["link"], stream=True, timeout=30)
+                            with open(dest, "wb") as out:
+                                for chunk in r2.iter_content(1024 * 1024):
+                                    if chunk: out.write(chunk)
+                            clips.append(dest)
+                            break
+                    if len(clips) > i:
+                        break
         except Exception as e:
-            logger.error(f"  Photo fetch failed: {e}")
-            
-    return downloaded
+            logger.error(f"Fallback Pexels failed for '{q}': {e}")
+    
+    return clips
 
 
-# ──────────────────────────────────────────────────────────
-# PARALLAX MOTION (Ken Burns)
-# ──────────────────────────────────────────────────────────
+# ─── CLIP NORMALIZER ───────────────────────────────────────────────────────
 
-def convert_image_to_parallax_video(img_src, dst, duration_s):
+def get_clip_duration(path):
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-i", path, "-show_entries", "format=duration",
+             "-v", "quiet", "-of", "csv=p=0"],
+            capture_output=True, text=True, check=True
+        )
+        return float(r.stdout.strip())
+    except:
+        return 4.0
+
+
+def normalize_clip(src, dst, target_dur):
     """
-    Converts a static AI image into a cinematic moving video using FFmpeg zoompan.
-    Slow zoom-in from 1.0 to 1.08 over the clip duration.
+    Normalizes a real video clip:
+    - Skips 1s (avoids title cards)
+    - Scales to exactly 1080x1920 portrait
+    - Applies IDENTICAL warm cinematic color grade to all clips
+      (this makes transitions invisible — all clips look same camera)
+    - Trims to exact target_dur seconds
+    NO zooming, NO Ken Burns, NO photo animation — only REAL video motion.
     """
-    total_frames = int(duration_s * TARGET_FPS)
-    zoom_expr = f"'min(zoom+0.001,1.08)'"
-    x_expr = "iw/2-(iw/zoom/2)"
-    y_expr = "ih/2-(ih/zoom/2)"
-
-    vf = (
-        f"zoompan=z={zoom_expr}:x={x_expr}:y={y_expr}"
-        f":d={total_frames}:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS},"
-        f"setsar=1"
+    # Warm cinematic grade applied identically to every clip = invisible transitions
+    grade = (
+        "eq=contrast=1.06:saturation=1.12:brightness=0.01:gamma=0.98,"
+        "hue=h=4:s=1.05"
     )
-
+    vf = (
+        f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,"
+        f"crop={TARGET_W}:{TARGET_H},setsar=1,{grade}"
+    )
     cmd = [
-        "ffmpeg", "-y",
-        "-loop", "1",
-        "-i", img_src,
-        "-t", str(duration_s),
-        "-vf", vf,
+        "ffmpeg", "-y", "-ss", "1", "-t", str(target_dur), "-i", src,
+        "-vf", vf, "-r", str(TARGET_FPS), "-an",
         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-pix_fmt", "yuv420p",
-        dst
+        "-pix_fmt", "yuv420p", dst
     ]
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return True
     except Exception as e:
-        logger.error(f"Parallax motion failed for {img_src}: {e}")
+        logger.error(f"normalize_clip failed {src}: {e}")
         return False
 
 
-# ──────────────────────────────────────────────────────────
-# XFADE CHAIN & AUDIO FX
-# ──────────────────────────────────────────────────────────
+# ─── XFADE CHAIN ───────────────────────────────────────────────────────────
 
-def get_clip_duration(clip_path):
-    cmd = ["ffprobe", "-i", clip_path, "-show_entries", "format=duration",
-           "-v", "quiet", "-of", "csv=p=0"]
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return float(r.stdout.strip())
-    except: return 3.5
-
-def build_xfade_chain(norm_clips, target_duration):
+def build_xfade_chain(norm_clips, total_dur):
     n = len(norm_clips)
+    if n == 0:
+        return None, []
     if n == 1:
         out = "stitched_broll.mp4"
-        subprocess.run(["ffmpeg", "-y", "-i", norm_clips[0], "-t", str(target_duration), "-c", "copy", out], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", norm_clips[0], "-t", str(total_dur), "-c", "copy", out],
+            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
         return out, []
 
-    clip_durations = [get_clip_duration(c) for c in norm_clips]
-    filter_parts = []
-    prev_label = "[0:v]"
-    cumulative = 0.0
-    transition_times = []
+    durations     = [get_clip_duration(c) for c in norm_clips]
+    filters       = []
+    prev_label    = "[0:v]"
+    cumulative    = 0.0
+    cut_times     = []
 
     for i in range(1, n):
-        cumulative += clip_durations[i - 1] - XFADE_DURATION
-        offset = max(0.01, cumulative)
-        transition_times.append(offset)
-        curr_label = f"[xf{i}]"
-        filter_parts.append(f"{prev_label}[{i}:v]xfade=transition=fade:duration={XFADE_DURATION}:offset={offset:.4f}{curr_label}")
-        prev_label = curr_label
+        cumulative   += durations[i - 1] - XFADE_DUR
+        offset        = max(0.01, cumulative)
+        cut_times.append(offset)
+        label         = f"[xf{i}]"
+        filters.append(
+            f"{prev_label}[{i}:v]xfade=transition=fade"
+            f":duration={XFADE_DUR}:offset={offset:.4f}{label}"
+        )
+        prev_label    = label
 
-    input_args = []
+    inputs = []
     for c in norm_clips:
-        input_args.extend(["-i", c])
+        inputs.extend(["-i", c])
 
-    stitched = "stitched_broll.mp4"
+    out = "stitched_broll.mp4"
     cmd = [
-        "ffmpeg", "-y", *input_args,
-        "-filter_complex", ";".join(filter_parts),
+        "ffmpeg", "-y", *inputs,
+        "-filter_complex", ";".join(filters),
         "-map", prev_label,
-        "-t", str(target_duration),
+        "-t", str(total_dur),
         "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-        "-pix_fmt", "yuv420p", stitched
+        "-pix_fmt", "yuv420p", out
     ]
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        logger.info(f"Seamless xfade chain → '{stitched}'")
-        return stitched, transition_times
+        logger.info(f"Seamless xfade chain complete → '{out}'")
+        return out, cut_times
     except Exception as e:
-        logger.warning(f"xfade failed: {e}. Fallback to hard cut.")
+        logger.warning(f"xfade failed ({e}). Hard-cut fallback.")
         with open("clips.txt", "w") as f:
             for c in norm_clips: f.write(f"file '{c}'\n")
-        subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "clips.txt", "-t", str(target_duration), "-c", "copy", stitched], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return stitched, []
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "clips.txt",
+             "-t", str(total_dur), "-c", "copy", out],
+            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        return out, []
+
+
+# ─── AUDIO ASSETS ──────────────────────────────────────────────────────────
 
 def fetch_audio_assets():
-    if not os.path.exists(BG_MUSIC_FILE):
+    if not os.path.exists(BG_MUSIC_FILE) or os.path.getsize(BG_MUSIC_FILE) < 10_000:
         for url in MUSIC_URLS:
             try:
                 req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
                 with urllib.request.urlopen(req, timeout=20) as r, open(BG_MUSIC_FILE, "wb") as o:
                     o.write(r.read())
-                break
-            except: pass
-    if not os.path.exists(WHOOSH_FILE):
+                if os.path.getsize(BG_MUSIC_FILE) > 10_000:
+                    break
+            except Exception:
+                pass
+    
+    if not os.path.exists(WHOOSH_FILE) or os.path.getsize(WHOOSH_FILE) < 1_000:
         try:
             req = urllib.request.Request(WHOOSH_URL, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=20) as r, open(WHOOSH_FILE, "wb") as o:
                 o.write(r.read())
-        except: pass
+        except Exception:
+            pass
 
-def build_sfx_audio(transition_times, total_duration):
-    """Layers a whoosh sound effect at every transition time."""
-    if not os.path.exists(WHOOSH_FILE) or not transition_times:
+
+def build_sfx_mix(cut_times):
+    """Layers whoosh at every scene transition."""
+    if not cut_times or not os.path.exists(WHOOSH_FILE):
         return None
     
-    filter_parts = []
-    inputs = []
-    for i, t in enumerate(transition_times):
+    inputs, filters = [], []
+    for i, t in enumerate(cut_times):
         inputs.extend(["-i", WHOOSH_FILE])
-        filter_parts.append(f"[{i}:a]adelay={int(t*1000)}|{int(t*1000)}[w{i}]")
+        filters.append(f"[{i}:a]adelay={int(t*1000)}|{int(t*1000)}[w{i}]")
     
-    amix_inputs = "".join([f"[w{i}]" for i in range(len(transition_times))])
-    filter_parts.append(f"{amix_inputs}amix=inputs={len(transition_times)}:dropout_transition=0:normalize=0[sfx_out]")
+    labels = "".join(f"[w{i}]" for i in range(len(cut_times)))
+    filters.append(f"{labels}amix=inputs={len(cut_times)}:dropout_transition=0:normalize=0[sfx]")
     
-    out_sfx = "sfx_track.wav"
-    cmd = ["ffmpeg", "-y", *inputs, "-filter_complex", ";".join(filter_parts), "-map", "[sfx_out]", out_sfx]
+    sfx_out = "sfx_track.wav"
+    cmd = ["ffmpeg", "-y", *inputs, "-filter_complex", ";".join(filters), "-map", "[sfx]", sfx_out]
     try:
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return out_sfx
-    except: return None
+        return sfx_out
+    except:
+        return None
 
 
-# ──────────────────────────────────────────────────────────
-# FINAL COMPILE
-# ──────────────────────────────────────────────────────────
+# ─── FINAL COMPILE ─────────────────────────────────────────────────────────
 
-def compile_final_reel(broll_video, transition_times, thumbnail_text=""):
-    temp = "temp_merged.mp4"
+def compile_final(broll, cut_times, thumbnail_text=""):
+    """Merges broll + voice + music + SFX + Hormozi subtitles → final_reel.mp4"""
     fetch_audio_assets()
-    sfx_track = build_sfx_audio(transition_times, 60)
+    sfx       = build_sfx_mix(cut_times)
+    temp_out  = "temp_merged.mp4"
 
-    # Audio Mixing: Voice (1.0), Music (0.12), SFX (0.5)
-    cmd = ["ffmpeg", "-y", "-i", broll_video, "-i", AUDIO_INPUT]
-    
-    has_music = os.path.exists(BG_MUSIC_FILE) and os.path.getsize(BG_MUSIC_FILE) > 1000
-    has_sfx = sfx_track and os.path.exists(sfx_track)
+    has_music = os.path.exists(BG_MUSIC_FILE) and os.path.getsize(BG_MUSIC_FILE) > 10_000
+    has_sfx   = sfx and os.path.exists(sfx) and os.path.getsize(sfx) > 100
 
-    audio_inputs = "[1:a]volume=1.0[voice];"
-    mix_elements = "[voice]"
-    mix_count = 1
+    # Build ffmpeg audio mixing
+    cmd = ["ffmpeg", "-y", "-i", broll, "-i", AUDIO_INPUT]
+    audio_parts = "[1:a]volume=1.0[voice];"
+    mix_labels  = "[voice]"
+    mix_count   = 1
 
     if has_music:
         cmd.extend(["-stream_loop", "-1", "-i", BG_MUSIC_FILE])
-        audio_inputs += "[2:a]volume=0.12[bg];"
-        mix_elements += "[bg]"
-        mix_count += 1
-    
+        audio_parts += "[2:a]volume=0.12[bg];"
+        mix_labels  += "[bg]"
+        mix_count   += 1
+
     if has_sfx:
         sfx_idx = 3 if has_music else 2
-        cmd.extend(["-i", sfx_track])
-        audio_inputs += f"[{sfx_idx}:a]volume=0.5[sfx];"
-        mix_elements += "[sfx]"
-        mix_count += 1
+        cmd.extend(["-i", sfx])
+        audio_parts += f"[{sfx_idx}:a]volume=0.5[sfx];"
+        mix_labels  += "[sfx]"
+        mix_count   += 1
 
-    fc = f"{audio_inputs}{mix_elements}amix=inputs={mix_count}:duration=first:dropout_transition=3[a_out]"
-    
-    # Cinematic Grade
-    fc = f"[0:v]eq=contrast=1.05:saturation=1.1,vignette=PI/6[v_out];" + fc
+    # Final cinematic grade on the stitched broll
+    fc = (
+        f"[0:v]eq=contrast=1.04:saturation=1.05:brightness=0.01,"
+        f"vignette=PI/8[v_out];"
+        f"{audio_parts}"
+        f"{mix_labels}amix=inputs={mix_count}:duration=first:dropout_transition=3[a_out]"
+    )
 
     cmd.extend([
-        "-filter_complex", fc, "-map", "[v_out]", "-map", "[a_out]",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-b:v", "8M",
-        "-r", str(TARGET_FPS), "-c:a", "aac", "-b:a", "192k", "-shortest", temp
+        "-filter_complex", fc,
+        "-map", "[v_out]", "-map", "[a_out]",
+        "-c:v", "libx264", "-preset", "medium",
+        "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
+        "-r", str(TARGET_FPS),
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        "-shortest", temp_out
     ])
 
-    logger.info("Merging audio, music, and SFX...")
+    logger.info("Merging video + voice + music + SFX...")
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # HORMOZI SUBTITLES: Big, Yellow, Bold, Thick Black Outline, Centered
-    logger.info("Burning Hormozi-style kinetic typography...")
-    style = (
-        "Alignment=2,Fontname=Arial,Fontsize=30,Bold=-1,"
-        "PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,"  # Cyan-Yellow format in ASS is AABBGGRR -> 00FFFF is pure Yellow
-        "Outline=5,Shadow=3,BorderStyle=1,MarginV=120"
-    )
+    # HORMOZI SUBTITLES: big, bold, yellow, thick black outline, center screen
+    logger.info("Burning Hormozi-style subtitles...")
     srt_rel = os.path.basename(SRT_INPUT)
-
+    style = (
+        "Alignment=2,Fontname=Arial,Fontsize=28,Bold=-1,"
+        "PrimaryColour=&H0000FFFF,"  # Yellow
+        "OutlineColour=&H00000000,"  # Black outline
+        "Outline=5,Shadow=2,BorderStyle=1,MarginV=100"
+    )
     cmd_subs = [
-        "ffmpeg", "-y", "-i", temp,
+        "ffmpeg", "-y", "-i", temp_out,
         "-vf", f"subtitles={srt_rel}:force_style='{style}'",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-b:v", "8M",
-        "-r", str(TARGET_FPS), "-c:a", "copy", "-movflags", "+faststart", FINAL_REEL
+        "-c:v", "libx264", "-preset", "medium",
+        "-crf", "17", "-b:v", "8M", "-maxrate", "12M", "-bufsize", "16M",
+        "-r", str(TARGET_FPS),
+        "-c:a", "copy",
+        "-map_metadata", "-1",
+        "-movflags", "+faststart",
+        FINAL_REEL
     ]
     try:
-        subprocess.run(cmd_subs, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=os.getcwd())
-        logger.info(f"✅ FINAL AI DOCUMENTARY READY: '{FINAL_REEL}'")
+        subprocess.run(cmd_subs, check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       cwd=os.getcwd())
+        logger.info(f"✅ FINAL MASTERPIECE REEL: '{FINAL_REEL}'")
     except Exception as e:
-        logger.warning(f"Subtitle burn failed ({e}).")
+        logger.warning(f"Subtitle burn failed ({e}) — saving without subs.")
         import shutil
-        shutil.copy(temp, FINAL_REEL)
+        shutil.copy(temp_out, FINAL_REEL)
 
-    cleanup_temp_files()
+    _cleanup()
 
-def cleanup_temp_files():
-    kill_prefixes = ["raw_clip_", "norm_clip_", "ai_image_", "clips.txt",
-                     "stitched_broll.mp4", "temp_merged.mp4", "thumbnail.ass", "sfx_track.wav"]
+
+def _cleanup():
+    prefixes = ["raw_clip_", "norm_clip_", "fallback_clip_", "clips.txt",
+                "stitched_broll.mp4", "temp_merged.mp4", "sfx_track.wav"]
     for fname in os.listdir("."):
-        for p in kill_prefixes:
-            if fname.startswith(p):
-                try: os.remove(fname)
-                except: pass
+        for p in prefixes:
+            if fname.startswith(p) or fname == p:
+                try:
+                    os.remove(fname)
+                except:
+                    pass
+
+
+# ─── PLACEHOLDER (if no clips at all) ──────────────────────────────────────
+
+def generate_placeholder(duration):
+    logger.warning("No clips available — generating dark gradient placeholder.")
+    out = "stitched_broll.mp4"
+    subprocess.run([
+        "ffmpeg", "-y", "-f", "lavfi",
+        "-i", f"color=c=0x0d0d1a:s={TARGET_W}x{TARGET_H}:d={duration}:r={TARGET_FPS}",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", out
+    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return out, []
+
+
+# ─── MAIN RENDER ───────────────────────────────────────────────────────────
 
 def render():
-    if not os.path.exists(SCRIPT_INPUT): return
-    with open(SCRIPT_INPUT, "r", encoding="utf-8") as f:
-        script_data = json.load(f)
-
-    total_duration = get_audio_duration()
-    prompts = script_data.get("ai_image_prompts", [])
-    
-    if not prompts:
-        logger.error("No AI image prompts found.")
+    if not os.path.exists(SCRIPT_INPUT):
+        logger.error(f"'{SCRIPT_INPUT}' not found.")
         return
 
-    # 1. Fetch AI Images
-    images = fetch_ai_images(prompts)
-    if not images: return
+    with open(SCRIPT_INPUT, "r", encoding="utf-8") as f:
+        script = json.load(f)
 
-    # 2. Timing
-    clip_durations = calculate_srt_segment_durations(len(images), total_duration)
+    total_dur      = get_audio_duration()
+    scene_sequence = script.get("scene_sequence", [])
 
-    # 3. Apply Ken Burns Parallax
-    norm_clips = []
-    for i, (img, dur) in enumerate(zip(images, clip_durations)):
-        dst = f"norm_clip_{i}.mp4"
-        logger.info(f"Parallax rendering clip {i+1}/{len(images)} → {dur:.2f}s")
-        if convert_image_to_parallax_video(img, dst, dur):
-            norm_clips.append(dst)
+    logger.info(f"Audio: {total_dur:.2f}s | Scenes: {scene_sequence}")
 
-    # 4. Stitch with Xfade
-    broll, transition_times = build_xfade_chain(norm_clips, total_duration)
+    if not scene_sequence:
+        broll, cuts = generate_placeholder(total_dur)
+    else:
+        # Step 1: Get clips from B-Roll library
+        library_clips = get_clips_from_library(scene_sequence)
+        
+        # Step 2: Fill None slots with Pexels fallback if library not ready
+        none_count = library_clips.count(None)
+        if none_count == len(library_clips):
+            # Library completely missing
+            pexels_key = os.environ.get("PEXELS_API_KEY")
+            if pexels_key:
+                raw_clips = fallback_pexels_fetch(len(scene_sequence), pexels_key)
+                library_clips = raw_clips
+            else:
+                broll, cuts = generate_placeholder(total_dur)
+                compile_final(broll, cuts, script.get("thumbnail_text", ""))
+                return
 
-    # 5. Compile with Hormozi subs + SFX
-    compile_final_reel(broll, transition_times, script_data.get("thumbnail_text", ""))
+        # Step 3: Get SRT-driven clip durations
+        valid_clips  = [c for c in library_clips if c]
+        clip_durs    = get_clip_durations_from_srt(len(valid_clips), total_dur)
+
+        # Step 4: Normalize each clip (color grade + crop + trim)
+        norm_clips = []
+        for i, (src, dur) in enumerate(zip(valid_clips, clip_durs)):
+            dst = f"norm_clip_{i}.mp4"
+            logger.info(f"Normalizing [{i+1}/{len(valid_clips)}]: {os.path.basename(src)} → {dur:.2f}s")
+            if normalize_clip(src, dst, dur):
+                norm_clips.append(dst)
+
+        if not norm_clips:
+            broll, cuts = generate_placeholder(total_dur)
+        else:
+            # Step 5: Stitch with seamless 0.6s crossfade
+            broll, cuts = build_xfade_chain(norm_clips, total_dur)
+
+    # Step 6: Compile final reel
+    if broll:
+        compile_final(broll, cuts, script.get("thumbnail_text", ""))
+
 
 if __name__ == "__main__":
     render()

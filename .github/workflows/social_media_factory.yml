@@ -1,4 +1,4 @@
-name: AI Cinematic Factory
+name: AI Social Media Wealth Factory — Phase 12
 
 on:
   schedule:
@@ -32,6 +32,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
+    - name: Build B-Roll Library (First-Time Only)
+      env:
+        PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      run: |
+        python -c "from studio.build_broll_library import build_library; build_library()"
+
     - name: Execute Social Media Factory Pipeline
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -39,5 +45,8 @@ jobs:
         CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
         META_USER_ACCESS_TOKEN: ${{ secrets.META_USER_ACCESS_TOKEN }}
         INSTAGRAM_BUSINESS_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+        YOUTUBE_CLIENT_SECRETS: ${{ secrets.YOUTUBE_CLIENT_SECRETS }}
+        FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+        FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
       run: |
         python main.py
