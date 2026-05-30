@@ -143,12 +143,34 @@ def fetch_clip_dynamically_youtube(query):
         return None
     return None
 
-def fallback_clip(target_dur=10.0):
+def fallback_clip(query="", target_dur=10.0):
+    query_lower = query.lower()
+    
+    # Semantic mapping for offline B-Roll to ensure emotional resonance
+    category = "07_india_life" # default authentic India
+    if any(w in query_lower for w in ["shock", "surprise", "look", "hook"]): category = "01_hook"
+    elif any(w in query_lower for w in ["stress", "poor", "broke", "struggle", "bad", "sad"]): category = "02_struggle"
+    elif any(w in query_lower for w in ["school", "study", "exam", "college", "book", "learn"]): category = "03_school_lie"
+    elif any(w in query_lower for w in ["work", "laptop", "office", "code", "desk", "business"]): category = "04_work"
+    elif any(w in query_lower for w in ["money", "rupee", "bank", "pay", "cash", "wealth"]): category = "05_money"
+    elif any(w in query_lower for w in ["success", "win", "happy", "rich", "celebrate", "proud"]): category = "06_success"
+    elif any(w in query_lower for w in ["phone", "tech", "app", "digital", "screen"]): category = "08_tech"
+    elif any(w in query_lower for w in ["nature", "mountain", "sun", "free", "travel", "landscape"]): category = "09_freedom"
+    elif any(w in query_lower for w in ["camera", "talk", "point", "loop", "direct"]): category = "10_loop"
+    
     clips = []
-    if os.path.exists("broll"):
+    target_dir = os.path.join("broll", category)
+    
+    if os.path.exists(target_dir):
+        for f in os.listdir(target_dir):
+            if f.endswith(".mp4"): clips.append(os.path.join(target_dir, f))
+            
+    # If semantic category is empty, fallback to the entire massive library
+    if not clips and os.path.exists("broll"):
         for root, _, files in os.walk("broll"):
             for f in files:
                 if f.endswith(".mp4"): clips.append(os.path.join(root, f))
+                
     if clips: return random.choice(clips)
     
     # Ultra-Fallback: Generate synthetic background to prevent pipeline crash
@@ -166,7 +188,9 @@ def fallback_clip(target_dur=10.0):
 def get_dynamic_typography(master_word, target_dur):
     if not master_word: return ""
     
-    mw_clean = master_word.replace("'", "").replace(":", "")
+    # Escape special characters that crash FFmpeg drawtext
+    # % must be %% because drawtext uses % for variables
+    mw_clean = master_word.replace("'", "").replace(":", "").replace("%", "%%").replace("\\", "")
     
     colors = ["#00FFFF", "#FF00FF", "#FFFF00", "#FF4444", "#00FF44", "white"]
     color = random.choice(colors)
@@ -382,7 +406,7 @@ def render():
         
         src = fetch_clip_dynamically_youtube(query)
         if not src: 
-            src = fallback_clip(dur)
+            src = fallback_clip(query, dur)
             logger.info(f"Using generic fallback.")
             
         if not src: continue
