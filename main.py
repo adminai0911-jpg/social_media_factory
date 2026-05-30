@@ -84,7 +84,9 @@ def execute_pipeline():
         logger.info(f"Advanced Jitter: Standard window delay. Sleeping for {jitter_seconds//60} minutes...")
         send_telegram_alert(f"🤖 <b>AI Factory Waking Up</b>\nJitter engaged. Sleeping for {jitter_seconds//60} minutes before generating video.")
         
-    time.sleep(jitter_seconds)
+    # JITTER TEMPORARILY DISABLED FOR IMMEDIATE TESTING
+    # time.sleep(jitter_seconds)
+    time.sleep(0)
     
     verify_environment()
     
