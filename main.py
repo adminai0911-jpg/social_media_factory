@@ -119,7 +119,7 @@ def execute_pipeline():
         logger.error(f"Failed to load script_output.json: {e}")
         script_data = {}
         
-    caption = script_data.get("instagram_caption", "Amazing Video! 🔥")
+    caption = script_data.get("seo_caption_matrix", script_data.get("instagram_caption", "Amazing Video! 🔥"))
     tags = script_data.get("instagram_hashtags", ["#viral"])
     if isinstance(tags, str):
         tags = tags.split()

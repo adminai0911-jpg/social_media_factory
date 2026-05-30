@@ -11,7 +11,8 @@ import json
 import random
 import logging
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("Brain_1_TrendAnalyzer")
@@ -35,7 +36,7 @@ def scout_top_trend():
         logger.error("GEMINI_API_KEY not set! Using fallback.")
         return fallback_trend()
         
-    genai.configure(api_key=api_key)
+    client = genai.Client()
     
     # Rotate through all 5 niches. Use day-of-week to ensure full weekly rotation.
     niche_index = datetime.utcnow().weekday() % len(NICHES)
@@ -68,12 +69,11 @@ Return response ONLY in this exact JSON schema:
 Provide exactly 10 objects in the "angles" array, sorted by virality_score descending.
 """
     
-    model = genai.GenerativeModel("gemini-2.5-flash")
-    
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"}
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type="application/json")
         )
         
         data = json.loads(response.text)

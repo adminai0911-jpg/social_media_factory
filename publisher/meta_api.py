@@ -194,12 +194,17 @@ def run():
     # 1. Upload to Cloudinary
     public_video_url, public_id = upload_to_cloudinary(FINAL_REEL)
     
+    # Extract safely since schema changed to seo_caption_matrix
+    caption = meta_data.get("seo_caption_matrix", meta_data.get("instagram_caption", "Amazing Video! 🔥"))
+    hashtags_data = meta_data.get("instagram_hashtags", ["#viral", "#trending", "#wealth"])
+    hashtags = " ".join(hashtags_data) if isinstance(hashtags_data, list) else hashtags_data
+    
     # 2. Publish to Instagram
     try:
         publish_to_instagram(
             video_url=public_video_url,
-            caption=meta_data["instagram_caption"],
-            hashtags=meta_data["instagram_hashtags"]
+            caption=caption,
+            hashtags=hashtags
         )
     finally:
         # 3. Clean up the public Cloudinary object immediately after publish trigger

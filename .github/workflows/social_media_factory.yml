@@ -32,6 +32,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
+    - name: Cache B-Roll Library
+      uses: actions/cache@v4
+      with:
+        path: broll
+        key: broll-library-${{ hashFiles('studio/build_broll_library.py') }}
+        restore-keys: |
+          broll-library-
+        
     - name: Build B-Roll Library (First-Time Only)
       env:
         PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
