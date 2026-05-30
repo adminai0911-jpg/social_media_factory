@@ -59,28 +59,38 @@ def generate_script():
     logger.info("======================================================================")
     
     if client:
-        try:
-            logger.info("Brain 3: Exploiting Instagram Algorithm...")
-            if TRIGGER_MISTAKE:
-                logger.info("[!] Intentional Mistake Engaged for Comment Baiting.")
-                prompt_append = " REQUIRED: Make an obvious math error in scene 5's master word to bait comments."
-            else:
-                prompt_append = ""
-                
-            resp = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=PROMPT + prompt_append,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.9
-                ),
-            )
-            data = json.loads(resp.text)
-            logger.info("Script Generated via Gemini!")
-            return data
-        except Exception as e:
-            logger.error(f"Brain failed: {e}")
-            return _premium_fallback()
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                logger.info("Brain 3: Exploiting Instagram Algorithm...")
+                if TRIGGER_MISTAKE:
+                    logger.info("[!] Intentional Mistake Engaged for Comment Baiting.")
+                    prompt_append = " REQUIRED: Make an obvious math error in scene 5's master word to bait comments."
+                else:
+                    prompt_append = ""
+                    
+                resp = client.models.generate_content(
+                    model='gemini-2.0-flash',
+                    contents=PROMPT + prompt_append,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.9
+                    ),
+                )
+                data = json.loads(resp.text)
+                logger.info("Script Generated via Gemini!")
+                return data
+            except Exception as e:
+                err_str = str(e).lower()
+                if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                    logger.warning(f"⚠️ 429 Quota Exceeded (Attempt {attempt+1}/{max_retries}). The Sentinel is pausing for 65 seconds...")
+                    time.sleep(65)
+                else:
+                    logger.error(f"Brain failed: {e}")
+                    return _premium_fallback()
+        logger.error("Max retries exceeded for Gemini Quota. Falling back.")
+        return _premium_fallback()
     else:
         return _premium_fallback()
 

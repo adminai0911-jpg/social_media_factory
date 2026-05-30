@@ -63,6 +63,7 @@ def execute_pipeline():
     Executes the 4-step pipeline end-to-end.
     """
     logger.info("--- STARTING SOCIAL MEDIA AUTONOMOUS FACTORY PIPELINE ---")
+    from publisher.telegram_bot import send_telegram_alert
     
     # ADVANCED HUMAN JITTER:
     # GitHub Actions wakes this server up at exactly 8:30am, 1:30pm, and 7:30pm.
@@ -75,11 +76,13 @@ def execute_pipeline():
     if is_unusual_time:
         jitter_seconds = random.randint(3600, 10800) # Sleep for 1 to 3 hours!
         logger.info(f"Advanced Jitter: Triggering UNUSUAL POST TIME. Sleeping for {jitter_seconds//60} minutes...")
+        send_telegram_alert(f"🤖 <b>AI Factory Waking Up</b>\nJitter engaged. Sleeping for {jitter_seconds//60} minutes before generating video.")
     else:
         # Standard window: Sleep anywhere between 0 and 60 minutes
         # This spreads the post randomly across the 8:30-9:30, 1:30-2:30 windows.
         jitter_seconds = random.randint(0, 3600)
         logger.info(f"Advanced Jitter: Standard window delay. Sleeping for {jitter_seconds//60} minutes...")
+        send_telegram_alert(f"🤖 <b>AI Factory Waking Up</b>\nJitter engaged. Sleeping for {jitter_seconds//60} minutes before generating video.")
         
     time.sleep(jitter_seconds)
     
@@ -142,6 +145,7 @@ def execute_pipeline():
     publish_to_youtube("final_reel.mp4", yt_title, caption, yt_tags)
     
     logger.info("\n--- PIPELINE SUCCESSFULLY EXECUTED ---")
+    send_telegram_alert("✅ <b>SUCCESS</b>\nReel compiled and posted to all platforms successfully!")
 
 @app.route("/", methods=["GET", "POST"])
 @app.route("/run", methods=["GET", "POST"])
@@ -159,6 +163,8 @@ def http_trigger():
         }), 200
     except Exception as e:
         logger.error(f"HTTP Pipeline execution encountered a critical error: {e}", exc_info=True)
+        from publisher.telegram_bot import send_telegram_alert
+        send_telegram_alert(f"🚨 <b>CRITICAL ERROR</b>\nPipeline failed: {str(e)}")
         return jsonify({
             "status": "error",
             "message": f"Pipeline execution failed: {str(e)}"
@@ -172,4 +178,6 @@ if __name__ == "__main__":
         sys.exit(0)
     except Exception as e:
         logger.critical(f"CLI Pipeline execution failed: {e}", exc_info=True)
+        from publisher.telegram_bot import send_telegram_alert
+        send_telegram_alert(f"🚨 <b>CRITICAL ERROR</b>\nCLI Pipeline failed: {str(e)}")
         sys.exit(1)
