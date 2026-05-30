@@ -207,7 +207,10 @@ def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
     else:
         grade = "eq=contrast=1.1:saturation=0.8:brightness=-0.02:gamma=0.95:gamma_r=0.9:gamma_b=1.1"
         
-    vf = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade}"
+    # Visual Hypnosis: Continuous 3% per second zoom-in
+    hypnosis_zoom = f"zoompan=z='1+0.03*t':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS}"
+        
+    vf = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
     vf += get_dynamic_typography(master_word, target_dur)
         
     cmd = [
