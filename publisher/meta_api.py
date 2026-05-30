@@ -69,6 +69,27 @@ def delete_from_cloudinary(public_id):
     except Exception as e:
         logger.warning(f"Failed to delete '{public_id}' from Cloudinary: {e}")
 
+def retry_request(method, url, max_retries=4, backoff_factor=1.5, **kwargs):
+    for attempt in range(max_retries):
+        try:
+            if method.lower() == 'post':
+                response = requests.post(url, **kwargs)
+            else:
+                response = requests.get(url, **kwargs)
+            
+            # Raise for 500s or 429s to trigger retry
+            if response.status_code >= 500 or response.status_code == 429:
+                response.raise_for_status()
+                
+            return response
+        except requests.exceptions.RequestException as e:
+            if attempt == max_retries - 1:
+                logger.error(f"Meta Network request failed after {max_retries} attempts: {e}")
+                raise e
+            wait_time = backoff_factor ** attempt * 10
+            logger.warning(f"Meta API unstable (Status {getattr(e.response, 'status_code', 'Network Error')}). Retrying in {wait_time:.1f}s... (Attempt {attempt+1}/{max_retries})")
+            time.sleep(wait_time)
+
 def publish_to_instagram(video_url, caption, hashtags):
     """
     Orchestrates the Meta Graph API Reels publishing sequence.
@@ -94,7 +115,7 @@ def publish_to_instagram(video_url, caption, hashtags):
     }
     
     try:
-        response = requests.post(container_url, data=payload, timeout=20)
+        response = retry_request("post", container_url, data=payload, timeout=20)
         res_data = response.json()
         
         if "id" not in res_data:
@@ -125,7 +146,7 @@ def publish_to_instagram(video_url, caption, hashtags):
         time.sleep(poll_interval_seconds)
         
         try:
-            status_resp = requests.get(status_url, params=params, timeout=15)
+            status_resp = retry_request("get", status_url, params=params, timeout=15)
             status_data = status_resp.json()
             logger.info(f"Raw Status Data: {status_data}")
             
@@ -142,7 +163,7 @@ def publish_to_instagram(video_url, caption, hashtags):
                 raise RuntimeError(f"Meta Transcoding Error: {reason}")
                 
         except Exception as e:
-            logger.warning(f"Error checking container status: {e}. Retrying...")
+            logger.warning(f"Error checking container status: {e}. Retrying polling loop...")
             
     if not published:
         logger.error("Meta API container polling timed out. Process aborted.")
@@ -158,7 +179,7 @@ def publish_to_instagram(video_url, caption, hashtags):
     }
     
     try:
-        pub_response = requests.post(publish_url, data=publish_payload, timeout=20)
+        pub_response = retry_request("post", publish_url, data=publish_payload, timeout=20)
         pub_data = pub_response.json()
         
         if "id" in pub_data:

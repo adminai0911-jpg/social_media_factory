@@ -33,7 +33,13 @@ TARGET_W      = 1080
 TARGET_H      = 1920
 TARGET_FPS    = 30
 
-MUSIC_URLS = ["https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3"]
+MUSIC_URLS = [
+    "https://cdn.pixabay.com/download/audio/2022/10/25/audio_5b3eb59461.mp3", # Phonk
+    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_a169dc2a11.mp3", # Dark Synth
+    "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", # Aggressive Trap
+    "https://cdn.pixabay.com/download/audio/2022/03/24/audio_5fcb414dbb.mp3", # Suspense
+    "https://cdn.pixabay.com/download/audio/2023/04/07/audio_03d226a457.mp3", # Cyberpunk
+]
 WHOOSH_URL = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_7ea20eb18a.mp3"
 DROP_URL   = "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3"
 
@@ -41,7 +47,9 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 def fetch_audio_assets():
     if not os.path.exists(BG_MUSIC_FILE):
-        for url in MUSIC_URLS:
+        urls = MUSIC_URLS.copy()
+        random.shuffle(urls)
+        for url in urls:
             try:
                 r = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=20)
                 with open(BG_MUSIC_FILE, "wb") as o: o.write(r.read())
@@ -250,8 +258,13 @@ def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
         
     # Visual Hypnosis: Continuous slow zoom-in
     hypnosis_zoom = f"zoompan=z='min(zoom+0.0015\\,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={TARGET_W}x{TARGET_H}:fps={TARGET_FPS}"
+    
+    # Kinetic Speed Ramping (1.1x to 1.4x speed)
+    speed_factor = random.uniform(1.1, 1.4)
+    pts_factor = 1.0 / speed_factor
+    speed_vf = f"setpts={pts_factor}*PTS"
         
-    vf = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
+    vf = f"{speed_vf},scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
     vf += get_dynamic_typography(master_word, target_dur)
         
     cmd = [
@@ -265,7 +278,7 @@ def normalize_and_add_text(src, dst, target_dur, master_word, is_warm):
         if r.returncode != 0:
             logger.error(f"FFmpeg normalize failed: {r.stderr}")
             # Try again without text (failsafe)
-            vf_no_text = f"scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
+            vf_no_text = f"{speed_vf},scale={TARGET_W}:{TARGET_H}:force_original_aspect_ratio=increase,crop={TARGET_W}:{TARGET_H},setsar=1,{grade},{hypnosis_zoom}"
             cmd_no_text = cmd[:]
             cmd_no_text[cmd_no_text.index("-vf") + 1] = vf_no_text
             r2 = subprocess.run(cmd_no_text, capture_output=True, text=True)
@@ -338,13 +351,17 @@ def compile_final(broll, cut_times):
     temp_out = "temp_merged.mp4"
     
     cmd = ["ffmpeg", "-y", "-i", broll, "-i", AUDIO_INPUT]
-    audio_parts = "[1:a]volume=1.0[voice];"
-    mix_labels, mix_count = "[voice]", 1
+    
+    # Audio Sidechain Ducking Setup
+    # [1:a] is voice. Split it into [voice_out] and [voice_ctrl]
+    audio_parts = "[1:a]volume=1.2,asplit=2[voice_out][voice_ctrl];"
+    mix_labels, mix_count = "[voice_out]", 1
     
     if os.path.exists(BG_MUSIC_FILE):
         cmd.extend(["-stream_loop", "-1", "-i", BG_MUSIC_FILE])
-        audio_parts += "[2:a]volume=0.10[bg];"
-        mix_labels += "[bg]"
+        # sidechain compress the background music using voice_ctrl
+        audio_parts += "[2:a]volume=0.4[bg_raw];[bg_raw][voice_ctrl]sidechaincompress=threshold=0.06:ratio=5:attack=50:release=250[bg_ducked];"
+        mix_labels += "[bg_ducked]"
         mix_count += 1
     if sfx and os.path.exists(sfx):
         sfx_idx = 3 if os.path.exists(BG_MUSIC_FILE) else 2
