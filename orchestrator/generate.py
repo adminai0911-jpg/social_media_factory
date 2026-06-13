@@ -37,11 +37,13 @@ def generate_script():
         Topic: A Dark Psychology fact, mind-blowing wealth hack, or conspiracy.
         
         CRITICAL RULES (THE LOOPHOLE ENGINE):
-        1. NO introduction.
-        2. FAKE INTERACTION: Halfway through, explicitly say something like "Look at the hidden symbol I placed on the screen" or "Stare at the center".
-        3. INFINITE LOOP: The script MUST be an infinite loop. The final sentence must grammatically cut off and flow PERFECTLY into the very first word of the script.
+        1. ZERO INTRODUCTIONS. Start mid-sentence with extreme high energy.
+        2. EXTREME PACE: The script must be breathless. Short, punchy sentences. Overstimulate the brain so the viewer has no time to think. 
+        3. AGGRESSIVE HOOKS: Use words like 'WARNING', 'ILLEGAL', 'SECRET', 'HIJACK'.
+        4. THE SLOT MACHINE TENSION: Halfway through, explicitly say something like "Look at the numbers spinning on your screen" or "Don't blink or you'll miss the flash."
+        5. INFINITE LOOP: The script MUST be an infinite loop. The final sentence must grammatically cut off and flow PERFECTLY into the very first word of the script.
         Example Loop: End with "Which is exactly why you need to..." -> Start with "...stop trusting your friends."
-        4. Output ONLY pure raw JSON with the following structure:
+        6. Output ONLY pure raw JSON with the following structure:
         {
           "script_text": "The full spoken text as one continuous string.",
           "title": "A short dramatic title"
