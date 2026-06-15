@@ -1,3 +1,0 @@
-file 'C:/Users/drsau/.gemini/antigravity-ide/scratch/Viral_Autopilot_Factory/remotion-studio/public/temp_0.mp3'
-file 'C:/Users/drsau/.gemini/antigravity-ide/scratch/Viral_Autopilot_Factory/remotion-studio/public/temp_1.mp3'
-file 'C:/Users/drsau/.gemini/antigravity-ide/scratch/Viral_Autopilot_Factory/remotion-studio/public/temp_2.mp3'
