@@ -16,13 +16,23 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-GEMINI_KEYS = [
-    os.getenv("GEMINI_API_KEY_1"),
-    os.getenv("GEMINI_API_KEY_2"),
-    os.getenv("GEMINI_API_KEY_3"),
-    os.getenv("GEMINI_API_KEY_4"),
-    os.getenv("GEMINI_API_KEY_5")
+raw_keys = [
+    os.getenv("GEMINI_API_KEY_1", ""),
+    os.getenv("GEMINI_API_KEY_2", ""),
+    os.getenv("GEMINI_API_KEY_3", ""),
+    os.getenv("GEMINI_API_KEY_4", ""),
+    os.getenv("GEMINI_API_KEY_5", ""),
+    os.getenv("GEMINI_API_KEY", "")
 ]
+
+GEMINI_KEYS = []
+for raw in raw_keys:
+    if raw:
+        # Split by comma to support users pasting multiple keys in one secret
+        for k in raw.split(","):
+            clean_k = k.strip()
+            if clean_k and clean_k not in GEMINI_KEYS:
+                GEMINI_KEYS.append(clean_k)
 
 VOICES = [
     "hi-IN-MadhurNeural", # Male
