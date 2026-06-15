@@ -67,7 +67,7 @@ jobs:
       - name: Upload to 4 Platforms
         env:
           # Mapped to your existing GitHub secret names
-          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.META_API_ACCESS_TOKEN }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.META_USER_ACCESS_TOKEN }}
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
