@@ -2,8 +2,10 @@ name: V32 Viral Autopilot Server
 
 on:
   schedule:
-    # Run every 8 hours (3 times a day)
-    - cron: '0 */8 * * *'
+    # 00:00 UTC (8 PM EST) -> Nighttime doomscrolling peak
+    # 12:00 UTC (8 AM EST) -> Morning commute peak
+    # 17:00 UTC (1 PM EST) -> Lunch break peak
+    - cron: '0 0,12,17 * * *'
   workflow_dispatch: # Allows manual trigger
 
 jobs:
