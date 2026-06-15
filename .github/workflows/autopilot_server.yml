@@ -42,12 +42,11 @@ jobs:
       - name: Download Background Videos (Free Stock)
         run: |
           mkdir -p remotion-studio/public
-          echo "Downloading background video 1..."
-          curl -L "https://cdn.pixabay.com/video/2023/10/18/185466-874788041_large.mp4" -o remotion-studio/public/gta.mp4 || \
-          curl -L "https://www.pexels.com/video/3255358/download/" -o remotion-studio/public/gta.mp4
-          echo "Downloading background video 2..."
-          curl -L "https://cdn.pixabay.com/video/2022/01/14/104566-666979166_large.mp4" -o remotion-studio/public/sand.mp4 || \
-          curl -L "https://www.pexels.com/video/3121459/download/" -o remotion-studio/public/sand.mp4
+          pip install yt-dlp
+          echo "Downloading background video 1 (GTA)..."
+          yt-dlp -f "bestvideo[ext=mp4][height<=1080]" "https://www.youtube.com/shorts/31-Gv9e9T1Q" -o remotion-studio/public/gta.mp4 || curl -L "https://www.w3schools.com/html/mov_bbb.mp4" -o remotion-studio/public/gta.mp4
+          echo "Downloading background video 2 (Minecraft)..."
+          yt-dlp -f "bestvideo[ext=mp4][height<=1080]" "https://www.youtube.com/shorts/s_Y16lG2-Hw" -o remotion-studio/public/sand.mp4 || curl -L "https://raw.githubusercontent.com/mdn/learning-area/master/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4" -o remotion-studio/public/sand.mp4
           echo "✅ Videos downloaded:"
           ls -lh remotion-studio/public/*.mp4
 
