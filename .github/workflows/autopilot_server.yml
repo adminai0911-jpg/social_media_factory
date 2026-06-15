@@ -43,21 +43,22 @@ jobs:
         run: |
           mkdir -p remotion-studio/public
           echo "Downloading background video 1..."
-          curl -L "https://www.pexels.com/video/3255358/download/" -o remotion-studio/public/gta.mp4 || \
-          curl -L "https://cdn.pixabay.com/video/2023/10/18/185466-874788041_large.mp4" -o remotion-studio/public/gta.mp4
+          curl -L "https://cdn.pixabay.com/video/2023/10/18/185466-874788041_large.mp4" -o remotion-studio/public/gta.mp4 || \
+          curl -L "https://www.pexels.com/video/3255358/download/" -o remotion-studio/public/gta.mp4
           echo "Downloading background video 2..."
-          curl -L "https://www.pexels.com/video/3121459/download/" -o remotion-studio/public/sand.mp4 || \
-          curl -L "https://cdn.pixabay.com/video/2022/01/14/104566-666979166_large.mp4" -o remotion-studio/public/sand.mp4
+          curl -L "https://cdn.pixabay.com/video/2022/01/14/104566-666979166_large.mp4" -o remotion-studio/public/sand.mp4 || \
+          curl -L "https://www.pexels.com/video/3121459/download/" -o remotion-studio/public/sand.mp4
           echo "✅ Videos downloaded:"
           ls -lh remotion-studio/public/*.mp4
 
       - name: Run V32 Dopamine Engine (Render)
         env:
-          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
-          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
-          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
-          GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
-          GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY_5 }}
+          # Mapped to your existing GitHub secret names
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
@@ -65,11 +66,12 @@ jobs:
 
       - name: Upload to 4 Platforms
         env:
-          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          # Mapped to your existing GitHub secret names
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.META_API_ACCESS_TOKEN }}
           FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
-          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_BUSINESS_ACCOUNT_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          X_BEARER_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
