@@ -2,10 +2,9 @@ name: V32 Viral Autopilot Server
 
 on:
   schedule:
-    # 00:00 UTC (8 PM EST) -> Nighttime doomscrolling peak
-    # 12:00 UTC (8 AM EST) -> Morning commute peak
-    # 17:00 UTC (1 PM EST) -> Lunch break peak
-    - cron: '0 0,12,17 * * *'
+    # Changed minute from '0' to '13' to avoid GitHub Actions global queue delays
+    # 00:13 UTC, 12:13 UTC, 17:13 UTC
+    - cron: '13 0,12,17 * * *'
   workflow_dispatch: # Allows manual trigger
 
 jobs:
@@ -16,6 +15,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         
+      - name: Human Jitter (Anti-Bot Delay)
+        run: |
+          # Sleep for a random amount of time between 0 and 45 minutes (2700 seconds)
+          # This ensures the video posts at a slightly different, random time every single day, exactly like a human.
+          JITTER=$((RANDOM % 2700))
+          echo "Sleeping for $JITTER seconds to mimic human behavior..."
+          sleep $JITTER
+          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
