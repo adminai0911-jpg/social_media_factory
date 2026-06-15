@@ -93,7 +93,7 @@ def generate_dynamic_script():
     for attempt in range(3):  # Retry up to 3 times on failure
         try:
             response = client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-2.0-flash',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
