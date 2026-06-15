@@ -140,8 +140,52 @@ def generate_dynamic_script():
                     logger.warning("Quota exhausted for this key. Moving to next key...")
                     break # Break inner loop, try next key
     
-    logger.error("All Gemini keys and attempts failed.")
+    logger.error("All Gemini keys and attempts failed. Falling back to HuggingFace...")
+    hf_script = generate_fallback_script(prompt)
+    if hf_script: return hf_script
+    
+    logger.error("HuggingFace also failed. Using offline hardcoded viral template...")
+    return generate_offline_script()
+
+def generate_fallback_script(prompt):
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token: return None
+    
+    logger.info("Calling HuggingFace Qwen-2.5-72B API...")
+    url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct"
+    headers = {"Authorization": f"Bearer {hf_token}", "Content-Type": "application/json"}
+    hf_prompt = f"<|im_start|>system\nYou are an AI that outputs pure JSON.<|im_end|>\n<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n"
+    
+    try:
+        r = requests.post(url, headers=headers, json={"inputs": hf_prompt, "parameters": {"max_new_tokens": 800, "return_full_text": False}}, timeout=30)
+        if r.status_code == 200:
+            text = r.json()[0]['generated_text'].strip()
+            if text.startswith("```json"): text = text[7:]
+            if text.startswith("```"): text = text[3:]
+            if text.endswith("```"): text = text[:-3]
+            return json.loads(text.strip())
+        else:
+            logger.error(f"HF Error: {r.status_code}")
+    except Exception as e:
+        logger.error(f"HF Fallback failed: {e}")
     return None
+
+def generate_offline_script():
+    """Bulletproof offline fallback so the video ALWAYS renders."""
+    return {
+      "micro_niche": "Psychology of Wealth",
+      "style_seed": random.randint(1, 100),
+      "emojis": ["🧠", "🔥", "⚠️"],
+      "red_box_keyword": "FAKE",
+      "subliminal_flash_word": "WAKE UP",
+      "serotonin_payoff_number": random.randint(10000, 999999),
+      "phase_1": "क्या आपको लगता है कि आप कभी अमीर नहीं बन पाएंगे?",
+      "phase_2": "आप अकेले नहीं हैं, 99% लोग यही सोचते हैं।",
+      "phase_3": "लेकिन सच यह है कि स्कूल हमें पैसे के बारे में सब कुछ गलत सिखाता है।",
+      "phase_4": "असली दौलत तब बनती है जब आपका पैसा आपके लिए काम करता है, न कि आप पैसे के लिए।",
+      "phase_5": "इस मैट्रिक्स से बाहर निकलने का समय आ गया है।",
+      "caption": "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
+    }
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
