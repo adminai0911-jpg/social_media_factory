@@ -82,7 +82,22 @@ def generate_dynamic_script():
     
     for attempt in range(3):  # Retry up to 3 times on failure
         try:
-            response = model.generate_content(prompt)
+            response = model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(response_mime_type="application/json"),
+                safety_settings={
+                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
+                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
+                }
+            )
+            
+            if not response.candidates or not response.parts:
+                logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
+                time.sleep(5)
+                continue
+                
             text = response.text.strip()
             # Clean up markdown code fences if Gemini adds them
             if text.startswith("```json"): text = text[7:]
