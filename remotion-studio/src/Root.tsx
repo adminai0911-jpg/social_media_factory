@@ -1,12 +1,22 @@
 import { Composition } from "remotion";
 import { MainVideo } from "./MainVideo";
+import React from "react";
 
 const defaultProps = {
   script: {
     style_seed: 1,
-    emojis: ["👀", "🔥", "💀"]
+    emojis: ["👀", "🔥", "💀"],
+    red_box_keyword: "LIES",
+    subliminal_flash_word: "WAKE UP",
+    serotonin_payoff_number: 88319,
+    micro_niche: "Test Niche",
+    phase_1: "test hook",
+    phase_2: "test build",
+    phase_3: "test interrupt",
+    phase_4: "test payoff",
+    phase_5: "test loop",
+    caption: "Test caption #viral #trending #fyp #mindset #growth"
   },
-  voice: "Adam",
   timings: [],
   audio_offsets: [0.0, 5.0, 10.0, 20.0, 25.0],
   total_duration: 30.0
@@ -18,7 +28,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MainVideo"
         component={MainVideo}
-        durationInFrames={Math.ceil(15.0 * 30)}
+        durationInFrames={Math.ceil(30.0 * 30)}
         fps={30}
         width={1080}
         height={1920}

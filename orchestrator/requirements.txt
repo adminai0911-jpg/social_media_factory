@@ -1,2 +1,5 @@
 edge-tts
-google-genai
+google-generativeai
+mutagen
+python-dotenv
+requests

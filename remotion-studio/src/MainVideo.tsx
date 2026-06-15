@@ -114,11 +114,11 @@ export const MainVideo: React.FC<{
     }}>
       
       {/* 1. AUDIO LAYER */}
-      <Sequence from={0}><Audio src={staticFile(`v31_audio_0.mp3`)} volume={1.5} /></Sequence>
-      {audio_offsets[1] && <Sequence from={Math.round(p2_start * fps)}><Audio src={staticFile(`v31_audio_1.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile(`v31_audio_2.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile(`v31_audio_3.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[4] && <Sequence from={Math.round(p5_start * fps)}><Audio src={staticFile(`v31_audio_4.mp3`)} volume={1.5} /></Sequence>}
+      <Sequence from={0}><Audio src={staticFile(`v32_audio_0.mp3`)} volume={1.5} /></Sequence>
+      {audio_offsets[1] && <Sequence from={Math.round(p2_start * fps)}><Audio src={staticFile(`v32_audio_1.mp3`)} volume={1.5} /></Sequence>}
+      {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile(`v32_audio_2.mp3`)} volume={1.5} /></Sequence>}
+      {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile(`v32_audio_3.mp3`)} volume={1.5} /></Sequence>}
+      {audio_offsets[4] && <Sequence from={Math.round(p5_start * fps)}><Audio src={staticFile(`v32_audio_4.mp3`)} volume={1.5} /></Sequence>}
       
       {Array.from({length: 20}).map((_, i) => {
           const glitchFrame = Math.round(p3_start * fps) + (i * 60);
