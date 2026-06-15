@@ -6,8 +6,7 @@ import subprocess
 import sys
 import logging
 import time
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from dotenv import load_dotenv
 from mutagen.mp3 import MP3
 
@@ -87,33 +86,15 @@ def generate_dynamic_script():
     
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
-        client = genai.Client(api_key=key)
+        genai.configure(api_key=key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
-                response = client.models.generate_content(
-                    model='gemini-2.0-flash',
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        safety_settings=[
-                            types.SafetySetting(
-                                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                            ),
-                            types.SafetySetting(
-                                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                            ),
-                            types.SafetySetting(
-                                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                            ),
-                            types.SafetySetting(
-                                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                            ),
-                        ]
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        response_mime_type="application/json"
                     )
                 )
                 
