@@ -49,7 +49,7 @@ def get_gemini_client():
         return None
     key = random.choice(valid_keys)
     genai.configure(api_key=key)
-    return genai.GenerativeModel('gemini-2.5-flash')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
