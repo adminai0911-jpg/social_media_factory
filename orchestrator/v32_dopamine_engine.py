@@ -6,6 +6,9 @@ import subprocess
 import sys
 import logging
 import time
+import wave
+import math
+import struct
 import google.generativeai as genai
 from dotenv import load_dotenv
 from mutagen.mp3 import MP3
@@ -252,9 +255,11 @@ def build_v32_payload():
     json_path = os.path.join(public_dir, "v32_script.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
+    
+    studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
+    ensure_sfx(studio_dir)
         
     logger.info("Triggering Remotion Render (V32 - Ultimate Aesthetic)...")
-    studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
     out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V32_ULTIMATE_AESTHETIC.mp4"))
     
     # BUG FIX: Removed shell=True on Linux; pass command as list for cross-platform safety
