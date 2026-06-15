@@ -52,20 +52,15 @@ def send_telegram_alert(message):
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
-def get_gemini_client():
-    """Pick a random Gemini key and return a model client."""
-    valid_keys = [k for k in GEMINI_KEYS if k]
-    if not valid_keys:
-        logger.error("No Gemini keys found in .env or environment!")
-        return None
-    key = random.choice(valid_keys)
-    return genai.Client(api_key=key)
 
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
-    client = get_gemini_client()
-    if not client:
+    valid_keys = [k for k in GEMINI_KEYS if k]
+    if not valid_keys:
+        logger.error("No Gemini keys found!")
         return None
+        
+    random.shuffle(valid_keys)
 
     prompt = """
     You are an elite, neuro-marketing viral scriptwriter.
@@ -90,53 +85,62 @@ def generate_dynamic_script():
     }
     """
     
-    for attempt in range(3):  # Retry up to 3 times on failure
-        try:
-            response = client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    safety_settings=[
-                        types.SafetySetting(
-                            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                        ),
-                        types.SafetySetting(
-                            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                        ),
-                        types.SafetySetting(
-                            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                        ),
-                        types.SafetySetting(
-                            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
-                        ),
-                    ]
+    for key in valid_keys:
+        logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
+        client = genai.Client(api_key=key)
+        
+        for attempt in range(2):  # Retry up to 2 times per key
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.0-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        safety_settings=[
+                            types.SafetySetting(
+                                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                            ),
+                            types.SafetySetting(
+                                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                            ),
+                            types.SafetySetting(
+                                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                            ),
+                            types.SafetySetting(
+                                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                                threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                            ),
+                        ]
+                    )
                 )
-            )
-            
-            if not response.candidates or not response.text:
-                logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
-                time.sleep(5)
-                continue
                 
-            text = response.text.strip()
-            # Clean up markdown code fences if Gemini adds them
-            if text.startswith("```json"): text = text[7:]
-            if text.startswith("```"): text = text[3:]
-            if text.endswith("```"): text = text[:-3]
-            return json.loads(text.strip())
-        except json.JSONDecodeError as e:
-            logger.warning(f"Gemini returned invalid JSON (attempt {attempt+1}/3): {e}")
-            time.sleep(2)
-        except Exception as e:
-            logger.error(f"Gemini generation error (attempt {attempt+1}/3): {e}")
-            time.sleep(5)
+                if not response.candidates or not response.text:
+                    logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
+                    time.sleep(2)
+                    continue
+                    
+                text = response.text.strip()
+                # Clean up markdown code fences if Gemini adds them
+                if text.startswith("```json"): text = text[7:]
+                if text.startswith("```"): text = text[3:]
+                if text.endswith("```"): text = text[:-3]
+                return json.loads(text.strip())
+                
+            except json.JSONDecodeError as e:
+                logger.warning(f"Gemini returned invalid JSON: {e}")
+                time.sleep(2)
+            except Exception as e:
+                err_str = str(e)
+                logger.error(f"Gemini generation error: {err_str}")
+                time.sleep(2)
+                if "429" in err_str or "quota" in err_str.lower():
+                    logger.warning("Quota exhausted for this key. Moving to next key...")
+                    break # Break inner loop, try next key
     
-    logger.error("All Gemini attempts failed.")
+    logger.error("All Gemini keys and attempts failed.")
     return None
 
 def generate_audio(text, voice_id, output_path):
