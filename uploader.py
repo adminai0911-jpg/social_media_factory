@@ -14,6 +14,18 @@ PAGE_ID = os.environ.get("FACEBOOK_PAGE_ID", "")
 INSTAGRAM_ACCOUNT_ID = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 X_BEARER_TOKEN = os.environ.get("X_BEARER_TOKEN", "")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+def send_telegram_alert(message):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"}
+    try:
+        requests.post(url, data=payload)
+    except Exception as e:
+        logger.error(f"Failed to send Telegram alert: {e}")
 
 def upload_to_facebook_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID:
@@ -94,6 +106,8 @@ def distribute_to_all_platforms(video_path, description):
     logger.info(f"🌐 Initiating 4-Platform Distribution Pipeline...")
     logger.info(f"📝 Final Caption: {description}")
     
+    send_telegram_alert("🚀 <b>V32 Factory Wakeup</b>\nStarting generation and distribution process...")
+    
     # Run the uploads
     fb = upload_to_facebook_reels(video_path, description)
     ig = upload_to_instagram_reels("http://example.com/mock_video.mp4", description) # Requires public URL
@@ -101,6 +115,22 @@ def distribute_to_all_platforms(video_path, description):
     x = upload_to_x(video_path, description)
     
     logger.info("🚀 Distribution Complete!")
+    
+    status_msg = f"""
+✅ <b>V32 Factory Complete</b>
+<i>Successfully distributed payload.</i>
+
+<b>Platforms:</b>
+🟦 Facebook: {'✅' if fb else '❌'}
+🟪 Instagram: {'✅' if ig else '❌'}
+🟥 YouTube: {'✅' if yt else '❌'}
+⬛ X/Twitter: {'✅' if x else '❌'}
+
+<b>Caption Used:</b>
+{description}
+"""
+    send_telegram_alert(status_msg)
+    
     return {
         "facebook": fb,
         "instagram": ig,

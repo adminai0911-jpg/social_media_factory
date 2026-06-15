@@ -14,9 +14,10 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Human Jitter (Anti-Bot Delay)
+        if: github.event_name != 'workflow_dispatch'
         run: |
           # Sleep for a random amount of time between 0 and 45 minutes (2700 seconds)
-          # This ensures the video posts at a slightly different, random time every single day, exactly like a human.
+          # Skipped if triggered manually via 'workflow_dispatch'
           JITTER=$((RANDOM % 2700))
           echo "Sleeping for $JITTER seconds to mimic human behavior..."
           sleep $JITTER
@@ -47,6 +48,8 @@ jobs:
           GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
           GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
           GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY_5 }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python orchestrator/v32_dopamine_engine.py
           
@@ -57,5 +60,7 @@ jobs:
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python orchestrator/uploader.py
