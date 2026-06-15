@@ -1,0 +1,649 @@
+{
+  "script": {
+    "micro_niche": "Urban hermits secretly obsessed with extreme sports photography.",
+    "style_seed": 6,
+    "emojis": [
+      "\ud83e\udd2b",
+      "\ud83d\udcf8",
+      "\u26f0\ufe0f"
+    ],
+    "red_box_keyword": "dark mode",
+    "jackpot_keyword": "control",
+    "phase_1": "Kya aapke 87% bade faisle, aapka dimaag khud nahin leta?",
+    "phase_2": "Nahin, main subconscious ki baat nahin kar raha. Main baat kar raha hoon ek chhipe 'dark mode' ki, jo aapke har kadam ko control karta hai, aur aapko khabar bhi nahin hoti.",
+    "phase_3": "Socho, kya aapka har bada decision sach mein aapki marzi se hota hai? Ya fir andar se ek anjaana dabaav hota hai? Hum sab us ehsaas se guzarte hain, jahan hum apni hi choice par sawaal uthaate hain.",
+    "phase_4": "Woh dabaav ek programming hai. Jab dimaag 3,291 baar 'decision fatigue' ka shikaar hota hai, tab yeh 'dark mode' control le leta hai. Aur uske 47% faisle, aapke nahin hote.",
+    "phase_5": "Toh yaad rakhiye, aapka dimaag shayad khud hi apne 87% bade faisle nahin leta."
+  },
+  "voice": "Charlie",
+  "timings": [
+    {
+      "word": "Kya",
+      "start": 0.0,
+      "end": 0.6168
+    },
+    {
+      "word": "aapke",
+      "start": 0.6168,
+      "end": 1.2336
+    },
+    {
+      "word": "87%",
+      "start": 1.2336,
+      "end": 1.8504
+    },
+    {
+      "word": "bade",
+      "start": 1.8504,
+      "end": 2.4672
+    },
+    {
+      "word": "faisle,",
+      "start": 2.4672,
+      "end": 3.084
+    },
+    {
+      "word": "aapka",
+      "start": 3.084,
+      "end": 3.7008
+    },
+    {
+      "word": "dimaag",
+      "start": 3.7008,
+      "end": 4.3176000000000005
+    },
+    {
+      "word": "khud",
+      "start": 4.3176000000000005,
+      "end": 4.9344
+    },
+    {
+      "word": "nahin",
+      "start": 4.9344,
+      "end": 5.5512
+    },
+    {
+      "word": "leta?",
+      "start": 5.5512,
+      "end": 6.168
+    },
+    {
+      "word": "Nahin,",
+      "start": 6.268,
+      "end": 6.6865
+    },
+    {
+      "word": "main",
+      "start": 6.6865,
+      "end": 7.1049999999999995
+    },
+    {
+      "word": "subconscious",
+      "start": 7.1049999999999995,
+      "end": 7.5235
+    },
+    {
+      "word": "ki",
+      "start": 7.5235,
+      "end": 7.942
+    },
+    {
+      "word": "baat",
+      "start": 7.942,
+      "end": 8.3605
+    },
+    {
+      "word": "nahin",
+      "start": 8.3605,
+      "end": 8.779
+    },
+    {
+      "word": "kar",
+      "start": 8.779,
+      "end": 9.1975
+    },
+    {
+      "word": "raha.",
+      "start": 9.1975,
+      "end": 9.616
+    },
+    {
+      "word": "Main",
+      "start": 9.616,
+      "end": 10.0345
+    },
+    {
+      "word": "baat",
+      "start": 10.0345,
+      "end": 10.453
+    },
+    {
+      "word": "kar",
+      "start": 10.453,
+      "end": 10.8715
+    },
+    {
+      "word": "raha",
+      "start": 10.8715,
+      "end": 11.29
+    },
+    {
+      "word": "hoon",
+      "start": 11.29,
+      "end": 11.7085
+    },
+    {
+      "word": "ek",
+      "start": 11.7085,
+      "end": 12.126999999999999
+    },
+    {
+      "word": "chhipe",
+      "start": 12.126999999999999,
+      "end": 12.5455
+    },
+    {
+      "word": "'dark",
+      "start": 12.5455,
+      "end": 12.963999999999999
+    },
+    {
+      "word": "mode'",
+      "start": 12.963999999999999,
+      "end": 13.3825
+    },
+    {
+      "word": "ki,",
+      "start": 13.3825,
+      "end": 13.800999999999998
+    },
+    {
+      "word": "jo",
+      "start": 13.800999999999998,
+      "end": 14.2195
+    },
+    {
+      "word": "aapke",
+      "start": 14.2195,
+      "end": 14.637999999999998
+    },
+    {
+      "word": "har",
+      "start": 14.637999999999998,
+      "end": 15.0565
+    },
+    {
+      "word": "kadam",
+      "start": 15.0565,
+      "end": 15.474999999999998
+    },
+    {
+      "word": "ko",
+      "start": 15.474999999999998,
+      "end": 15.8935
+    },
+    {
+      "word": "control",
+      "start": 15.8935,
+      "end": 16.312
+    },
+    {
+      "word": "karta",
+      "start": 16.312,
+      "end": 16.7305
+    },
+    {
+      "word": "hai,",
+      "start": 16.7305,
+      "end": 17.149
+    },
+    {
+      "word": "aur",
+      "start": 17.149,
+      "end": 17.5675
+    },
+    {
+      "word": "aapko",
+      "start": 17.5675,
+      "end": 17.986
+    },
+    {
+      "word": "khabar",
+      "start": 17.986,
+      "end": 18.4045
+    },
+    {
+      "word": "bhi",
+      "start": 18.4045,
+      "end": 18.823
+    },
+    {
+      "word": "nahin",
+      "start": 18.823,
+      "end": 19.2415
+    },
+    {
+      "word": "hoti.",
+      "start": 19.2415,
+      "end": 19.66
+    },
+    {
+      "word": "Socho,",
+      "start": 19.759999999999998,
+      "end": 20.23178947368421
+    },
+    {
+      "word": "kya",
+      "start": 20.23178947368421,
+      "end": 20.70357894736842
+    },
+    {
+      "word": "aapka",
+      "start": 20.70357894736842,
+      "end": 21.175368421052628
+    },
+    {
+      "word": "har",
+      "start": 21.175368421052628,
+      "end": 21.64715789473684
+    },
+    {
+      "word": "bada",
+      "start": 21.64715789473684,
+      "end": 22.11894736842105
+    },
+    {
+      "word": "decision",
+      "start": 22.11894736842105,
+      "end": 22.59073684210526
+    },
+    {
+      "word": "sach",
+      "start": 22.59073684210526,
+      "end": 23.062526315789473
+    },
+    {
+      "word": "mein",
+      "start": 23.062526315789473,
+      "end": 23.53431578947368
+    },
+    {
+      "word": "aapki",
+      "start": 23.53431578947368,
+      "end": 24.00610526315789
+    },
+    {
+      "word": "marzi",
+      "start": 24.00610526315789,
+      "end": 24.477894736842103
+    },
+    {
+      "word": "se",
+      "start": 24.477894736842103,
+      "end": 24.949684210526314
+    },
+    {
+      "word": "hota",
+      "start": 24.949684210526314,
+      "end": 25.421473684210525
+    },
+    {
+      "word": "hai?",
+      "start": 25.421473684210525,
+      "end": 25.893263157894737
+    },
+    {
+      "word": "Ya",
+      "start": 25.893263157894737,
+      "end": 26.365052631578948
+    },
+    {
+      "word": "fir",
+      "start": 26.365052631578948,
+      "end": 26.836842105263155
+    },
+    {
+      "word": "andar",
+      "start": 26.836842105263155,
+      "end": 27.308631578947367
+    },
+    {
+      "word": "se",
+      "start": 27.308631578947367,
+      "end": 27.780421052631578
+    },
+    {
+      "word": "ek",
+      "start": 27.780421052631578,
+      "end": 28.252210526315785
+    },
+    {
+      "word": "anjaana",
+      "start": 28.252210526315785,
+      "end": 28.723999999999997
+    },
+    {
+      "word": "dabaav",
+      "start": 28.723999999999997,
+      "end": 29.195789473684208
+    },
+    {
+      "word": "hota",
+      "start": 29.195789473684208,
+      "end": 29.66757894736842
+    },
+    {
+      "word": "hai?",
+      "start": 29.66757894736842,
+      "end": 30.13936842105263
+    },
+    {
+      "word": "Hum",
+      "start": 30.13936842105263,
+      "end": 30.61115789473684
+    },
+    {
+      "word": "sab",
+      "start": 30.61115789473684,
+      "end": 31.082947368421053
+    },
+    {
+      "word": "us",
+      "start": 31.082947368421053,
+      "end": 31.554736842105264
+    },
+    {
+      "word": "ehsaas",
+      "start": 31.554736842105264,
+      "end": 32.02652631578947
+    },
+    {
+      "word": "se",
+      "start": 32.02652631578947,
+      "end": 32.49831578947368
+    },
+    {
+      "word": "guzarte",
+      "start": 32.49831578947368,
+      "end": 32.97010526315789
+    },
+    {
+      "word": "hain,",
+      "start": 32.97010526315789,
+      "end": 33.4418947368421
+    },
+    {
+      "word": "jahan",
+      "start": 33.4418947368421,
+      "end": 33.91368421052631
+    },
+    {
+      "word": "hum",
+      "start": 33.91368421052631,
+      "end": 34.385473684210524
+    },
+    {
+      "word": "apni",
+      "start": 34.385473684210524,
+      "end": 34.857263157894735
+    },
+    {
+      "word": "hi",
+      "start": 34.857263157894735,
+      "end": 35.329052631578946
+    },
+    {
+      "word": "choice",
+      "start": 35.329052631578946,
+      "end": 35.80084210526316
+    },
+    {
+      "word": "par",
+      "start": 35.80084210526316,
+      "end": 36.27263157894737
+    },
+    {
+      "word": "sawaal",
+      "start": 36.27263157894737,
+      "end": 36.74442105263158
+    },
+    {
+      "word": "uthaate",
+      "start": 36.74442105263158,
+      "end": 37.21621052631579
+    },
+    {
+      "word": "hain.",
+      "start": 37.21621052631579,
+      "end": 37.688
+    },
+    {
+      "word": "Woh",
+      "start": 37.788,
+      "end": 38.3944
+    },
+    {
+      "word": "dabaav",
+      "start": 38.3944,
+      "end": 39.0008
+    },
+    {
+      "word": "ek",
+      "start": 39.0008,
+      "end": 39.6072
+    },
+    {
+      "word": "programming",
+      "start": 39.6072,
+      "end": 40.2136
+    },
+    {
+      "word": "hai.",
+      "start": 40.2136,
+      "end": 40.81999999999999
+    },
+    {
+      "word": "Jab",
+      "start": 40.81999999999999,
+      "end": 41.426399999999994
+    },
+    {
+      "word": "dimaag",
+      "start": 41.426399999999994,
+      "end": 42.032799999999995
+    },
+    {
+      "word": "3,291",
+      "start": 42.032799999999995,
+      "end": 42.639199999999995
+    },
+    {
+      "word": "baar",
+      "start": 42.639199999999995,
+      "end": 43.245599999999996
+    },
+    {
+      "word": "'decision",
+      "start": 43.245599999999996,
+      "end": 43.852
+    },
+    {
+      "word": "fatigue'",
+      "start": 43.852,
+      "end": 44.4584
+    },
+    {
+      "word": "ka",
+      "start": 44.4584,
+      "end": 45.0648
+    },
+    {
+      "word": "shikaar",
+      "start": 45.0648,
+      "end": 45.6712
+    },
+    {
+      "word": "hota",
+      "start": 45.6712,
+      "end": 46.2776
+    },
+    {
+      "word": "hai,",
+      "start": 46.2776,
+      "end": 46.884
+    },
+    {
+      "word": "tab",
+      "start": 46.884,
+      "end": 47.490399999999994
+    },
+    {
+      "word": "yeh",
+      "start": 47.490399999999994,
+      "end": 48.0968
+    },
+    {
+      "word": "'dark",
+      "start": 48.0968,
+      "end": 48.703199999999995
+    },
+    {
+      "word": "mode'",
+      "start": 48.703199999999995,
+      "end": 49.309599999999996
+    },
+    {
+      "word": "control",
+      "start": 49.309599999999996,
+      "end": 49.916
+    },
+    {
+      "word": "le",
+      "start": 49.916,
+      "end": 50.5224
+    },
+    {
+      "word": "leta",
+      "start": 50.5224,
+      "end": 51.1288
+    },
+    {
+      "word": "hai.",
+      "start": 51.1288,
+      "end": 51.7352
+    },
+    {
+      "word": "Aur",
+      "start": 51.7352,
+      "end": 52.3416
+    },
+    {
+      "word": "uske",
+      "start": 52.3416,
+      "end": 52.948
+    },
+    {
+      "word": "47%",
+      "start": 52.948,
+      "end": 53.5544
+    },
+    {
+      "word": "faisle,",
+      "start": 53.5544,
+      "end": 54.160799999999995
+    },
+    {
+      "word": "aapke",
+      "start": 54.160799999999995,
+      "end": 54.7672
+    },
+    {
+      "word": "nahin",
+      "start": 54.7672,
+      "end": 55.373599999999996
+    },
+    {
+      "word": "hote.",
+      "start": 55.373599999999996,
+      "end": 55.98
+    },
+    {
+      "word": "Toh",
+      "start": 56.08,
+      "end": 56.60971428571428
+    },
+    {
+      "word": "yaad",
+      "start": 56.60971428571428,
+      "end": 57.13942857142857
+    },
+    {
+      "word": "rakhiye,",
+      "start": 57.13942857142857,
+      "end": 57.66914285714286
+    },
+    {
+      "word": "aapka",
+      "start": 57.66914285714286,
+      "end": 58.19885714285714
+    },
+    {
+      "word": "dimaag",
+      "start": 58.19885714285714,
+      "end": 58.72857142857143
+    },
+    {
+      "word": "shayad",
+      "start": 58.72857142857143,
+      "end": 59.25828571428571
+    },
+    {
+      "word": "khud",
+      "start": 59.25828571428571,
+      "end": 59.788
+    },
+    {
+      "word": "hi",
+      "start": 59.788,
+      "end": 60.31771428571428
+    },
+    {
+      "word": "apne",
+      "start": 60.31771428571428,
+      "end": 60.847428571428566
+    },
+    {
+      "word": "87%",
+      "start": 60.847428571428566,
+      "end": 61.37714285714286
+    },
+    {
+      "word": "bade",
+      "start": 61.37714285714286,
+      "end": 61.90685714285714
+    },
+    {
+      "word": "faisle",
+      "start": 61.90685714285714,
+      "end": 62.436571428571426
+    },
+    {
+      "word": "nahin",
+      "start": 62.436571428571426,
+      "end": 62.96628571428571
+    },
+    {
+      "word": "leta.",
+      "start": 62.96628571428571,
+      "end": 63.495999999999995
+    }
+  ],
+  "audio_offsets": [
+    0.0,
+    6.268,
+    19.759999999999998,
+    37.788,
+    56.08
+  ],
+  "total_duration": 63.596
+}

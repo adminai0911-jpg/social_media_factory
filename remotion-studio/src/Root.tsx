@@ -2,12 +2,14 @@ import { Composition } from "remotion";
 import { MainVideo } from "./MainVideo";
 
 const defaultProps = {
-  title: "The Simulation",
-  script_text: "This fact will mess with your perception of time.",
-  timings: [
-    { word: "This", start: 0.0, end: 0.3 }
-  ],
-  totalDurationInSeconds: 15.0
+  script: {
+    style_seed: 1,
+    emojis: ["👀", "🔥", "💀"]
+  },
+  voice: "Adam",
+  timings: [],
+  audio_offsets: [0.0, 5.0, 10.0, 20.0, 25.0],
+  total_duration: 30.0
 };
 
 export const RemotionRoot: React.FC = () => {
@@ -22,7 +24,7 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={defaultProps}
         calculateMetadata={async ({ props }) => {
-          const duration = props.totalDurationInSeconds || 15.0;
+          const duration = props.total_duration || 30.0;
           return {
             durationInFrames: Math.ceil(duration * 30),
             props

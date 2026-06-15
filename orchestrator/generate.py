@@ -1,136 +1,157 @@
 import os
 import sys
 import json
-from dotenv import load_dotenv
 import asyncio
-import logging
-import edge_tts
-import shutil
 import subprocess
-
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
-load_dotenv(env_path)
+import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - V5_ENGINE - %(levelname)s - %(message)s")
-logger = logging.getLogger("Brain_V3")
+logger = logging.getLogger(__name__)
 
-API_KEY = os.environ.get("GEMINI_API_KEY", "")
-
-def generate_script():
-    logger.info("Generating explosive v3 script...")
-    
-    if not API_KEY:
-        logger.warning("No API Key. Using fallback script.")
-        return {
-            "title": "The Simulation",
-            "script_text": "This fact will mess with your perception of time. Did you know that Cleopatra lived closer in time to the iPhone than she did to the building of the Great Pyramid? When the Great Pyramid was being built, woolly mammoths were still roaming the earth. Every time you think history is long, remember that."
-        }
-    
-    try:
-        from google import genai
-        from google.genai import types
-        client = genai.Client(api_key=API_KEY.split(",")[0].strip())
-        
-        prompt = """
-        You are a master scriptwriter for the top 0.01% viral TikToks and YouTube Shorts. 
-        Write a highly engaging, high-retention 30-second script for a faceless channel.
-        Topic: A Dark Psychology fact, mind-blowing wealth hack, or conspiracy.
-        
-        CRITICAL RULES (THE LOOPHOLE ENGINE):
-        1. ZERO INTRODUCTIONS. Start mid-sentence with extreme high energy.
-        2. EXTREME PACE: The script must be breathless. Short, punchy sentences. Overstimulate the brain so the viewer has no time to think. 
-        3. AGGRESSIVE HOOKS: Use words like 'WARNING', 'ILLEGAL', 'SECRET', 'HIJACK'.
-        4. THE SLOT MACHINE TENSION: Halfway through, explicitly say something like "Look at the numbers spinning on your screen" or "Don't blink or you'll miss the flash."
-        5. INFINITE LOOP: The script MUST be an infinite loop. The final sentence must grammatically cut off and flow PERFECTLY into the very first word of the script.
-        Example Loop: End with "Which is exactly why you need to..." -> Start with "...stop trusting your friends."
-        6. Output ONLY pure raw JSON with the following structure:
-        {
-          "script_text": "The full spoken text as one continuous string.",
-          "title": "A short dramatic title"
-        }
-        """
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.9)
-        )
-        text = response.text.strip()
-        if text.startswith("```json"): text = text[7:]
-        if text.startswith("```"): text = text[3:]
-        if text.endswith("```"): text = text[:-3]
-        return json.loads(text.strip())
-    except Exception as e:
-        logger.error(f"Failed to generate script: {e}")
-        return {
-            "title": "The Simulation",
-            "script_text": "This fact will mess with your perception of time. Did you know that Cleopatra lived closer in time to the iPhone than she did to the building of the Great Pyramid? When the Great Pyramid was being built, woolly mammoths were still roaming the earth. Every time you think history is long, remember that."
-        }
-
-async def generate_tts_and_timings(script_json, output_audio="audio.mp3", output_timings="timings.json"):
-    logger.info("Generating TTS and extracting precise word timings...")
-    
-    full_text = script_json["script_text"]
-    
-    # Use an intense voice, male or female
-    communicate = edge_tts.Communicate(full_text, "en-US-ChristopherNeural", rate="+15%")
-    
-    words = []
-    
-    with open(output_audio, "wb") as file:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                file.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                words.append({
-                    "word": chunk["text"],
-                    "start": chunk["offset"] / 10000000.0,
-                    "end": (chunk["offset"] + chunk["duration"]) / 10000000.0
-                })
-    
-    with open(output_timings, "w", encoding="utf-8") as f:
-        json.dump(words, f, indent=2)
-        
-    logger.info(f"Saved TTS to {output_audio} and timings to {output_timings}")
-    return words
-
-def run_pipeline():
-    script = generate_script()
-    
-    public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public"))
-    os.makedirs(public_dir, exist_ok=True)
-    
-    audio_path = os.path.join(public_dir, "audio.mp3")
-    timings_path = os.path.join(public_dir, "timings.json")
-    
-    timings = asyncio.run(generate_tts_and_timings(script, audio_path, timings_path))
-    
-    props = {
-        "title": script["title"],
-        "script_text": script["script_text"],
-        "timings": timings,
-        "totalDurationInSeconds": timings[-1]["end"] + 1.0 if timings else 15.0
+# --- V17 MULTI-VOICE HINDI PODCAST SCRIPT ---
+# Segment 1: Euphoria (Female Voice)
+# Segment 2: Paranoia (Male Voice)
+# Segment 3: Gamification (Male Voice)
+SEGMENTS = [
+    {
+        "text": "रिलैक्स... अपनी आँखें बंद करो। तुम्हें कैसा लग रहा है? बिल्कुल शांत... सब कुछ बिल्कुल परफेक्ट है।",
+        "voice": "hi-IN-SwaraNeural"
+    },
+    {
+        "text": "तुम्हें लगता है तुम सुरक्षित हो? जाग जाओ! यह सब एक धोखा है! तुम एक सिमुलेशन में फँस गए हो!",
+        "voice": "hi-IN-MadhurNeural"
+    },
+    {
+        "text": "सिस्टम हैक हो चुका है। सच तुम्हारे सामने है। इसे अभी शेयर करो, इससे पहले कि बहुत देर हो जाए।",
+        "voice": "hi-IN-MadhurNeural"
     }
+]
+
+async def generate_audio_segment(index, text, voice, out_dir):
+    temp_mp3 = os.path.join(out_dir, f"temp_{index}.mp3")
+    temp_json = os.path.join(out_dir, f"temp_{index}_timings.json")
     
-    props_path = os.path.join(public_dir, "props.json")
-    with open(props_path, "w", encoding="utf-8") as f:
-        json.dump(props, f, indent=2)
+    cmd = [
+        sys.executable, "-m", "edge_tts",
+        "--text", text,
+        "--voice", voice,
+        "--write-media", temp_mp3,
+        "--write-subtitles", temp_json
+    ]
+    
+    logger.info(f"Generating segment {index} with voice {voice}...")
+    process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await process.communicate()
+    
+    if process.returncode != 0:
+        logger.error(f"Failed to generate segment {index}: {stderr.decode()}")
+        sys.exit(1)
         
-    logger.info(f"Props saved to {props_path}")
+    return temp_mp3, temp_json
+
+def get_audio_duration(file_path):
+    cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return float(result.stdout.strip())
+
+async def main():
+    logger.info("\u26a0\ufe0f INITIATING V17 MULTI-VOICE CHAOS ENGINE...")
     
-    logger.info("Triggering Remotion Render...")
+    studio_public = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public"))
+    os.makedirs(studio_public, exist_ok=True)
+    
+    mp3_files = []
+    json_files = []
+    
+    # Generate parts
+    for i, seg in enumerate(SEGMENTS):
+        # Save directly as audio_0.mp3 etc
+        temp_mp3 = os.path.join(studio_public, f"audio_{i}.mp3")
+        temp_json = os.path.join(studio_public, f"temp_{i}_timings.json")
+        
+        cmd = [
+            sys.executable, "-m", "edge_tts",
+            "--text", seg["text"],
+            "--voice", seg["voice"],
+            "--write-media", temp_mp3,
+            "--write-subtitles", temp_json
+        ]
+        
+        logger.info(f"Generating segment {i} with voice {seg['voice']}...")
+        process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        stdout, stderr = await process.communicate()
+        
+        if process.returncode != 0:
+            logger.error(f"Failed to generate segment {i}: {stderr.decode()}")
+            sys.exit(1)
+            
+        mp3_files.append(temp_mp3)
+        json_files.append(temp_json)
+        
+    # Manually construct timings and offsets since edge-tts word-boundaries fail on Hindi
+    logger.info("Constructing Row-based timings and audio offsets...")
+    
+    # We will use approximate offsets. 
+    # Segment 0 usually takes ~8 seconds. Segment 1 ~8 seconds. Segment 2 ~8 seconds.
+    # To be safe and ensure no overlap, we will space them out.
+    audio_offsets = [0.0, 11.0, 21.0]
+    
+    final_timings = [
+        # Segment 0 (0 to 11s)
+        {"word": "रिलैक्स... अपनी आँखें बंद करो।", "start": 0.5, "end": 4.0},
+        {"word": "तुम्हें कैसा लग रहा है?", "start": 4.5, "end": 7.0},
+        {"word": "बिल्कुल शांत... सब परफेक्ट है।", "start": 7.5, "end": 10.5},
+        
+        # Segment 1 (11 to 21s)
+        {"word": "तुम्हें लगता है तुम सुरक्षित हो?", "start": 11.5, "end": 14.0},
+        {"word": "जाग जाओ! यह सब एक धोखा है!", "start": 14.5, "end": 17.5},
+        {"word": "तुम एक सिमुलेशन में फँस गए हो!", "start": 18.0, "end": 20.5},
+        
+        # Segment 2 (21 to 30s)
+        {"word": "सिस्टम हैक हो चुका है।", "start": 21.5, "end": 24.0},
+        {"word": "सच तुम्हारे सामने है।", "start": 24.5, "end": 26.5},
+        {"word": "इसे अभी शेयर करो...", "start": 27.0, "end": 28.5},
+        {"word": "...इससे पहले कि बहुत देर हो जाए।", "start": 28.5, "end": 30.0}
+    ]
+    
+    # Write final timings
+    final_json_path = os.path.join(studio_public, "timings.json")
+    with open(final_json_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "timings": final_timings,
+            "audio_offsets": audio_offsets
+        }, f, indent=2)
+        
+    # Cleanup temp JSON files
+    for f in json_files:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except:
+                pass
+            
+    # Write script text
+    script_path = os.path.join(studio_public, "script.txt")
+    with open(script_path, "w", encoding="utf-8") as f:
+        f.write(" ".join([s["text"] for s in SEGMENTS]))
+        
+    logger.info("Triggering Remotion Render (V17 - MultiVoice Chaos)...")
     studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
-    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "final_reel_v5.mp4"))
+    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "final_reel_v17_hindi_chaos.mp4"))
     
     cmd = [
         "npx", "remotion", "render", "src/index.ts", "MainVideo", out_file,
-        "--props=public/props.json"
+        "--props=./public/timings.json",
+        f"--totalDurationInSeconds=30.0", # Force exactly 30s
+        "--videoBitrate=40M",
+        "--codec=h264"
     ]
     
     try:
         subprocess.run(cmd, cwd=studio_dir, check=True, shell=True)
-        logger.info(f"✅ SUCCESSFULLY RENDERED V5 REEL: {out_file}")
+        logger.info(f"\u2705 SUCCESSFULLY RENDERED V17 REEL: {out_file}")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Remotion render failed: {e}")
+        logger.error(f"Render failed: {e}")
 
 if __name__ == "__main__":
-    run_pipeline()
+    asyncio.run(main())
