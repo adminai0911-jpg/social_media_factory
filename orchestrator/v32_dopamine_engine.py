@@ -6,7 +6,8 @@ import subprocess
 import sys
 import logging
 import time
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from mutagen.mp3 import MP3
 
@@ -48,13 +49,12 @@ def get_gemini_client():
         logger.error("No Gemini keys found in .env or environment!")
         return None
     key = random.choice(valid_keys)
-    genai.configure(api_key=key)
-    return genai.GenerativeModel('gemini-1.5-flash')
+    return genai.Client(api_key=key)
 
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
-    model = get_gemini_client()
-    if not model:
+    client = get_gemini_client()
+    if not client:
         return None
 
     prompt = """
@@ -82,18 +82,33 @@ def generate_dynamic_script():
     
     for attempt in range(3):  # Retry up to 3 times on failure
         try:
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(response_mime_type="application/json"),
-                safety_settings={
-                    'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-                    'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-                    'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE'
-                }
+            response = client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    safety_settings=[
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                        ),
+                    ]
+                )
             )
             
-            if not response.candidates or not response.parts:
+            if not response.candidates or not response.text:
                 logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
                 time.sleep(5)
                 continue
