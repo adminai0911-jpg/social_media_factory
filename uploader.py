@@ -10,11 +10,23 @@ logger = logging.getLogger("Uploader")
 
 load_dotenv()
 
+# Meta credentials
 PAGE_ACCESS_TOKEN = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
 PAGE_ID = os.environ.get("FACEBOOK_PAGE_ID", "")
 INSTAGRAM_ACCOUNT_ID = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
-YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
-X_BEARER_TOKEN = os.environ.get("X_BEARER_TOKEN", "")
+
+# YouTube credentials
+YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID", "")
+YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET", "")
+YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
+
+# Twitter/X credentials
+TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
+TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
+TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
+TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
+
+# Telegram credentials
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
@@ -27,6 +39,23 @@ def send_telegram_alert(message):
         requests.post(url, data=payload)
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
+
+def get_facebook_page_token(user_token, page_id):
+    if not user_token or not page_id:
+        return user_token
+    # Try to exchange User Access Token for Page Access Token dynamically
+    url = f"https://graph.facebook.com/v19.0/{page_id}"
+    params = {"fields": "access_token", "access_token": user_token}
+    try:
+        res = requests.get(url, params=params).json()
+        if "access_token" in res:
+            logger.info("Successfully obtained Page Access Token dynamically.")
+            return res["access_token"]
+        else:
+            logger.warning(f"Facebook Page Token exchange response: {res}. Using original token.")
+    except Exception as e:
+        logger.error(f"Error exchanging token: {e}. Using original token.")
+    return user_token
 
 def upload_to_tmpfiles(file_path):
     logger.info("Uploading video to tmpfiles.org to get a public URL for Instagram...")
@@ -53,9 +82,11 @@ def upload_to_facebook_reels(video_path, description):
         logger.warning("⏭️ Skipping Facebook Reels (Missing Credentials)")
         return False
         
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    
     logger.info(f"📤 Starting Facebook Reel upload for {video_path}")
     init_url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_reels"
-    init_payload = {"upload_phase": "start", "access_token": PAGE_ACCESS_TOKEN}
+    init_payload = {"upload_phase": "start", "access_token": page_token}
     
     try:
         init_res = requests.post(init_url, data=init_payload).json()
@@ -66,12 +97,12 @@ def upload_to_facebook_reels(video_path, description):
         video_id = init_res["video_id"]
         upload_url = init_res["upload_url"]
         
-        headers = {"Authorization": f"OAuth {PAGE_ACCESS_TOKEN}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
+        headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
         with open(video_path, "rb") as f:
             upload_res = requests.post(upload_url, headers=headers, data=f).json()
             
         publish_payload = {
-            "upload_phase": "finish", "access_token": PAGE_ACCESS_TOKEN,
+            "upload_phase": "finish", "access_token": page_token,
             "video_id": video_id, "video_state": "PUBLISHED", "description": description
         }
         publish_res = requests.post(init_url, data=publish_payload).json()
@@ -89,6 +120,8 @@ def upload_to_instagram_reels(video_path, description):
         logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
         return False
         
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    
     # Upload video to tmpfiles.org to get a direct public URL
     video_url = upload_to_tmpfiles(video_path)
     if not video_url:
@@ -97,7 +130,7 @@ def upload_to_instagram_reels(video_path, description):
 
     logger.info(f"📤 Starting Instagram Reel upload with URL: {video_url}")
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
-    container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": PAGE_ACCESS_TOKEN}
+    container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
     
     try:
         container_res = requests.post(container_url, data=container_payload).json()
@@ -106,10 +139,37 @@ def upload_to_instagram_reels(video_path, description):
             return False
             
         creation_id = container_res["id"]
-        time.sleep(15) # Wait for IG to process
         
+        # Poll container status until it is FINISHED or fails
+        status_url = f"https://graph.facebook.com/v19.0/{creation_id}"
+        status_params = {"fields": "status_code,status", "access_token": page_token}
+        
+        max_attempts = 30
+        seconds_between_attempts = 10
+        is_ready = False
+        
+        logger.info("Waiting for Instagram to process the video...")
+        for attempt in range(max_attempts):
+            time.sleep(seconds_between_attempts)
+            try:
+                status_res = requests.get(status_url, params=status_params).json()
+                status_code = status_res.get("status_code", "")
+                logger.info(f"Instagram container status (attempt {attempt+1}/{max_attempts}): {status_code}")
+                if status_code == "FINISHED":
+                    is_ready = True
+                    break
+                elif status_code in ["ERROR", "EXPIRED"]:
+                    logger.error(f"Instagram video processing failed: {status_res}")
+                    break
+            except Exception as e:
+                logger.error(f"Error checking Instagram container status: {e}")
+                
+        if not is_ready:
+            logger.error("Instagram Reels container did not become ready in time. Publishing skipped.")
+            return False
+            
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
-        publish_payload = {"creation_id": creation_id, "access_token": PAGE_ACCESS_TOKEN}
+        publish_payload = {"creation_id": creation_id, "access_token": page_token}
         publish_res = requests.post(publish_url, data=publish_payload).json()
         
         if "id" in publish_res:
@@ -122,21 +182,180 @@ def upload_to_instagram_reels(video_path, description):
     return False
 
 def upload_to_youtube_shorts(video_path, description):
-    if not YOUTUBE_API_KEY:
+    if not YOUTUBE_CLIENT_ID or not YOUTUBE_CLIENT_SECRET or not YOUTUBE_REFRESH_TOKEN:
         logger.warning("⏭️ Skipping YouTube Shorts (Missing Credentials)")
         return False
-    logger.info("📤 Uploading to YouTube Shorts (Implementation via google-api-python-client expected in prod)")
-    return True
+        
+    logger.info("📤 Starting YouTube Shorts upload...")
+    try:
+        # Step 1: Refresh Access Token
+        token_url = "https://oauth2.googleapis.com/token"
+        token_payload = {
+            "client_id": YOUTUBE_CLIENT_ID,
+            "client_secret": YOUTUBE_CLIENT_SECRET,
+            "refresh_token": YOUTUBE_REFRESH_TOKEN,
+            "grant_type": "refresh_token"
+        }
+        token_res = requests.post(token_url, data=token_payload).json()
+        access_token = token_res.get("access_token")
+        if not access_token:
+            logger.error(f"Failed to refresh YouTube access token: {token_res}")
+            return False
+            
+        # Step 2: Initialize Resumable Upload Session
+        upload_init_url = "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json; charset=UTF-8",
+            "X-Upload-Content-Length": str(os.path.getsize(video_path)),
+            "X-Upload-Content-Type": "video/mp4"
+        }
+        
+        # Clean up title (limit to 70 chars, remove hashtags)
+        clean_title = description.split("#")[0].strip()
+        if not clean_title:
+            clean_title = "Viral Short"
+        if len(clean_title) > 70:
+            clean_title = clean_title[:67] + "..."
+            
+        metadata = {
+            "snippet": {
+                "title": clean_title,
+                "description": description,
+                "categoryId": "22"  # People & Blogs
+            },
+            "status": {
+                "privacyStatus": "public",
+                "selfDeclaredMadeForKids": False
+            }
+        }
+        
+        init_res = requests.post(upload_init_url, headers=headers, json=metadata)
+        if init_res.status_code != 200:
+            logger.error(f"Failed to initialize YouTube upload: {init_res.status_code} - {init_res.text}")
+            return False
+            
+        upload_url = init_res.headers.get("Location")
+        if not upload_url:
+            logger.error("No Location header returned from YouTube upload initialization.")
+            return False
+            
+        # Step 3: Upload Video File
+        file_size = os.path.getsize(video_path)
+        put_headers = {
+            "Content-Length": str(file_size),
+            "Content-Type": "video/mp4"
+        }
+        
+        with open(video_path, "rb") as f:
+            put_res = requests.put(upload_url, headers=put_headers, data=f)
+            
+        if put_res.status_code in [200, 201]:
+            logger.info("✅ Successfully published to YouTube Shorts!")
+            return True
+        else:
+            logger.error(f"YouTube file upload failed: {put_res.status_code} - {put_res.text}")
+    except Exception as e:
+        logger.error(f"YouTube Upload Exception: {e}")
+    return False
 
 def upload_to_x(video_path, description):
-    if not X_BEARER_TOKEN:
+    if not TWITTER_API_KEY or not TWITTER_API_SECRET or not TWITTER_ACCESS_TOKEN or not TWITTER_ACCESS_SECRET:
         logger.warning("⏭️ Skipping X/Twitter (Missing Credentials)")
         return False
-    logger.info("📤 Uploading to X (Implementation via Twitter API v2 Media Upload expected in prod)")
-    return True
+        
+    logger.info("📤 Starting X/Twitter upload...")
+    try:
+        from requests_oauthlib import OAuth1
+        auth = OAuth1(TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET)
+        
+        # Phase 1: INIT
+        init_url = "https://upload.twitter.com/1.1/media/upload.json"
+        file_size = os.path.getsize(video_path)
+        init_data = {
+            "command": "INIT",
+            "media_type": "video/mp4",
+            "total_bytes": str(file_size),
+            "media_category": "tweet_video"
+        }
+        
+        init_res = requests.post(init_url, auth=auth, data=init_data).json()
+        if "media_id_string" not in init_res:
+            logger.error(f"Failed to initialize X media upload: {init_res}")
+            return False
+            
+        media_id = init_res["media_id_string"]
+        
+        # Phase 2: APPEND
+        append_url = "https://upload.twitter.com/1.1/media/upload.json"
+        chunk_size = 1 * 1024 * 1024  # 1MB
+        segment_index = 0
+        
+        with open(video_path, "rb") as f:
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                    
+                append_data = {
+                    "command": "APPEND",
+                    "media_id": media_id,
+                    "segment_index": str(segment_index)
+                }
+                files = {"media": chunk}
+                append_res = requests.post(append_url, auth=auth, data=append_data, files=files)
+                if append_res.status_code < 200 or append_res.status_code >= 300:
+                    logger.error(f"Failed to append X media chunk {segment_index}: {append_res.status_code} - {append_res.text}")
+                    return False
+                segment_index += 1
+                
+        # Phase 3: FINALIZE
+        finalize_data = {
+            "command": "FINALIZE",
+            "media_id": media_id
+        }
+        finalize_res = requests.post(init_url, auth=auth, data=finalize_data).json()
+        
+        # Phase 4: STATUS (Check processing state)
+        if "processing_info" in finalize_res:
+            processing_info = finalize_res["processing_info"]
+            state = processing_info.get("state")
+            while state in ["pending", "in_progress"]:
+                check_after_secs = processing_info.get("check_after_secs", 5)
+                logger.info(f"X media processing state: {state}. Waiting {check_after_secs}s...")
+                time.sleep(check_after_secs)
+                
+                status_params = {
+                    "command": "STATUS",
+                    "media_id": media_id
+                }
+                status_res = requests.get(init_url, auth=auth, params=status_params).json()
+                processing_info = status_res.get("processing_info", {})
+                state = processing_info.get("state")
+                if state == "failed":
+                    logger.error(f"X media processing failed: {processing_info}")
+                    return False
+                    
+        # Phase 5: POST TWEET
+        tweet_url = "https://api.twitter.com/2/tweets"
+        tweet_payload = {
+            "text": description,
+            "media": {
+                "media_ids": [media_id]
+            }
+        }
+        tweet_res = requests.post(tweet_url, auth=auth, json=tweet_payload).json()
+        if "data" in tweet_res and "id" in tweet_res["data"]:
+            logger.info("✅ Successfully published to X/Twitter!")
+            return True
+        else:
+            logger.error(f"Failed to post Tweet: {tweet_res}")
+    except Exception as e:
+        logger.error(f"X Upload Exception: {e}")
+    return False
 
 def distribute_to_all_platforms(video_path, description):
-    logger.info(f"🌐 Initiating 4-Platform Distribution Pipeline...")
+    logger.info("🌐 Initiating 4-Platform Distribution Pipeline...")
     logger.info(f"📝 Final Caption: {description}")
     
     send_telegram_alert("🚀 <b>V32 Factory Wakeup</b>\nStarting generation and distribution process...")
@@ -177,7 +396,6 @@ if __name__ == "__main__":
     
     if not os.path.exists(video_path):
         logger.error(f"Rendered video not found at {video_path}")
-        # Write a mock file if running in non-workflow test modes
         logger.warning("Creating a dummy video file for local testing...")
         with open(video_path, "wb") as f:
             f.write(b"dummy video data")
