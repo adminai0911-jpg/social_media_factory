@@ -90,7 +90,7 @@ def generate_dynamic_script():
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash-8b')
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
@@ -155,21 +155,83 @@ def generate_fallback_script(prompt):
     return None
 
 def generate_offline_script():
-    """Bulletproof offline fallback so the video ALWAYS renders."""
-    return {
-      "micro_niche": "Psychology of Wealth",
-      "style_seed": random.randint(1, 100),
-      "emojis": ["🧠", "🔥", "⚠️"],
-      "red_box_keyword": "FAKE",
-      "subliminal_flash_word": "WAKE UP",
-      "serotonin_payoff_number": random.randint(10000, 999999),
-      "phase_1": "क्या आपको लगता है कि आप कभी अमीर नहीं बन पाएंगे?",
-      "phase_2": "आप अकेले नहीं हैं, 99% लोग यही सोचते हैं।",
-      "phase_3": "लेकिन सच यह है कि स्कूल हमें पैसे के बारे में सब कुछ गलत सिखाता है।",
-      "phase_4": "असली दौलत तब बनती है जब आपका पैसा आपके लिए काम करता है, न कि आप पैसे के लिए।",
-      "phase_5": "इस मैट्रिक्स से बाहर निकलने का समय आ गया है।",
-      "caption": "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
-    }
+    """Bulletproof offline fallback so the video ALWAYS renders with variety."""
+    templates = [
+        {
+          "micro_niche": "Psychology of Wealth",
+          "style_seed": random.randint(1, 100),
+          "emojis": ["🧠", "🔥", "⚠️"],
+          "red_box_keyword": "FAKE",
+          "subliminal_flash_word": "WAKE UP",
+          "serotonin_payoff_number": random.randint(10000, 999999),
+          "phase_1": "क्या आपको लगता है कि आप कभी अमीर नहीं बन पाएंगे?",
+          "phase_2": "आप अकेले नहीं हैं, 99% लोग यही सोचते हैं।",
+          "phase_3": "लेकिन सच यह है कि स्कूल हमें पैसे के बारे में सब कुछ गलत सिखाता है।",
+          "phase_4": "असली दौलत तब बनती है जब आपका पैसा आपके लिए काम करता है, न कि आप पैसे के लिए।",
+          "phase_5": "इस मैट्रिक्स से बाहर निकलने का समय आ गया है।",
+          "caption": "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
+        },
+        {
+          "micro_niche": "Dark Psychology",
+          "style_seed": random.randint(1, 100),
+          "emojis": ["👁️", "🤐", "⚡"],
+          "red_box_keyword": "LIES",
+          "subliminal_flash_word": "TRUST NO ONE",
+          "serotonin_payoff_number": random.randint(10000, 999999),
+          "phase_1": "क्या आप जानते हैं कि लोग आपको रोज़ाना कैसे मैनिपुलेट करते हैं?",
+          "phase_2": "यह आपके सबसे करीबियों से ही शुरू होता है।",
+          "phase_3": "साइकोलॉजी कहती है कि जो लोग हमेशा 'अच्छा' बनते हैं, वो सबसे बड़े मास्टरमाइंड होते हैं।",
+          "phase_4": "उनके मीठे शब्दों के पीछे छिपे असली इरादे को पहचानना सीखें।",
+          "phase_5": "अब और बेवकूफ मत बनो, खेल के नियम बदलो।",
+          "caption": "सच्चाई कड़वी है। #psychology #facts #mindset #lifehacks #hindi"
+        },
+        {
+          "micro_niche": "Sigma Male Rule",
+          "style_seed": random.randint(1, 100),
+          "emojis": ["🐺", "🤫", "📈"],
+          "red_box_keyword": "SILENCE",
+          "subliminal_flash_word": "GRIND HARD",
+          "serotonin_payoff_number": random.randint(10000, 999999),
+          "phase_1": "सिग्मा मेल्स कभी भीड़ का हिस्सा नहीं बनते।",
+          "phase_2": "वो अपनी मंज़िल अकेले तय करते हैं।",
+          "phase_3": "जब दुनिया शोर मचा रही होती है, सिग्मा शांत रहकर अपना एम्पायर खड़ा कर रहा होता है।",
+          "phase_4": "उनकी खामोशी में ही उनकी सबसे बड़ी ताकत छुपी है।",
+          "phase_5": "अकेले चलना सीखो, जीत पक्की है।",
+          "caption": "रूल नंबर 1: किसी पर निर्भर मत रहो। #sigma #motivation #rules #hindi #alpha"
+        }
+    ]
+    return random.choice(templates)
+
+def create_tone(filename, freq, duration, vol=0.5, decay=True, riser=False):
+    sample_rate = 44100
+    n_samples = int(sample_rate * duration)
+    try:
+        with wave.open(filename, 'w') as f:
+            f.setnchannels(1)
+            f.setsampwidth(2)
+            f.setframerate(sample_rate)
+            for i in range(n_samples):
+                t = float(i) / sample_rate
+                env = math.exp(-3.0 * t) if decay else 1.0
+                if riser:
+                    current_freq = freq + (400 * t) # pitch goes up
+                    env = min(1.0, t) # volume goes up
+                else:
+                    current_freq = freq
+                val = int(vol * env * math.sin(2 * math.pi * current_freq * t) * 32767)
+                f.writeframes(struct.pack('<h', val))
+    except Exception as e:
+        logger.error(f"Failed to create {filename}: {e}")
+
+def ensure_sfx(studio_dir):
+    sfx_dir = os.path.join(studio_dir, "public")
+    os.makedirs(sfx_dir, exist_ok=True)
+    if not os.path.exists(os.path.join(sfx_dir, "ding.wav")):
+        create_tone(os.path.join(sfx_dir, "ding.wav"), 1200, 1.0)
+    if not os.path.exists(os.path.join(sfx_dir, "riser.wav")):
+        create_tone(os.path.join(sfx_dir, "riser.wav"), 100, 2.0, riser=True)
+    if not os.path.exists(os.path.join(sfx_dir, "impact.wav")):
+        create_tone(os.path.join(sfx_dir, "impact.wav"), 60, 1.5)
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
