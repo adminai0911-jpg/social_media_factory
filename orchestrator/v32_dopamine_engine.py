@@ -347,6 +347,57 @@ def get_audio_duration(file_path):
     except:
         return 2.0
 
+def download_dynamic_backgrounds(public_dir):
+    """Downloads two random high-quality satisfying background videos."""
+    logger.info("🎬 Initializing Dynamic Visual Engine...")
+    send_telegram_alert("🎬 <b>Dynamic Visuals</b>\nFetching fresh 1080p background videos...")
+    
+    # Massive curated list of 4K/HD satisfying shorts
+    satisfying_urls = [
+        "https://www.youtube.com/shorts/31-Gv9e9T1Q", # GTA
+        "https://www.youtube.com/shorts/s_Y16lG2-Hw", # Sand
+        "https://www.youtube.com/shorts/qLWGcTfQOTo", # Satisfying loop
+        "https://www.youtube.com/shorts/yX3yX_wD7Fw", # Abstract 3D
+        "https://www.youtube.com/shorts/Q_pQ3P2bMmw", # Car driving
+        "https://www.youtube.com/shorts/3w-N8T8X0hQ", # ASMR Kinetic
+        "https://www.youtube.com/shorts/4rL1qj3BwLg", # Fluid simulation
+        "https://www.youtube.com/shorts/9fXj9-yY7A0", # GTA Parkour
+        "https://www.youtube.com/shorts/P2_6X0zQnZw", # Relaxing paint
+        "https://www.youtube.com/shorts/6-1r3_Z8B5Q", # Luxury cars
+    ]
+    
+    selected_urls = random.sample(satisfying_urls, 2)
+    
+    files = ["gta", "sand"]
+    for i, url in enumerate(selected_urls):
+        raw_out = os.path.join(public_dir, f"{files[i]}_raw.mp4")
+        final_out = os.path.join(public_dir, f"{files[i]}.mp4")
+        
+        logger.info(f"Downloading Video {i+1}: {url}")
+        try:
+            # Download best mp4 under 1080p
+            subprocess.run(["yt-dlp", "-f", "bestvideo[ext=mp4][height<=1080]", url, "-o", raw_out, "--no-playlist", "--quiet"], check=True)
+            
+            # Optimize with FFmpeg (1080p, CRF 18, GOP 1, No audio)
+            logger.info(f"Optimizing Video {i+1} to 1080p CRF-18...")
+            subprocess.run([
+                "ffmpeg", "-y", "-i", raw_out, 
+                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920", 
+                "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode", 
+                "-crf", "18", "-g", "1", "-keyint_min", "1", "-an", final_out
+            ], check=True)
+            
+            os.remove(raw_out)
+        except Exception as e:
+            logger.error(f"Failed to download/optimize video {i}: {e}")
+            # Fallback to absolute basics if network fails
+            if i == 0:
+                subprocess.run(["curl", "-L", "https://www.w3schools.com/html/mov_bbb.mp4", "-o", final_out], check=False)
+            else:
+                subprocess.run(["curl", "-L", "https://raw.githubusercontent.com/mdn/learning-area/master/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4", "-o", final_out], check=False)
+
+    logger.info("✅ Dynamic Visuals Ready!")
+
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
     send_telegram_alert("⚡ <b>V32 Engine Starting</b>\nGenerating new unique script from Gemini...")
@@ -378,6 +429,9 @@ def build_v32_payload():
     # Path to remotion-studio/public
     public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public"))
     os.makedirs(public_dir, exist_ok=True)
+    
+    # ── DOWNLOAD DYNAMIC BACKGROUND VISUALS ──
+    download_dynamic_backgrounds(public_dir)
     
     timings = []
     audio_offsets = []

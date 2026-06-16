@@ -259,122 +259,41 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x(video_path, description):
-    if not TWITTER_API_KEY or not TWITTER_API_SECRET or not TWITTER_ACCESS_TOKEN or not TWITTER_ACCESS_SECRET:
-        logger.warning("⏭️ Skipping X/Twitter (Missing Credentials)")
+def upload_to_x_via_make(video_path, description):
+    MAKE_WEBHOOK_URL = os.environ.get("MAKE_WEBHOOK_URL", "")
+    if not MAKE_WEBHOOK_URL:
+        logger.warning("⏭️ Skipping X/Twitter via Make.com (Missing MAKE_WEBHOOK_URL)")
         return False
 
-    # Ensure requests_oauthlib is available
+    logger.info("📤 Starting X/Twitter upload via Make.com Webhook...")
     try:
-        from requests_oauthlib import OAuth1
-    except ImportError:
-        logger.error("❌ requests_oauthlib not installed. Run: pip install requests-oauthlib")
-        return False
-
-    logger.info("📤 Starting X/Twitter upload...")
-    try:
-        auth = OAuth1(
-            TWITTER_API_KEY, TWITTER_API_SECRET,
-            TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET
-        )
-
-        # Truncate tweet text to X's 280-char limit (safe at 240 to leave room)
-        tweet_text = description
-        if len(tweet_text) > 240:
-            tweet_text = tweet_text[:237] + "..."
-        logger.info(f"Tweet text ({len(tweet_text)} chars): {tweet_text}")
-
-        # ── Phase 1: INIT ──────────────────────────────────────────────────────
-        upload_url = "https://upload.twitter.com/1.1/media/upload.json"
-        file_size = os.path.getsize(video_path)
-        init_data = {
-            "command": "INIT",
-            "media_type": "video/mp4",
-            "total_bytes": str(file_size),
-            "media_category": "tweet_video"
-        }
-        init_res = requests.post(upload_url, auth=auth, data=init_data)
-        logger.info(f"X INIT status: {init_res.status_code}")
-        init_json = init_res.json()
-        if "media_id_string" not in init_json:
-            logger.error(f"Failed to initialize X media upload: {init_json}")
+        # We need a public URL for Make.com to download and post the video.
+        video_url = upload_to_tmpfiles(video_path)
+        if not video_url:
+            logger.error("❌ Failed to get public URL for X/Twitter Webhook. Skipping.")
             return False
 
-        media_id = init_json["media_id_string"]
-        logger.info(f"X media_id: {media_id}")
+        # Clean up tweet text (X limits to 280 chars)
+        tweet_text = description
+        if len(tweet_text) > 270:
+            tweet_text = tweet_text[:267] + "..."
 
-        # ── Phase 2: APPEND (chunked) ──────────────────────────────────────────
-        chunk_size = 4 * 1024 * 1024  # 4 MB chunks (Twitter max per chunk)
-        segment_index = 0
-        with open(video_path, "rb") as f:
-            while True:
-                chunk = f.read(chunk_size)
-                if not chunk:
-                    break
-                append_data = {
-                    "command": "APPEND",
-                    "media_id": media_id,
-                    "segment_index": str(segment_index)
-                }
-                files = {"media": ("chunk", chunk, "application/octet-stream")}
-                append_res = requests.post(upload_url, auth=auth, data=append_data, files=files)
-                if append_res.status_code not in (200, 204):
-                    logger.error(f"Failed to append X chunk {segment_index}: {append_res.status_code} - {append_res.text[:300]}")
-                    return False
-                logger.info(f"X APPEND segment {segment_index} OK")
-                segment_index += 1
-
-        # ── Phase 3: FINALIZE ──────────────────────────────────────────────────
-        finalize_data = {"command": "FINALIZE", "media_id": media_id}
-        finalize_res = requests.post(upload_url, auth=auth, data=finalize_data)
-        logger.info(f"X FINALIZE status: {finalize_res.status_code}")
-        finalize_json = finalize_res.json()
-
-        # ── Phase 4: Poll STATUS until succeeded/failed ────────────────────────
-        processing_info = finalize_json.get("processing_info", {})
-        state = processing_info.get("state", "succeeded")
-        max_polls = 30
-        polls = 0
-        while state in ("pending", "in_progress") and polls < max_polls:
-            wait = processing_info.get("check_after_secs", 5)
-            logger.info(f"X processing state: {state}. Waiting {wait}s... (poll {polls+1}/{max_polls})")
-            time.sleep(wait)
-            status_res = requests.get(
-                upload_url, auth=auth,
-                params={"command": "STATUS", "media_id": media_id}
-            )
-            status_json = status_res.json()
-            processing_info = status_json.get("processing_info", {})
-            state = processing_info.get("state", "succeeded")
-            polls += 1
-            if state == "failed":
-                logger.error(f"X media processing FAILED: {processing_info}")
-                return False
-
-        logger.info(f"X media processing complete. Final state: {state}")
-
-        # ── Phase 5: POST TWEET with media ────────────────────────────────────
-        tweet_url = "https://api.twitter.com/2/tweets"
-        tweet_payload = {
-            "text": tweet_text,
-            "media": {"media_ids": [media_id]}
+        payload = {
+            "video_url": video_url,
+            "caption": tweet_text
         }
-        # CRITICAL: Must send Content-Type: application/json for v2 API
-        tweet_headers = {"Content-Type": "application/json"}
-        tweet_res = requests.post(
-            tweet_url, auth=auth,
-            json=tweet_payload,
-            headers=tweet_headers
-        )
-        logger.info(f"X Tweet POST status: {tweet_res.status_code} | {tweet_res.text[:300]}")
-        tweet_json = tweet_res.json()
-        if "data" in tweet_json and "id" in tweet_json["data"]:
-            logger.info(f"✅ Successfully published to X/Twitter! Tweet ID: {tweet_json['data']['id']}")
+
+        res = requests.post(MAKE_WEBHOOK_URL, json=payload)
+        
+        if res.status_code in [200, 202, 204] or res.text == "Accepted":
+            logger.info("✅ Successfully sent payload to Make.com for X/Twitter!")
             return True
         else:
-            logger.error(f"Failed to post Tweet: {tweet_json}")
+            logger.error(f"❌ Failed to trigger Make.com webhook: {res.status_code} - {res.text}")
+            return False
+            
     except Exception as e:
-        logger.error(f"X Upload Exception: {e}")
+        logger.error(f"X Upload via Make.com Exception: {e}")
     return False
 
 def distribute_to_all_platforms(video_path, description):
@@ -387,7 +306,7 @@ def distribute_to_all_platforms(video_path, description):
     fb = upload_to_facebook_reels(video_path, description)
     ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x(video_path, description)
+    x = upload_to_x_via_make(video_path, description)
     
     logger.info("🚀 Distribution Complete!")
     
