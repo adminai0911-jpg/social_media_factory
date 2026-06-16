@@ -422,19 +422,19 @@ def build_v32_payload():
     studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
     ensure_sfx(studio_dir)
         
-    logger.info("🎬 Triggering V34 1080p Premium Remotion Render (CRF=12, Scale=1, Concurrency=2)...")
-    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V34_ULTRA_4K.mp4"))
+    logger.info("🎬 Triggering V35 1080p Remotion Render (JPEG, CRF=18, Concurrency=4)...")
+    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V35_HD.mp4"))
 
-    # ── V34 Render Flags — Max Quality + Optimized Speed ─────────────────────
-    # --scale=1         → Native resolution (1080x1920 vertical HD)
-    # --crf=12          → Near-lossless visual quality (ultra-glossy, crisp text)
-    # --concurrency=2   → Parallel rendering on both runner CPU cores
-    # --timeout=1200000 → Kill after 20 minutes to save Actions minutes if hung
-    # --gl=swangle      → Software WebGL rendering on headless Linux
-    # ─────────────────────────────────────────────────────────────────────────
+    # ── V35 Render Flags — HD Quality + Maximum Speed ──────────────────────────
+    # --scale=1              → Native resolution (1080x1920 vertical HD)
+    # --crf=18               → Excellent visual quality (visually lossless), fast encode
+    # --image-format=jpeg    → JPEG frames = 40% faster render vs PNG, no transparency needed
+    # --concurrency=4        → All 4 runner vCPUs working in parallel
+    # --timeout=1200000      → Kill after 20 minutes to save Actions minutes if hung
+    # ─────────────────────────────────────────────────────────────────────────────
 
-    # Read REMOTION_CONCURRENCY from env (set to 2 in workflow for 2-core runners)
-    concurrency = os.environ.get("REMOTION_CONCURRENCY", "2")
+    # Read REMOTION_CONCURRENCY from env, override default to 4
+    concurrency = os.environ.get("REMOTION_CONCURRENCY", "4")
 
     cmd = [
         "npx", "remotion", "render",
@@ -442,6 +442,7 @@ def build_v32_payload():
         "--props", json_path,
         "--scale=1",
         "--crf=18",
+        "--image-format=jpeg",
         f"--concurrency={concurrency}",
         "--timeout=1200000",
     ]
