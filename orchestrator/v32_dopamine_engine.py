@@ -348,49 +348,64 @@ def get_audio_duration(file_path):
         return 2.0
 
 def download_dynamic_backgrounds(public_dir):
-    """Downloads 4 random high-quality background videos for maximum visual variety."""
-    logger.info("🎬 Initializing Dynamic Visual Engine V2 — downloading 4 unique backgrounds...")
-    send_telegram_alert("🎬 <b>Dynamic Visuals V2</b>\nFetching 4 fresh 1080p background videos...")
+    """Downloads 4 random high-quality background videos using infinite dynamic YouTube search."""
+    logger.info("🎬 Initializing Infinite Dynamic Visual Engine V3...")
+    send_telegram_alert("🎬 <b>Infinite Visuals V3</b>\nScraping fresh satisfying videos from YouTube Search...")
 
-    # Large curated pool — pick 4 unique ones each run for maximum visual variety
-    satisfying_urls = [
-        "https://www.youtube.com/shorts/31-Gv9e9T1Q",   # GTA city
-        "https://www.youtube.com/shorts/s_Y16lG2-Hw",   # Sand art
-        "https://www.youtube.com/shorts/qLWGcTfQOTo",   # Satisfying loop
-        "https://www.youtube.com/shorts/yX3yX_wD7Fw",   # Abstract 3D
-        "https://www.youtube.com/shorts/Q_pQ3P2bMmw",   # Car driving
-        "https://www.youtube.com/shorts/3w-N8T8X0hQ",   # ASMR Kinetic
-        "https://www.youtube.com/shorts/4rL1qj3BwLg",   # Fluid simulation
-        "https://www.youtube.com/shorts/9fXj9-yY7A0",   # GTA Parkour
-        "https://www.youtube.com/shorts/P2_6X0zQnZw",   # Relaxing paint
-        "https://www.youtube.com/shorts/6-1r3_Z8B5Q",   # Luxury cars
-        "https://www.youtube.com/shorts/qHSHxWVKpFM",   # Satisfying cut
-        "https://www.youtube.com/shorts/8_B3cRZVkMU",   # Nature drone
-        "https://www.youtube.com/shorts/uAlNqpI2j7g",   # Motorcycles
-        "https://www.youtube.com/shorts/Rqv4ZLpNOmk",   # City timelapse
+    # Massive pool of search queries to guarantee we never see the same stuff
+    search_queries = [
+        "satisfying loop shorts hd",
+        "kinetic sand slicing asmr shorts",
+        "luxury cars cinematic 4k shorts",
+        "abstract 3d loop blender shorts",
+        "relaxing nature drone 4k shorts",
+        "gta v parkour gameplay shorts",
+        "fluid simulation loop satisfying shorts",
+        "asmr soap cutting satisfying shorts",
+        "satisfying paint mixing macro shorts",
+        "cyberpunk city rain loop shorts",
+        "space galaxy stars loop shorts",
+        "satisfying factory machine loop shorts",
+        "woodworking resin satisfying shorts",
+        "hydraulic press crushing shorts",
+        "satisfying slime mixing shorts",
+        "minecraft parkour gameplay background shorts",
+        "satisfying glass blowing shorts",
+        "satisfying calligraphy writing shorts",
+        "oddly satisfying 3d animation shorts",
+        "satisfying kinetic sand crushing shorts"
     ]
 
-    # Always select 4 unique background videos
-    num_to_download = min(4, len(satisfying_urls))
-    selected_urls = random.sample(satisfying_urls, num_to_download)
-
-    # Output file names: gta.mp4, sand.mp4, bg3.mp4, bg4.mp4
     output_names = ["gta", "sand", "bg3", "bg4"]
+    fallback_url = "https://www.w3schools.com/html/mov_bbb.mp4"
 
-    fallback_urls = [
-        "https://www.w3schools.com/html/mov_bbb.mp4",
-        "https://raw.githubusercontent.com/mdn/learning-area/master/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
-        "https://www.w3schools.com/html/mov_bbb.mp4",
-        "https://raw.githubusercontent.com/mdn/learning-area/master/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
-    ]
+    # Pick 4 random search queries
+    selected_queries = random.sample(search_queries, 4)
 
-    for i, url in enumerate(selected_urls):
+    for i, query in enumerate(selected_queries):
         name = output_names[i]
         raw_out   = os.path.join(public_dir, f"{name}_raw.mp4")
         final_out = os.path.join(public_dir, f"{name}.mp4")
 
-        logger.info(f"📥 Downloading background {i+1}/{num_to_download}: {url}")
+        logger.info(f"🔍 Searching YouTube for: '{query}'")
         try:
+            # Get top 15 results for this search query
+            result = subprocess.run(
+                ["yt-dlp", f"ytsearch15:{query}", "--get-id", "--match-filter", "duration < 180"],
+                capture_output=True, text=True, timeout=30
+            )
+            
+            video_ids = [vid for vid in result.stdout.strip().split('\n') if len(vid) == 11]
+            
+            if not video_ids:
+                raise Exception("No videos found for query")
+
+            # Pick a completely random video from the top 15
+            selected_id = random.choice(video_ids)
+            url = f"https://www.youtube.com/watch?v={selected_id}"
+
+            logger.info(f"📥 Downloading selected video ({selected_id}) for {name}...")
+            
             subprocess.run([
                 "yt-dlp", "-f", "bestvideo[ext=mp4][height<=1080]",
                 url, "-o", raw_out, "--no-playlist", "--quiet"
@@ -411,11 +426,11 @@ def download_dynamic_backgrounds(public_dir):
         except Exception as e:
             logger.error(f"❌ Failed for background {i}: {e} — using fallback")
             try:
-                subprocess.run(["curl", "-L", fallback_urls[i], "-o", final_out], check=False, timeout=60)
+                subprocess.run(["curl", "-L", fallback_url, "-o", final_out], check=False, timeout=60)
             except Exception:
                 pass
 
-    logger.info("✅ All 4 Dynamic Backgrounds Ready!")
+    logger.info("✅ All 4 Infinite Dynamic Backgrounds Ready!")
 
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
