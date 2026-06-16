@@ -443,7 +443,6 @@ def build_v32_payload():
         "--props", json_path,
         "--scale=2",
         "--crf=12",
-        "--video-bitrate=8000k",
         f"--concurrency={concurrency}",
         "--timeout=1200000",
         "--gl=swangle",
