@@ -90,7 +90,7 @@ def generate_dynamic_script():
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash-8b')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
@@ -329,16 +329,7 @@ def build_v32_payload():
     subprocess.run(cmd, cwd=studio_dir, check=True)
     logger.info(f"✅ SUCCESSFULLY RENDERED V32 REEL: {out_file}")
     
-    # Trigger uploader with the generated caption
-    caption = script_data.get('caption', "Yeh sach aapko haila kar dega! 🤯 #viral #trending #fyp #mindset #growth")
-    
-    try:
-        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-        import uploader
-        uploader.distribute_to_all_platforms(out_file, caption)
-    except Exception as e:
-        logger.error(f"Uploader failed: {e}")
-        send_telegram_alert(f"❌ <b>Uploader Failed</b>\n{str(e)}")
+    logger.info("Video rendering complete. Script execution finished.")
 
     return out_file
 

@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import requests
 import logging
 from dotenv import load_dotenv
@@ -27,6 +28,26 @@ def send_telegram_alert(message):
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
+def upload_to_tmpfiles(file_path):
+    logger.info("Uploading video to tmpfiles.org to get a public URL for Instagram...")
+    try:
+        url = "https://tmpfiles.org/api/v1/upload"
+        with open(file_path, "rb") as f:
+            files = {"file": f}
+            res = requests.post(url, files=files)
+            if res.status_code == 200:
+                data = res.json()
+                file_url = data["data"]["url"]
+                # Convert the view URL to direct download URL
+                direct_url = file_url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
+                logger.info(f"Public URL generated for Instagram: {direct_url}")
+                return direct_url
+            else:
+                logger.error(f"Failed to upload to tmpfiles.org: {res.status_code} - {res.text}")
+    except Exception as e:
+        logger.error(f"Error uploading to tmpfiles.org: {e}")
+    return None
+
 def upload_to_facebook_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID:
         logger.warning("⏭️ Skipping Facebook Reels (Missing Credentials)")
@@ -39,6 +60,7 @@ def upload_to_facebook_reels(video_path, description):
     try:
         init_res = requests.post(init_url, data=init_payload).json()
         if "video_id" not in init_res:
+            logger.error(f"Failed to initialize FB upload: {init_res}")
             return False
             
         video_id = init_res["video_id"]
@@ -56,22 +78,31 @@ def upload_to_facebook_reels(video_path, description):
         if "success" in publish_res and publish_res["success"]:
             logger.info("✅ Successfully published to Facebook Reels!")
             return True
+        else:
+            logger.error(f"Failed to publish FB Reel: {publish_res}")
     except Exception as e:
         logger.error(f"FB Upload Exception: {e}")
     return False
 
-def upload_to_instagram_reels(video_url, description):
+def upload_to_instagram_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
         logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
         return False
         
-    logger.info("📤 Starting Instagram Reel upload")
+    # Upload video to tmpfiles.org to get a direct public URL
+    video_url = upload_to_tmpfiles(video_path)
+    if not video_url:
+        logger.error("❌ Failed to get a public URL for Instagram Reel. Skipping IG upload.")
+        return False
+
+    logger.info(f"📤 Starting Instagram Reel upload with URL: {video_url}")
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
     container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": PAGE_ACCESS_TOKEN}
     
     try:
         container_res = requests.post(container_url, data=container_payload).json()
         if "id" not in container_res:
+            logger.error(f"Failed to create IG Media Container: {container_res}")
             return False
             
         creation_id = container_res["id"]
@@ -84,6 +115,8 @@ def upload_to_instagram_reels(video_url, description):
         if "id" in publish_res:
             logger.info("✅ Successfully published to Instagram Reels!")
             return True
+        else:
+            logger.error(f"Failed to publish IG Reel: {publish_res}")
     except Exception as e:
         logger.error(f"IG Upload Exception: {e}")
     return False
@@ -110,7 +143,7 @@ def distribute_to_all_platforms(video_path, description):
     
     # Run the uploads
     fb = upload_to_facebook_reels(video_path, description)
-    ig = upload_to_instagram_reels("http://example.com/mock_video.mp4", description) # Requires public URL
+    ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
     x = upload_to_x(video_path, description)
     
@@ -139,4 +172,23 @@ def distribute_to_all_platforms(video_path, description):
     }
 
 if __name__ == "__main__":
-    pass
+    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V32_ULTIMATE_AESTHETIC.mp4"))
+    json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "remotion-studio", "public", "v32_script.json"))
+    
+    if not os.path.exists(video_path):
+        logger.error(f"Rendered video not found at {video_path}")
+        # Write a mock file if running in non-workflow test modes
+        logger.warning("Creating a dummy video file for local testing...")
+        with open(video_path, "wb") as f:
+            f.write(b"dummy video data")
+        
+    caption = "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                caption = data["script"]["caption"]
+        except Exception as e:
+            logger.error(f"Failed to read caption from JSON: {e}")
+            
+    distribute_to_all_platforms(video_path, caption)
