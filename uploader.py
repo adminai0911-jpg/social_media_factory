@@ -263,14 +263,29 @@ def upload_to_x(video_path, description):
     if not TWITTER_API_KEY or not TWITTER_API_SECRET or not TWITTER_ACCESS_TOKEN or not TWITTER_ACCESS_SECRET:
         logger.warning("⏭️ Skipping X/Twitter (Missing Credentials)")
         return False
-        
-    logger.info("📤 Starting X/Twitter upload...")
+
+    # Ensure requests_oauthlib is available
     try:
         from requests_oauthlib import OAuth1
-        auth = OAuth1(TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET)
-        
-        # Phase 1: INIT
-        init_url = "https://upload.twitter.com/1.1/media/upload.json"
+    except ImportError:
+        logger.error("❌ requests_oauthlib not installed. Run: pip install requests-oauthlib")
+        return False
+
+    logger.info("📤 Starting X/Twitter upload...")
+    try:
+        auth = OAuth1(
+            TWITTER_API_KEY, TWITTER_API_SECRET,
+            TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET
+        )
+
+        # Truncate tweet text to X's 280-char limit (safe at 240 to leave room)
+        tweet_text = description
+        if len(tweet_text) > 240:
+            tweet_text = tweet_text[:237] + "..."
+        logger.info(f"Tweet text ({len(tweet_text)} chars): {tweet_text}")
+
+        # ── Phase 1: INIT ──────────────────────────────────────────────────────
+        upload_url = "https://upload.twitter.com/1.1/media/upload.json"
         file_size = os.path.getsize(video_path)
         init_data = {
             "command": "INIT",
@@ -278,78 +293,86 @@ def upload_to_x(video_path, description):
             "total_bytes": str(file_size),
             "media_category": "tweet_video"
         }
-        
-        init_res = requests.post(init_url, auth=auth, data=init_data).json()
-        if "media_id_string" not in init_res:
-            logger.error(f"Failed to initialize X media upload: {init_res}")
+        init_res = requests.post(upload_url, auth=auth, data=init_data)
+        logger.info(f"X INIT status: {init_res.status_code}")
+        init_json = init_res.json()
+        if "media_id_string" not in init_json:
+            logger.error(f"Failed to initialize X media upload: {init_json}")
             return False
-            
-        media_id = init_res["media_id_string"]
-        
-        # Phase 2: APPEND
-        append_url = "https://upload.twitter.com/1.1/media/upload.json"
-        chunk_size = 1 * 1024 * 1024  # 1MB
+
+        media_id = init_json["media_id_string"]
+        logger.info(f"X media_id: {media_id}")
+
+        # ── Phase 2: APPEND (chunked) ──────────────────────────────────────────
+        chunk_size = 4 * 1024 * 1024  # 4 MB chunks (Twitter max per chunk)
         segment_index = 0
-        
         with open(video_path, "rb") as f:
             while True:
                 chunk = f.read(chunk_size)
                 if not chunk:
                     break
-                    
                 append_data = {
                     "command": "APPEND",
                     "media_id": media_id,
                     "segment_index": str(segment_index)
                 }
-                files = {"media": chunk}
-                append_res = requests.post(append_url, auth=auth, data=append_data, files=files)
-                if append_res.status_code < 200 or append_res.status_code >= 300:
-                    logger.error(f"Failed to append X media chunk {segment_index}: {append_res.status_code} - {append_res.text}")
+                files = {"media": ("chunk", chunk, "application/octet-stream")}
+                append_res = requests.post(upload_url, auth=auth, data=append_data, files=files)
+                if append_res.status_code not in (200, 204):
+                    logger.error(f"Failed to append X chunk {segment_index}: {append_res.status_code} - {append_res.text[:300]}")
                     return False
+                logger.info(f"X APPEND segment {segment_index} OK")
                 segment_index += 1
-                
-        # Phase 3: FINALIZE
-        finalize_data = {
-            "command": "FINALIZE",
-            "media_id": media_id
-        }
-        finalize_res = requests.post(init_url, auth=auth, data=finalize_data).json()
-        
-        # Phase 4: STATUS (Check processing state)
-        if "processing_info" in finalize_res:
-            processing_info = finalize_res["processing_info"]
-            state = processing_info.get("state")
-            while state in ["pending", "in_progress"]:
-                check_after_secs = processing_info.get("check_after_secs", 5)
-                logger.info(f"X media processing state: {state}. Waiting {check_after_secs}s...")
-                time.sleep(check_after_secs)
-                
-                status_params = {
-                    "command": "STATUS",
-                    "media_id": media_id
-                }
-                status_res = requests.get(init_url, auth=auth, params=status_params).json()
-                processing_info = status_res.get("processing_info", {})
-                state = processing_info.get("state")
-                if state == "failed":
-                    logger.error(f"X media processing failed: {processing_info}")
-                    return False
-                    
-        # Phase 5: POST TWEET
+
+        # ── Phase 3: FINALIZE ──────────────────────────────────────────────────
+        finalize_data = {"command": "FINALIZE", "media_id": media_id}
+        finalize_res = requests.post(upload_url, auth=auth, data=finalize_data)
+        logger.info(f"X FINALIZE status: {finalize_res.status_code}")
+        finalize_json = finalize_res.json()
+
+        # ── Phase 4: Poll STATUS until succeeded/failed ────────────────────────
+        processing_info = finalize_json.get("processing_info", {})
+        state = processing_info.get("state", "succeeded")
+        max_polls = 30
+        polls = 0
+        while state in ("pending", "in_progress") and polls < max_polls:
+            wait = processing_info.get("check_after_secs", 5)
+            logger.info(f"X processing state: {state}. Waiting {wait}s... (poll {polls+1}/{max_polls})")
+            time.sleep(wait)
+            status_res = requests.get(
+                upload_url, auth=auth,
+                params={"command": "STATUS", "media_id": media_id}
+            )
+            status_json = status_res.json()
+            processing_info = status_json.get("processing_info", {})
+            state = processing_info.get("state", "succeeded")
+            polls += 1
+            if state == "failed":
+                logger.error(f"X media processing FAILED: {processing_info}")
+                return False
+
+        logger.info(f"X media processing complete. Final state: {state}")
+
+        # ── Phase 5: POST TWEET with media ────────────────────────────────────
         tweet_url = "https://api.twitter.com/2/tweets"
         tweet_payload = {
-            "text": description,
-            "media": {
-                "media_ids": [media_id]
-            }
+            "text": tweet_text,
+            "media": {"media_ids": [media_id]}
         }
-        tweet_res = requests.post(tweet_url, auth=auth, json=tweet_payload).json()
-        if "data" in tweet_res and "id" in tweet_res["data"]:
-            logger.info("✅ Successfully published to X/Twitter!")
+        # CRITICAL: Must send Content-Type: application/json for v2 API
+        tweet_headers = {"Content-Type": "application/json"}
+        tweet_res = requests.post(
+            tweet_url, auth=auth,
+            json=tweet_payload,
+            headers=tweet_headers
+        )
+        logger.info(f"X Tweet POST status: {tweet_res.status_code} | {tweet_res.text[:300]}")
+        tweet_json = tweet_res.json()
+        if "data" in tweet_json and "id" in tweet_json["data"]:
+            logger.info(f"✅ Successfully published to X/Twitter! Tweet ID: {tweet_json['data']['id']}")
             return True
         else:
-            logger.error(f"Failed to post Tweet: {tweet_res}")
+            logger.error(f"Failed to post Tweet: {tweet_json}")
     except Exception as e:
         logger.error(f"X Upload Exception: {e}")
     return False

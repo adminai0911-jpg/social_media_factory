@@ -12,12 +12,17 @@ import {
 } from "remotion";
 import React from "react";
 
-const FONTS = [
-  "Impact, sans-serif",
-  "'Arial Black', sans-serif",
-  "'Bebas Neue', cursive",
-  "system-ui, sans-serif"
-];
+// Load HD Hindi-supporting Google Font via @font-face in index.css is not reliable in Remotion.
+// Instead we inline a global style element to load from Google Fonts CDN.
+const GlobalFontStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@900&family=Bebas+Neue&family=Inter:wght@900&display=swap');
+  `}</style>
+);
+
+// Hindi-supporting font stack – fallback includes system Hindi fonts
+const HINDI_FONT = "'Noto Sans Devanagari', 'Mangal', 'Sanskrit Text', sans-serif";
+const IMPACT_FONT = "'Bebas Neue', 'Impact', sans-serif";
 
 const COLORS = [
   ["#FF0055", "#00FFCC", "#7700FF"], // Cyberpunk Neon
@@ -28,6 +33,20 @@ const COLORS = [
 ];
 
 const BASE_RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "KYA"];
+
+// Dynamic rotating neural alerts – changes on every run
+const NEURAL_ALERTS = [
+  { icon: "⚠️", text: "NEURAL LINK ACTIVE" },
+  { icon: "🧠", text: "MIND HACK DETECTED" },
+  { icon: "🔴", text: "DOPAMINE SPIKE NOW" },
+  { icon: "⚡", text: "BRAIN SIGNAL LOCKED" },
+  { icon: "🚨", text: "ATTENTION HIJACKED" },
+  { icon: "💀", text: "REALITY GLITCHING" },
+  { icon: "🔥", text: "ADRENALINE TRIGGER" },
+  { icon: "👁️", text: "SUBLIMINAL UPLOAD" },
+  { icon: "🌀", text: "HYPNOSIS IN PROGRESS" },
+  { icon: "❌", text: "ESCAPE IS IMPOSSIBLE" },
+];
 
 export const MainVideo: React.FC<{
   script: any;
@@ -49,7 +68,10 @@ export const MainVideo: React.FC<{
   const RED_WORDS = [...BASE_RED_WORDS, dynamicRedWord];
   const serotoninTarget = script.serotonin_payoff_number || 47212;
   
-  const font = FONTS[styleSeed % FONTS.length];
+  // Pick a unique neural alert based on styleSeed so it changes each run
+  const alertIndex = styleSeed % NEURAL_ALERTS.length;
+  const currentAlert = NEURAL_ALERTS[alertIndex];
+  
   const colorPalette = COLORS[styleSeed % COLORS.length];
 
   // Mathematical Timestamps
@@ -98,7 +120,9 @@ export const MainVideo: React.FC<{
 
   // Tension Meter Progress Math
   const tensionProgress = phase < 4 ? interpolate(frame, [0, p4_start * fps], [0, 100], {extrapolateRight: "clamp"}) : 100;
-  const isTensionCritical = tensionProgress > 95;
+
+  // 8D Stereo Simulation - slow left-right audio panning effect via visual shift indicator
+  const stereoPan = Math.sin(frame / (fps * 3)) * 0.5 + 0.5; // 0 to 1 oscillation
 
   // Liquid Mixing Background Math (Bright & HD)
   const bgAngle = (frame * 0.5) % 360;
@@ -107,19 +131,29 @@ export const MainVideo: React.FC<{
   const orb2X = 50 + Math.cos(frame / 35) * 40;
   const orb2Y = 50 + Math.sin(frame / 45) * 40;
 
+  // Neural Alert blinking
+  const alertFlash = frame % 8 < 4;
+
   return (
     <AbsoluteFill style={{ 
-      backgroundColor: colorPalette[0], // Bright base instead of black
+      backgroundColor: colorPalette[0],
       transform: `translate(${shakeX}px, ${shakeY}px)`,
     }}>
       
-      {/* 1. AUDIO LAYER */}
+      {/* Inline font loader */}
+      <GlobalFontStyle />
+      
+      {/* 1. AUDIO LAYER - Voice Over */}
       <Sequence from={0}><Audio src={staticFile(`v32_audio_0.mp3`)} volume={1.5} /></Sequence>
       {audio_offsets[1] && <Sequence from={Math.round(p2_start * fps)}><Audio src={staticFile(`v32_audio_1.mp3`)} volume={1.5} /></Sequence>}
       {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile(`v32_audio_2.mp3`)} volume={1.5} /></Sequence>}
       {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile(`v32_audio_3.mp3`)} volume={1.5} /></Sequence>}
       {audio_offsets[4] && <Sequence from={Math.round(p5_start * fps)}><Audio src={staticFile(`v32_audio_4.mp3`)} volume={1.5} /></Sequence>}
-      
+
+      {/* HYPNOTIC BACKGROUND MUSIC (loops throughout video) */}
+      <Sequence from={0}><Audio src={staticFile(`hypno.wav`)} volume={0.3} loop /></Sequence>
+
+      {/* SFX */}
       {Array.from({length: 20}).map((_, i) => {
           const glitchFrame = Math.round(p3_start * fps) + (i * 60);
           if (glitchFrame < p4_start * fps) {
@@ -130,41 +164,50 @@ export const MainVideo: React.FC<{
       {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile("riser.wav")} volume={0.5} /></Sequence>}
       {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile("impact.wav")} volume={2} /></Sequence>}
 
-      {/* 2. THE HD LIGHT COLOR BLENDING BACKGROUND (V23 Style) */}
+      {/* 2. THE HD LIGHT COLOR BLENDING BACKGROUND */}
       <AbsoluteFill style={{ 
           zIndex: 0, 
           background: `linear-gradient(${bgAngle}deg, ${colorPalette[0]}, ${colorPalette[1]}, ${colorPalette[2]})`,
           overflow: "hidden" 
       }}>
          <div style={{ position:"absolute", width: "150%", height: "150%", top: "-25%", left: "-25%", filter: "blur(60px)"}}>
-            <div style={{ position:"absolute", left: `${orb1X}%`, top: `${orb1Y}%`, width: "800px", height: "800px", borderRadius: "50%", background: colorPalette[1], opacity: 0.8, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
-            <div style={{ position:"absolute", left: `${orb2X}%`, top: `${orb2Y}%`, width: "900px", height: "900px", borderRadius: "50%", background: colorPalette[2], opacity: 0.8, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
+            <div style={{ position:"absolute", left: `${orb1X}%`, top: `${orb1Y}%`, width: "800px", height: "800px", borderRadius: "50%", background: colorPalette[1], opacity: 0.85, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
+            <div style={{ position:"absolute", left: `${orb2X}%`, top: `${orb2Y}%`, width: "900px", height: "900px", borderRadius: "50%", background: colorPalette[2], opacity: 0.85, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
          </div>
+         {/* Scan lines overlay for that cinematic HD feel */}
+         <div style={{ position:"absolute", width:"100%", height:"100%", backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)", zIndex:1 }} />
       </AbsoluteFill>
 
-
-      {/* 3. THE VISUAL CORE */}
+      {/* 3. THE VISUAL CORE - Bigger Floating Screen */}
       <AbsoluteFill style={{ zIndex: 10 }}>
-        {/* Phase 1 & 2: Floating Box */}
+        {/* Phase 1 & 2: Floating Box — BIGGER & GLOSSY */}
         <Sequence from={0} durationInFrames={Math.round(p3_start * fps)}>
            <div style={{
-             position: "absolute", top: "25%", left: "5%", width: "90%", height: "50%",
-             transform: `translateY(${Math.sin(frame / 20) * 20}px)`, 
-             boxShadow: `0 30px 80px rgba(0,0,0,0.5), 0 0 100px ${colorPalette[1]}`, 
-             border: `6px solid white`, borderRadius: "30px", overflow: "hidden",
+             position: "absolute", top: "20%", left: "3%", width: "94%", height: "58%",
+             transform: `translateY(${Math.sin(frame / 20) * 15}px)`, 
+             // HD glossy border with neon glow — NO grey background box
+             boxShadow: `0 40px 100px rgba(0,0,0,0.6), 0 0 120px ${colorPalette[1]}, inset 0 0 30px rgba(255,255,255,0.1)`, 
+             border: `5px solid rgba(255,255,255,0.8)`, 
+             borderRadius: "36px", overflow: "hidden",
+             backdropFilter: "blur(10px)",
            }}>
-              <OffthreadVideo src={staticFile(styleSeed % 2 === 0 ? "gta.mp4" : "sand.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {/* Inner gloss effect at top */}
+              <div style={{ position:"absolute", top:0, left:0, right:0, height:"30%", background:"linear-gradient(to bottom, rgba(255,255,255,0.25), transparent)", zIndex:2, pointerEvents:"none", borderRadius:"36px 36px 0 0" }} />
+              <OffthreadVideo 
+                src={staticFile(styleSeed % 2 === 0 ? "gta.mp4" : "sand.mp4")} 
+                style={{ width: "100%", height: "100%", objectFit: "cover", filter: "saturate(1.4) contrast(1.1) brightness(1.1)" }} 
+              />
            </div>
         </Sequence>
 
         {/* Phase 3: SMOOTH SPLIT SCREEN */}
         <Sequence from={Math.round(p3_start * fps)} durationInFrames={Math.round((p4_start - p3_start) * fps)}>
-           <AbsoluteFill style={{ display: "flex", flexDirection: "column", padding: "20px", gap: "20px" }}>
-             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `6px solid ${colorPalette[0]}`, boxShadow: `0 0 50px ${colorPalette[0]}` }}>
-                <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }} />
+           <AbsoluteFill style={{ display: "flex", flexDirection: "column", padding: "15px", gap: "15px" }}>
+             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `5px solid ${colorPalette[0]}`, boxShadow: `0 0 60px ${colorPalette[0]}, inset 0 0 20px rgba(255,255,255,0.05)` }}>
+                <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", filter:"saturate(1.5) contrast(1.1)" }} />
              </div>
-             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `6px solid ${colorPalette[1]}`, boxShadow: `0 0 50px ${colorPalette[1]}` }}>
-                <OffthreadVideo src={staticFile("sand.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `5px solid ${colorPalette[1]}`, boxShadow: `0 0 60px ${colorPalette[1]}, inset 0 0 20px rgba(255,255,255,0.05)` }}>
+                <OffthreadVideo src={staticFile("sand.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter:"saturate(1.5) contrast(1.1)" }} />
              </div>
            </AbsoluteFill>
         </Sequence>
@@ -188,48 +231,64 @@ export const MainVideo: React.FC<{
               <AbsoluteFill>
                  <div style={{ position: "absolute", width: "100%", height: "100%", background: `repeating-linear-gradient(0deg, transparent, transparent 40px, ${colorPalette[0]} 40px, ${colorPalette[0]} 45px)`, opacity: 0.3, transform: `translateY(${(frame*5)%45}px)` }} />
                  <div style={{
-                    position: "absolute", top: "25%", left: "10%", width: "80%", height: "50%",
+                    position: "absolute", top: "22%", left: "3%", width: "94%", height: "56%",
                     transform: `scale(${spring({fps, frame: frame - (Math.round(p4_start*fps)+15), config: {damping: 12}})})`,
-                    boxShadow: `0 0 150px ${colorPalette[1]}`, border: `10px solid white`, borderRadius: "40px", overflow: "hidden",
+                    boxShadow: `0 0 200px ${colorPalette[1]}, 0 0 60px white`, 
+                    border: `8px solid white`, borderRadius: "40px", overflow: "hidden",
                   }}>
-                     <OffthreadVideo src={staticFile(styleSeed % 2 === 0 ? "sand.mp4" : "gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "saturate(1.5)" }} />
+                     <div style={{ position:"absolute", top:0, left:0, right:0, height:"30%", background:"linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)", zIndex:2, pointerEvents:"none" }} />
+                     <OffthreadVideo src={staticFile(styleSeed % 2 === 0 ? "sand.mp4" : "gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "saturate(1.6) contrast(1.2) brightness(1.1)" }} />
                  </div>
-                 <div style={{ position: "absolute", bottom: "5%", width: "90%", left: "5%", background: "rgba(0,0,0,0.8)", border: `6px solid ${colorPalette[2]}`, padding: "20px", textAlign: "center", borderRadius: "20px" }}>
-                     <h1 style={{ margin: 0, color: colorPalette[1], fontSize: "80px", fontFamily: "monospace", textShadow: `0 0 40px ${colorPalette[1]}` }}>PAYOUT: {serotoninTarget.toLocaleString()}</h1>
+                 {/* PAYOUT counter — pure text, NO dark box */}
+                 <div style={{ position: "absolute", bottom: "5%", width: "94%", left: "3%", textAlign: "center" }}>
+                     <h1 style={{ 
+                       margin: 0, color: "white", fontSize: "90px", 
+                       fontFamily: IMPACT_FONT, 
+                       textShadow: `0 0 60px ${colorPalette[1]}, 0 0 20px white, 4px 4px 0 black`,
+                       WebkitTextStroke: "3px black"
+                     }}>PAYOUT: {serotoninTarget.toLocaleString()}</h1>
                  </div>
               </AbsoluteFill>
            )}
         </Sequence>
       </AbsoluteFill>
 
-      {/* 4. RESTORED FLASHING RED BOX (From V23) */}
+      {/* 4. DYNAMIC NEURAL ALERT BAR — changes every run, no grey box */}
       {(phase === 2 || phase === 3) && (
          <AbsoluteFill style={{ pointerEvents: "none", zIndex: 150 }}>
             <div style={{ 
-                position: "absolute", top: "5%", left: "5%", width: "90%", 
-                background: frame % 10 < 5 ? "#FF0044" : "transparent",
-                border: `6px solid ${frame % 10 < 5 ? "white" : "#FF0044"}`,
-                color: frame % 10 < 5 ? "white" : "#FF0044",
-                padding: "15px", textAlign: "center",
-                fontFamily: "monospace", fontSize: "50px", fontWeight: "bold",
-                boxShadow: frame % 10 < 5 ? "0 0 50px red" : "none",
-                borderRadius: "15px"
+                position: "absolute", top: "4%", left: "3%", width: "94%", 
+                background: alertFlash 
+                  ? `linear-gradient(90deg, #FF0044, #FF6600)` 
+                  : "transparent",
+                border: `5px solid ${alertFlash ? "white" : "#FF0044"}`,
+                color: alertFlash ? "white" : "#FF0044",
+                padding: "14px 20px", textAlign: "center",
+                fontFamily: IMPACT_FONT, 
+                fontSize: "52px", fontWeight: "bold",
+                letterSpacing: "4px",
+                boxShadow: alertFlash ? "0 0 60px red, 0 0 20px orange" : "none",
+                borderRadius: "18px",
+                // NO background box when not flashing — just border and text
             }}>
-                ⚠️ NEURAL LINK ACTIVE
+                {currentAlert.icon} {currentAlert.text}
             </div>
          </AbsoluteFill>
       )}
 
-      {/* 5. GAMIFICATION DOPAMINE COUNTER (Fixed black smudge!) */}
+      {/* 5. GAMIFICATION DOPAMINE COUNTER — NO dark box, pure glowing text */}
       <Sequence from={Math.round(p2_start * fps)} durationInFrames={Math.round((p4_start - p2_start) * fps)}>
         <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", zIndex: 150, pointerEvents: "none" }}>
-          {/* Removed the blur filter that caused the smudge */}
           <div style={{
-              background: "rgba(0,0,0,0.6)", padding: "20px 40px",
-              border: `4px solid ${colorPalette[0]}`, borderRadius: "30px", color: "white",
-              fontFamily: "monospace", fontSize: "70px", fontWeight: "bold",
-              textShadow: `0 0 20px ${colorPalette[0]}`,
-              transform: `translateY(300px)` // Moved down so it doesn't block center
+              // NO background/box — pure text with strong glow
+              padding: "0",
+              color: colorPalette[0],
+              fontFamily: IMPACT_FONT, 
+              fontSize: "80px", fontWeight: "bold",
+              textShadow: `0 0 40px ${colorPalette[0]}, 0 0 80px white, 4px 4px 0 black`,
+              WebkitTextStroke: "3px black",
+              transform: `translateY(300px)`,
+              letterSpacing: "2px"
           }}>
               {phase === 2 ? "SCANNING..." : Math.floor(interpolate(frame, [p3_start * fps, p4_start * fps], [0, serotoninTarget], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })).toLocaleString()}
           </div>
@@ -244,9 +303,10 @@ export const MainVideo: React.FC<{
           if (frame < spawnFrame || frame >= spawnFrame + fps * 2) return null;
           return (
             <div key={i} style={{
-              position: "absolute", left: `${30 + (i * 20)}%`, top: "50%", fontSize: "150px",
-              transform: `scale(${spring({ fps, frame: frame - spawnFrame, config: { damping: 10 } })}) translateY(${interpolate(frame - spawnFrame, [0, fps * 2], [0, -400])}px)`,
-              opacity: interpolate(frame - spawnFrame, [0, fps*1.5, fps*2], [1, 1, 0])
+              position: "absolute", left: `${25 + (i * 25)}%`, top: "48%", fontSize: "160px",
+              transform: `scale(${spring({ fps, frame: frame - spawnFrame, config: { damping: 10 } })}) translateY(${interpolate(frame - spawnFrame, [0, fps * 2], [0, -450])}px)`,
+              opacity: interpolate(frame - spawnFrame, [0, fps*1.5, fps*2], [1, 1, 0]),
+              filter: `drop-shadow(0 0 20px white)`
             }}>
               {emoji}
             </div>
@@ -254,49 +314,50 @@ export const MainVideo: React.FC<{
         })}
       </AbsoluteFill>
 
-      {/* 7. 4D CAPTIONS ENGINE (Crazy Animations, Reduced Size) */}
+      {/* 7. HD CAPTION ENGINE — NO background box, text-shadow + glow only */}
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", zIndex: 300, pointerEvents: "none" }}>
         {currentWord && (() => {
           const timeSinceWordStart = currentTime - currentWord.start;
-          const animStyle = currentWordIndex % 6; // 6 Different 4D animation styles
+          const animStyle = currentWordIndex % 6;
           
           let transformStr = "";
           let opacityVal = 1;
 
-          // 4D Animations Logic
           if (animStyle === 0) {
-            // Zoom In
             transformStr = `scale(${spring({ fps, frame: frame - Math.round(currentWord.start * fps), config: { damping: 12 } })})`;
           } else if (animStyle === 1) {
-            // Floating / Weaving
-            transformStr = `translate(${Math.sin(frame)*20}px, ${Math.cos(frame)*20}px) scale(1.1)`;
+            transformStr = `translate(${Math.sin(frame)*15}px, ${Math.cos(frame)*15}px) scale(1.1)`;
           } else if (animStyle === 2) {
-            // Flashing
             opacityVal = frame % 4 < 2 ? 1 : 0;
             transformStr = `scale(1.2)`;
           } else if (animStyle === 3) {
-            // 3D Flip
             const rotX = interpolate(timeSinceWordStart, [0, 0.2], [-90, 0], { extrapolateRight: "clamp" });
             transformStr = `perspective(500px) rotateX(${rotX}deg) scale(1.1)`;
           } else if (animStyle === 4) {
-            // Zoom Out
             const s = interpolate(timeSinceWordStart, [0, 0.2], [2, 1], { extrapolateRight: "clamp" });
             transformStr = `scale(${s})`;
           } else {
-            // Elastic Pop
-            transformStr = `scale(${spring({ fps, frame: frame - Math.round(currentWord.start * fps), config: { tension: 300, friction: 10 } })}) rotate(${(currentWordIndex % 2 === 0 ? 1 : -1) * 10}deg)`;
+            transformStr = `scale(${spring({ fps, frame: frame - Math.round(currentWord.start * fps), config: { tension: 300, friction: 10 } })}) rotate(${(currentWordIndex % 2 === 0 ? 1 : -1) * 8}deg)`;
           }
 
-          const glitchShadow = isVHSGlitch ? "10px 0 red, -10px 0 cyan" : `0 0 30px black`;
+          const glitchShadow = isVHSGlitch 
+            ? "10px 0 red, -10px 0 cyan" 
+            : `0 0 40px white, 0 0 80px ${colorPalette[currentWordIndex % colorPalette.length]}, 4px 4px 0 black`;
           
           if (isRedBox) {
+            // Red-highlighted words: vivid color, NO background box — just border + shadow
             return (
               <div style={{
-                  background: "#FF00AA", padding: "10px 40px", border: "6px solid white",
-                  fontSize: "80px", fontFamily: font, fontWeight: "900", color: "#FFF",
+                  border: `6px solid white`,
+                  borderRadius: "16px",
+                  padding: "8px 40px", 
+                  background: `linear-gradient(135deg, #FF0044, #FF6600)`,
+                  fontSize: "90px", fontFamily: IMPACT_FONT, fontWeight: "900", color: "#FFF",
                   textAlign: "center", transform: transformStr, opacity: opacityVal,
-                  boxShadow: "0 0 80px #FF00AA", borderRadius: "15px",
-                  maxWidth: "85%", wordWrap: "break-word", lineHeight: "1.1"
+                  textShadow: "0 0 80px #FF0044, 4px 4px 0 black",
+                  boxShadow: "0 0 100px #FF0044, 0 0 40px orange",
+                  maxWidth: "88%", wordWrap: "break-word", lineHeight: "1.1",
+                  letterSpacing: "2px"
                 }}>
                 {currentWord.word.toUpperCase()}
               </div>
@@ -304,47 +365,68 @@ export const MainVideo: React.FC<{
           } else {
             return (
               <div style={{
-                  fontSize: "75px", fontFamily: font, fontWeight: "900", 
-                  color: colorPalette[currentWordIndex % colorPalette.length], 
-                  textAlign: "center", WebkitTextStroke: "3px white", 
+                  // ZERO background/box — only text with multi-layer shadow for HD readability
+                  fontSize: "80px", fontFamily: HINDI_FONT, fontWeight: "900", 
+                  color: "white", 
+                  textAlign: "center",
                   textShadow: glitchShadow,
+                  WebkitTextStroke: "2px black",
                   transform: transformStr, opacity: opacityVal,
-                  maxWidth: "85%", wordWrap: "break-word", lineHeight: "1.1",
-                  background: "rgba(0,0,0,0.4)", padding: "10px 20px", borderRadius: "20px"
+                  maxWidth: "88%", wordWrap: "break-word", lineHeight: "1.2",
+                  // NO background, NO borderRadius, NO padding box
                 }}>
-                {currentWord.word.toUpperCase()}
+                {currentWord.word}
               </div>
             );
           }
         })()}
       </AbsoluteFill>
 
-      {/* 8. THE ADRENALINE COVER GRAPHIC (FIXED) */}
+      {/* 8. SUBLIMINAL FLASH */}
+      {isSubliminal && (
+        <AbsoluteFill style={{ zIndex: 999, backgroundColor: "white", opacity: 0.9 }}>
+          <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+            <div style={{ 
+              fontSize: "200px", fontFamily: IMPACT_FONT, color: "black", fontWeight: "900",
+              textShadow: "none"
+            }}>{subliminalWord}</div>
+          </AbsoluteFill>
+        </AbsoluteFill>
+      )}
+
+      {/* 9. THE ADRENALINE COVER (Frame 0 only) */}
       {frame === 0 && (
         <AbsoluteFill style={{ zIndex: 1000 }}>
-             <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+             <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter:"saturate(1.4) contrast(1.1)" }} />
              <div style={{ position: "absolute", width: "100%", height: "100%", background: `linear-gradient(45deg, ${colorPalette[0]}88, ${colorPalette[1]}88)` }} />
              <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
                  <div style={{
-                      background: "#FF00AA", padding: "20px 40px", border: "10px solid white",
-                      fontSize: "120px", fontFamily: "Impact", fontWeight: "900", color: "#FFF", // Reduced font size to 120px!
-                      textAlign: "center", boxShadow: "0 0 100px #000",
-                      maxWidth: "90%", wordWrap: "break-word"
+                      background: `linear-gradient(135deg, #FF0044, #FF6600)`,
+                      padding: "20px 50px", 
+                      border: "10px solid white",
+                      fontSize: "120px", fontFamily: IMPACT_FONT, fontWeight: "900", color: "#FFF",
+                      textAlign: "center", 
+                      boxShadow: "0 0 150px #FF0044, 0 0 50px orange",
+                      textShadow: "0 0 80px #FF0044, 6px 6px 0 black",
+                      maxWidth: "90%", wordWrap: "break-word",
+                      borderRadius: "24px",
+                      letterSpacing: "4px"
                     }}>
-                    {dynamicRedWord || "SIMULATION"}
-                 </div>
+                     {dynamicRedWord || "SIMULATION"}
+                  </div>
              </AbsoluteFill>
         </AbsoluteFill>
       )}
 
-      {/* 9. THE LOOP MIRROR */}
+      {/* 10. THE LOOP MIRROR (fade out) */}
       {phase === 5 && (
          <AbsoluteFill style={{ 
-            backgroundColor: "black", opacity: interpolate(frame, [p5_start * fps, total_duration * fps], [0, 1], {extrapolateRight:"clamp"}), zIndex: 1000 
+            backgroundColor: "black", 
+            opacity: interpolate(frame, [p5_start * fps, total_duration * fps], [0, 1], {extrapolateRight:"clamp"}), 
+            zIndex: 1000 
          }} />
       )}
 
     </AbsoluteFill>
   );
 };
-

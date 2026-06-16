@@ -223,6 +223,60 @@ def create_tone(filename, freq, duration, vol=0.5, decay=True, riser=False):
     except Exception as e:
         logger.error(f"Failed to create {filename}: {e}")
 
+def create_hypnotic_music(filename, duration=35.0):
+    """
+    Generate a stereo hypnotic background drone with binaural beat effect.
+    Left channel: 432 Hz carrier with slow LFO modulation
+    Right channel: 436 Hz (4 Hz binaural beat = theta/deep focus state)
+    Plus sub-bass pulse and slow harmonic overtones for depth.
+    """
+    sample_rate = 44100
+    n_samples = int(sample_rate * duration)
+    try:
+        with wave.open(filename, 'w') as f:
+            f.setnchannels(2)  # Stereo!
+            f.setsampwidth(2)
+            f.setframerate(sample_rate)
+            
+            for i in range(n_samples):
+                t = float(i) / sample_rate
+                
+                # Fade in/out envelope (2s fade in, 3s fade out)
+                fade_in = min(1.0, t / 2.0)
+                fade_out = min(1.0, (duration - t) / 3.0)
+                env = fade_in * fade_out
+                
+                # Slow LFO tremolo (0.15 Hz = very slow wobble)
+                lfo = 0.7 + 0.3 * math.sin(2 * math.pi * 0.15 * t)
+                
+                # Left: 432 Hz (healing frequency carrier)
+                left_carrier = math.sin(2 * math.pi * 432.0 * t)
+                # Subtle harmonic overtones for richness
+                left_carrier += 0.35 * math.sin(2 * math.pi * 864.0 * t)   # 2nd harmonic
+                left_carrier += 0.15 * math.sin(2 * math.pi * 216.0 * t)   # sub-octave
+                # Sub-bass pulse (60 Hz) for body feel
+                left_carrier += 0.4 * math.sin(2 * math.pi * 60.0 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
+                
+                # Right: 436 Hz (creates 4 Hz theta binaural beat with left)
+                right_carrier = math.sin(2 * math.pi * 436.0 * t)
+                right_carrier += 0.35 * math.sin(2 * math.pi * 872.0 * t)  # 2nd harmonic
+                right_carrier += 0.15 * math.sin(2 * math.pi * 218.0 * t)  # sub-octave
+                right_carrier += 0.4 * math.sin(2 * math.pi * 60.0 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
+                
+                vol = 0.28  # Gentle volume (voice-over will be louder)
+                left_val = int(vol * lfo * env * left_carrier * 32767)
+                right_val = int(vol * lfo * env * right_carrier * 32767)
+                
+                # Clamp to prevent clipping
+                left_val = max(-32767, min(32767, left_val))
+                right_val = max(-32767, min(32767, right_val))
+                
+                f.writeframes(struct.pack('<hh', left_val, right_val))
+                
+        logger.info(f"✅ Created hypnotic background music: {filename}")
+    except Exception as e:
+        logger.error(f"Failed to create {filename}: {e}")
+
 def ensure_sfx(studio_dir):
     sfx_dir = os.path.join(studio_dir, "public")
     os.makedirs(sfx_dir, exist_ok=True)
@@ -232,6 +286,9 @@ def ensure_sfx(studio_dir):
         create_tone(os.path.join(sfx_dir, "riser.wav"), 100, 2.0, riser=True)
     if not os.path.exists(os.path.join(sfx_dir, "impact.wav")):
         create_tone(os.path.join(sfx_dir, "impact.wav"), 60, 1.5)
+    # Always regenerate hypno.wav so it uses the latest duration
+    logger.info("Generating hypnotic background music (binaural 432Hz/436Hz stereo drone)...")
+    create_hypnotic_music(os.path.join(sfx_dir, "hypno.wav"), duration=40.0)
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
