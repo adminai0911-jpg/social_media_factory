@@ -414,14 +414,13 @@ def distribute_to_all_platforms(video_path, description):
     }
 
 if __name__ == "__main__":
-    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V34_ULTRA_4K.mp4"))
+    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V35_HD.mp4"))
     json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "remotion-studio", "public", "v32_script.json"))
     
     if not os.path.exists(video_path):
         logger.error(f"Rendered video not found at {video_path}")
-        logger.warning("Creating a dummy video file for local testing...")
-        with open(video_path, "wb") as f:
-            f.write(b"dummy video data")
+        # Stop execution so we don't upload a dummy file that breaks IG/X and silently fails on FB/YT
+        raise FileNotFoundError(f"Video file missing: {video_path}")
         
     caption = "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
     if os.path.exists(json_path):
