@@ -411,12 +411,12 @@ def download_dynamic_backgrounds(public_dir):
                 url, "-o", raw_out, "--no-playlist", "--quiet"
             ], check=True, timeout=120)
 
-            logger.info(f"⚙️  Optimizing {name}.mp4 to 1080x1920...")
+            logger.info(f"⚙️  Optimizing {name}.mp4 to 4K-like Ultra HD (1080x1920)...")
             subprocess.run([
                 "ffmpeg", "-y", "-i", raw_out,
-                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,unsharp=5:5:1.0:5:5:0.0,eq=contrast=1.15:saturation=1.25:brightness=0.03",
                 "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
-                "-crf", "18", "-g", "1", "-keyint_min", "1", "-an", final_out
+                "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
             ], check=True, timeout=180)
 
             if os.path.exists(raw_out):
