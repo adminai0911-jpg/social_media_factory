@@ -445,7 +445,7 @@ def build_v32_payload():
         "--crf=12",
         "--video-bitrate=8000k",
         f"--concurrency={concurrency}",
-        "--timeout=1200",
+        "--timeout=1200000",
         "--gl=swangle",
     ]
     subprocess.run(cmd, cwd=studio_dir, check=True)
