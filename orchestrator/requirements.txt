@@ -3,3 +3,4 @@ google-generativeai
 mutagen
 python-dotenv
 requests
+requests-oauthlib

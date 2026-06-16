@@ -422,38 +422,34 @@ def build_v32_payload():
     studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
     ensure_sfx(studio_dir)
         
-    logger.info("🎬 Triggering V34 4K-Quality Remotion Render...")
+    logger.info("🎬 Triggering V34 4K Premium Remotion Render (CRF=12, Scale=2, Concurrency=2)...")
     out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V34_ULTRA_4K.mp4"))
 
-    # ── V34 Quality Flags ─────────────────────────────────────────────────────
-    # --crf=10        → Near-lossless H.264 (0=lossless, 51=worst; 10=excellent)
-    # --video-bitrate=8000k → Force high bitrate cap for 4K-quality clarity
-    # --gl=angle      → Hardware-accelerated WebGL (works on GH Actions Linux)
+    # ── V34 Render Flags — Max Quality + Optimized Speed ─────────────────────
+    # --scale=2         → Double resolution (1080x1920 to 2160x3840 = True 4K!)
+    # --crf=12          → Near-lossless visual quality (ultra-glossy, crisp text)
+    # --video-bitrate=8000k → High bitrate for pristine 4K playback
+    # --concurrency=2   → Parallel rendering on both runner CPU cores
+    # --timeout=1200    → Kill after 20 minutes to save Actions minutes if hung
+    # --gl=swangle      → Software WebGL rendering on headless Linux
     # ─────────────────────────────────────────────────────────────────────────
+
+    # Read REMOTION_CONCURRENCY from env (set to 2 in workflow for 2-core runners)
+    concurrency = os.environ.get("REMOTION_CONCURRENCY", "2")
+
     cmd = [
         "npx", "remotion", "render",
         "src/index.ts", "MainVideo", out_file,
         "--props", json_path,
-        "--crf=10",
+        "--scale=2",
+        "--crf=12",
         "--video-bitrate=8000k",
-        "--gl=angle",
+        f"--concurrency={concurrency}",
+        "--timeout=1200",
+        "--gl=swangle",
     ]
-    try:
-        subprocess.run(cmd, cwd=studio_dir, check=True)
-        logger.info(f"✅ V34 4K-Quality render complete: {out_file}")
-    except subprocess.CalledProcessError:
-        # Fallback: try without --gl flag (some runners don't support angle)
-        logger.warning("angle GL failed, retrying with swangle...")
-        cmd_fallback = [
-            "npx", "remotion", "render",
-            "src/index.ts", "MainVideo", out_file,
-            "--props", json_path,
-            "--crf=10",
-            "--video-bitrate=8000k",
-            "--gl=swangle",
-        ]
-        subprocess.run(cmd_fallback, cwd=studio_dir, check=True)
-        logger.info(f"✅ V34 render complete (swangle): {out_file}")
+    subprocess.run(cmd, cwd=studio_dir, check=True)
+    logger.info(f"✅ V34 4K render complete: {out_file}")
 
     logger.info("Video rendering complete. Script execution finished.")
 
