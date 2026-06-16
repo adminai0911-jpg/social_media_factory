@@ -429,12 +429,12 @@ def build_v32_payload():
     # --scale=1              → Native resolution (1080x1920 vertical HD)
     # --crf=18               → Excellent visual quality (visually lossless), fast encode
     # --image-format=jpeg    → JPEG frames = 40% faster render vs PNG, no transparency needed
-    # --concurrency=4        → All 4 runner vCPUs working in parallel
+    # --concurrency=2        → Parallel rendering on both runner CPU cores (GitHub free tier gives 2 cores)
     # --timeout=1200000      → Kill after 20 minutes to save Actions minutes if hung
     # ─────────────────────────────────────────────────────────────────────────────
 
-    # Read REMOTION_CONCURRENCY from env, override default to 4
-    concurrency = os.environ.get("REMOTION_CONCURRENCY", "4")
+    # Read REMOTION_CONCURRENCY from env, override default to 2
+    concurrency = os.environ.get("REMOTION_CONCURRENCY", "2")
 
     cmd = [
         "npx", "remotion", "render",

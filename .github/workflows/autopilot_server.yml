@@ -11,7 +11,7 @@ name: V35 Ultra HD Autopilot (Minutes-Optimized)
 #   ✅ Python pip cache            saves  2-3 min
 #   ✅ Background video cache      saves  3-5 min
 #   ✅ JPEG frame format           saves  3-5 min (40% faster than PNG)
-#   ✅ --concurrency=4             saves  5-8 min (4 vCPUs instead of 2)
+#   ✅ --concurrency=2             saves  5-8 min (maxes out GitHub's 2 vCPUs)
 #   ✅ CRF=18 (vs 12)             saves  2-3 min  (still excellent quality)
 #   ✅ Pre-scaled 540p All-Intra   saves  5-10 min (instant frame seeks)
 #   ✅ timeout-minutes: 20         kills hung jobs that waste minutes
@@ -153,8 +153,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Tell Remotion render to use all 4 runner vCPUs for max parallel frame rendering
-          REMOTION_CONCURRENCY: "4"
+          # Tell Remotion render to use all 2 runner vCPUs for max parallel frame rendering
+          REMOTION_CONCURRENCY: "2"
         run: |
           python orchestrator/v32_dopamine_engine.py
 
