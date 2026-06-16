@@ -12,17 +12,33 @@ import {
 } from "remotion";
 import React from "react";
 
+import { loadFont as loadDevanagari } from "@remotion/google-fonts/NotoSansDevanagari";
+import { loadFont as loadMontserrat } from "@remotion/google-fonts/Montserrat";
+import { loadFont as loadBebasNeue } from "@remotion/google-fonts/BebasNeue";
+
+const { fontFamily: devanagariFont } = loadDevanagari("normal", {
+  weights: ["700", "900"],
+  subsets: ["devanagari"],
+});
+
+const { fontFamily: montserratFont } = loadMontserrat("normal", {
+  weights: ["900"],
+});
+
+const { fontFamily: bebasFont } = loadBebasNeue("normal", {
+  weights: ["400"],
+});
+
 // ─── FONT LOADER ────────────────────────────────────────────────────────────
 const GlobalStyle = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@700;900&family=Montserrat:wght@900&family=Bebas+Neue&display=swap');
     * { box-sizing: border-box; }
   `}</style>
 );
 
 // ─── DESIGN SYSTEM ──────────────────────────────────────────────────────────
-const HINDI_FONT  = "'Noto Sans Devanagari', 'Mangal', 'Sanskrit Text', Arial, sans-serif";
-const TITLE_FONT  = "'Bebas Neue', 'Montserrat', Impact, sans-serif";
+const HINDI_FONT  = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-serif`;
+const TITLE_FONT  = `${bebasFont}, ${montserratFont}, Impact, sans-serif`;
 
 // Premium palette pairs: [primary, accent, glow]
 const PALETTES = [
@@ -56,7 +72,7 @@ export const MainVideo: React.FC<{
   total_duration: number;
 }> = ({ script, timings, audio_offsets, total_duration }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
+  const { fps } = useVideoConfig();
   const t = frame / fps;
 
   if (!script || !audio_offsets || audio_offsets.length < 5) return null;
@@ -67,10 +83,10 @@ export const MainVideo: React.FC<{
   const alertText  = NEURAL_ALERTS[seed % NEURAL_ALERTS.length];
   const redKw      = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g,"") : "WARNING";
   const subliminal = (script.subliminal_flash_word || "WAKE UP").toUpperCase();
-  const serotonin  = script.serotonin_payoff_number || 88319;
+  const serotonin  = Number(script.serotonin_payoff_number || 88319);
   const activeRedWords = [...RED_WORDS, redKw];
 
-  const [p1,p2,p3,p4,p5] = audio_offsets;
+  const [,p2,p3,p4,p5] = audio_offsets;
   let phase = 1;
   if (t >= p2 && t < p3) phase = 2;
   else if (t >= p3 && t < p4) phase = 3;
@@ -93,7 +109,7 @@ export const MainVideo: React.FC<{
   const sy = shakeAmt > 0 ? (random(frame + 1) - 0.5) * shakeAmt : 0;
 
   // Animated background orbs
-  const bgAngle = (frame * 0.4) % 360;
+
   const o1x = 50 + Math.sin(frame / 45) * 35;
   const o1y = 50 + Math.cos(frame / 38) * 35;
   const o2x = 50 + Math.cos(frame / 30) * 42;
@@ -112,7 +128,7 @@ export const MainVideo: React.FC<{
   // 8D panning indicator for visual sync (audio pans L→R→L)
   const panAngle    = (frame / fps) * 0.2 * Math.PI * 2;
   const panLeft     = 0.5 + 0.5 * Math.cos(panAngle);  // 0→1 oscillation
-  const panGlowLeft = `rgba(${Math.round(panLeft * 255)},50,255,0.6)`;
+
 
   // ── Floating screen bob
   const bobY = Math.sin(frame / 22) * 14;
@@ -189,7 +205,7 @@ export const MainVideo: React.FC<{
             <OffthreadVideo
               src={staticFile(seed%2===0?"gta.mp4":"sand.mp4")}
               style={{ width:"100%", height:"100%", objectFit:"cover",
-                filter:`saturate(1.6) contrast(1.15) brightness(1.05) sharpen(1)` }}
+                filter:`saturate(1.6) contrast(1.15) brightness(1.05)` }}
             />
             {/* Glass gloss — top reflection */}
             <div style={{
@@ -242,14 +258,14 @@ export const MainVideo: React.FC<{
         <Sequence from={Math.round(p4*fps)}>
           {shatterActive ? (
             <AbsoluteFill style={{ display:"flex", flexWrap:"wrap" }}>
-              {Array.from({length:8}).map((_,i)=>(
+              {Array.from({length:4}).map((_,i)=>(
                 <div key={i} style={{
-                  width:"50%", height:"25%", overflow:"hidden",
+                  width:"50%", height:"50%", overflow:"hidden",
                   transform:`scale(${1+random(i)*0.25}) rotate(${(random(i)-0.5)*25}deg) translate(${(random(i)-0.5)*120}px,${(random(i)-0.5)*120}px)`,
                   border:`4px solid ${PALETTES[i%PALETTES.length].p}`,
                   filter:`hue-rotate(${i*45}deg) saturate(2)`
                 }}>
-                  <OffthreadVideo src={staticFile(seed%2===0?"sand.mp4":"gta.mp4")} style={{ width:"200%",height:"400%",objectFit:"cover",transform:`translate(-${(i%2)*50}%,-${Math.floor(i/2)*25}%)` }}/>
+                  <OffthreadVideo src={staticFile(seed%2===0?"sand.mp4":"gta.mp4")} style={{ width:"200%",height:"200%",objectFit:"cover",transform:`translate(-${(i%2)*50}%,-${Math.floor(i/2)*50}%)` }}/>
                 </div>
               ))}
             </AbsoluteFill>
@@ -389,10 +405,10 @@ export const MainVideo: React.FC<{
             const s=interpolate(elapsed,[0,0.18],[2.2,1],{extrapolateRight:"clamp"});
             tf=`scale(${s})`;
           } else {
-            tf=`scale(${spring({fps,frame:frame-Math.round(word.start*fps),config:{tension:280,friction:12}})}) rotate(${wordIdx%2===0?8:-8}deg)`;
+            tf=`scale(${spring({fps,frame:frame-Math.round(word.start*fps),config:{stiffness:280,damping:12}})}) rotate(${wordIdx%2===0?8:-8}deg)`;
           }
 
-          const glitch = isVHS?"12px 0 red,-12px 0 cyan":"none";
+
 
           if(isRed){
             // RED keyword — gradient glow, zero background box

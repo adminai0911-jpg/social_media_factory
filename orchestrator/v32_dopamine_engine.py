@@ -441,10 +441,9 @@ def build_v32_payload():
         "src/index.ts", "MainVideo", out_file,
         "--props", json_path,
         "--scale=1",
-        "--crf=12",
+        "--crf=18",
         f"--concurrency={concurrency}",
         "--timeout=1200000",
-        "--gl=swangle",
     ]
     subprocess.run(cmd, cwd=studio_dir, check=True)
     logger.info(f"✅ V34 4K render complete: {out_file}")
