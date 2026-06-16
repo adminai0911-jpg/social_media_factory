@@ -102,7 +102,7 @@ jobs:
           path: |
             remotion-studio/public/gta.mp4
             remotion-studio/public/sand.mp4
-          key: bg-videos-v5-optimized-g1
+          key: bg-videos-v5-1080p-g2
           # Fixed key = only downloaded ONCE then cached forever in this repo
 
       # ── STEP 10: Download videos ONLY on cache miss ───────────────────────
@@ -128,9 +128,9 @@ jobs:
             || curl -L "https://raw.githubusercontent.com/mdn/learning-area/master/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4" \
                -o remotion-studio/public/sand_raw.mp4
 
-          echo "⚡ Pre-converting and optimizing background videos (540p, GOP=1, All-Intra, no audio)..."
-          ffmpeg -y -i remotion-studio/public/gta_raw.mp4 -vf "scale=540:960" -c:v libx264 -preset superfast -tune fastdecode -crf 22 -g 1 -keyint_min 1 -an remotion-studio/public/gta.mp4 || cp remotion-studio/public/gta_raw.mp4 remotion-studio/public/gta.mp4
-          ffmpeg -y -i remotion-studio/public/sand_raw.mp4 -vf "scale=540:960" -c:v libx264 -preset superfast -tune fastdecode -crf 22 -g 1 -keyint_min 1 -an remotion-studio/public/sand.mp4 || cp remotion-studio/public/sand_raw.mp4 remotion-studio/public/sand.mp4
+          echo "⚡ Pre-converting and optimizing background videos (1080p, GOP=1, All-Intra, no audio)..."
+          ffmpeg -y -i remotion-studio/public/gta_raw.mp4 -vf "scale=1080:1920" -c:v libx264 -preset superfast -tune fastdecode -crf 18 -g 1 -keyint_min 1 -an remotion-studio/public/gta.mp4 || cp remotion-studio/public/gta_raw.mp4 remotion-studio/public/gta.mp4
+          ffmpeg -y -i remotion-studio/public/sand_raw.mp4 -vf "scale=1080:1920" -c:v libx264 -preset superfast -tune fastdecode -crf 18 -g 1 -keyint_min 1 -an remotion-studio/public/sand.mp4 || cp remotion-studio/public/sand_raw.mp4 remotion-studio/public/sand.mp4
 
           rm -f remotion-studio/public/*_raw.mp4
 

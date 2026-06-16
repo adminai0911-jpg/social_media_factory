@@ -42,11 +42,11 @@ const TITLE_FONT  = `${bebasFont}, ${montserratFont}, Impact, sans-serif`;
 
 // Premium palette pairs: [primary, accent, glow]
 const PALETTES = [
-  { p: "#FF0055", a: "#00F5FF", g: "#FF00CC", bg: ["#0A0018", "#200040", "#0D0030"] },
-  { p: "#FFD700", a: "#FF6600", g: "#FF00AA", bg: ["#1A0800", "#2D1200", "#0D0500"] },
-  { p: "#00FF88", a: "#0066FF", g: "#00FFFF", bg: ["#000D1A", "#001A0D", "#000820"] },
-  { p: "#FF3366", a: "#FF9933", g: "#FFCC00", bg: ["#1A0008", "#200010", "#100008"] },
-  { p: "#AA00FF", a: "#00CCFF", g: "#FF00AA", bg: ["#080018", "#0A0025", "#050012"] },
+  { p: "#FF0055", a: "#00F5FF", g: "#FF00CC", bg: ["#3D002A", "#003A4D", "#350035"] },
+  { p: "#FFD700", a: "#FF6600", g: "#FF00AA", bg: ["#3A2500", "#4D1A00", "#300020"] },
+  { p: "#00FF88", a: "#0066FF", g: "#00FFFF", bg: ["#002F1A", "#003A4D", "#001A3D"] },
+  { p: "#FF3366", a: "#FF9933", g: "#FFCC00", bg: ["#4D001A", "#4D1A00", "#3D2A00"] },
+  { p: "#AA00FF", a: "#00CCFF", g: "#FF00AA", bg: ["#25004D", "#003A4D", "#350025"] },
 ];
 
 const NEURAL_ALERTS = [
@@ -97,8 +97,8 @@ export const MainVideo: React.FC<{
   const word    = timings[wordIdx];
   const isRed   = word ? activeRedWords.some(r => word.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r)) : false;
 
-  // VHS glitch pulse
-  const isVHS         = frame % 120 > 112;
+  // Occasional 4D VHS glitch pulse every 2 seconds
+  const isVHS         = frame % 50 > 45;
   const sublimFrame   = Math.round(p3 * fps) + 90;
   const isSubliminal  = frame === sublimFrame;
   const shatterActive = phase === 4 && frame < Math.round(p4 * fps) + 12;
@@ -168,20 +168,20 @@ export const MainVideo: React.FC<{
 
       {/* ── LAYER 1: DEEP DARK PREMIUM BACKGROUND ─────────────────────── */}
       <AbsoluteFill style={{ zIndex: 0 }}>
-        {/* Deep mesh gradient base with integrated soft moving orbs (optimized to render 10x faster with 0ms blur overhead) */}
+        {/* Bright, highly saturated mesh gradient base */}
         <div style={{
           position: "absolute", inset: 0,
           background: `
-            radial-gradient(circle at ${o1x}% ${o1y}%, ${pal.p}33, transparent 50%),
-            radial-gradient(circle at ${o2x}% ${o2y}%, ${pal.a}25, transparent 55%),
-            radial-gradient(circle at ${o3x}% ${o3y}%, ${pal.g}20, transparent 45%),
+            radial-gradient(circle at ${o1x}% ${o1y}%, ${pal.p}55, transparent 55%),
+            radial-gradient(circle at ${o2x}% ${o2y}%, ${pal.a}44, transparent 60%),
+            radial-gradient(circle at ${o3x}% ${o3y}%, ${pal.g}40, transparent 50%),
             radial-gradient(ellipse at 50% 50%, ${pal.bg[1]} 0%, ${pal.bg[0]} 60%, ${pal.bg[2]} 100%)
           `
         }}/>
         {/* Fine scanlines for cinematic texture */}
-        <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.03) 3px,rgba(255,255,255,0.03) 4px)", pointerEvents:"none" }}/>
         {/* Vignette overlay */}
-        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.7) 100%)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.6) 100%)", pointerEvents:"none" }}/>
       </AbsoluteFill>
 
       {/* ── LAYER 2: MAIN VISUAL SCREEN ───────────────────────────────── */}
@@ -201,11 +201,12 @@ export const MainVideo: React.FC<{
               0 30px 80px rgba(0,0,0,0.7)
             `,
           }}>
-            {/* The actual video */}
+            {/* The actual video with heavy glitch displacement when VHS is active */}
             <OffthreadVideo
               src={staticFile(seed%2===0?"gta.mp4":"sand.mp4")}
               style={{ width:"100%", height:"100%", objectFit:"cover",
-                filter:`saturate(1.6) contrast(1.15) brightness(1.05)` }}
+                transform: isVHS ? `scale(1.05) translateX(${random(frame)*10-5}px)` : "none",
+                filter: isVHS ? `saturate(2) contrast(1.5) hue-rotate(90deg)` : `saturate(1.6) contrast(1.15) brightness(1.05)` }}
             />
             {/* Glass gloss — top reflection */}
             <div style={{
@@ -388,7 +389,7 @@ export const MainVideo: React.FC<{
       </AbsoluteFill>
 
       {/* ── LAYER 8: HD CAPTION ENGINE ─────────────────────────────────── */}
-      <AbsoluteFill style={{ zIndex:300, justifyContent:"center", alignItems:"center", pointerEvents:"none" }}>
+      <AbsoluteFill style={{ zIndex:300, justifyContent:"flex-end", alignItems:"center", paddingBottom:"25%", pointerEvents:"none" }}>
         {word && (()=>{
           const elapsed = t - word.start;
           const ai = wordIdx % 6;
@@ -427,16 +428,17 @@ export const MainVideo: React.FC<{
               </div>
             );
           } else {
-            // Normal word — pure text, zero box, max readability
+            // Normal word — dynamic vibrant text color (white, primary, or accent)
+            const wordCol = wordIdx % 3 === 0 ? "#FFFFFF" : (wordIdx % 3 === 1 ? pal.p : pal.g);
             return (
               <div style={{
                 fontFamily:HINDI_FONT, fontSize:84, fontWeight:900,
-                color:"#FFFFFF",
+                color:wordCol,
                 textShadow:`
-                  0 0 4px black,
-                  0 0 20px ${pal.p}
+                  0 0 8px black,
+                  0 0 30px ${wordCol}
                 `,
-                WebkitTextStroke:"2px rgba(0,0,0,0.6)",
+                WebkitTextStroke:`2px ${wordIdx % 3 === 0 ? "rgba(0,0,0,0.6)" : "white"}`,
                 transform:tf, opacity:op,
                 textAlign:"center", maxWidth:"90%",
                 lineHeight:1.2, letterSpacing:2,
