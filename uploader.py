@@ -259,41 +259,51 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x_via_make(video_path, description):
-    MAKE_WEBHOOK_URL = os.environ.get("MAKE_WEBHOOK_URL", "")
-    if not MAKE_WEBHOOK_URL:
-        logger.warning("⏭️ Skipping X/Twitter via Make.com (Missing MAKE_WEBHOOK_URL)")
+def upload_to_x_via_webhook(video_path, description):
+    """Post to X/Twitter via a free webhook service (Zapier or Make.com).
+    Set ZAPIER_WEBHOOK_URL or MAKE_WEBHOOK_URL in GitHub Secrets.
+    Zapier is recommended: free at zapier.com, 100 posts/month, no API key needed.
+    """
+    # Support both Zapier (recommended, free) and Make.com webhooks
+    WEBHOOK_URL = os.environ.get("ZAPIER_WEBHOOK_URL") or os.environ.get("MAKE_WEBHOOK_URL", "")
+    WEBHOOK_SERVICE = "Zapier" if os.environ.get("ZAPIER_WEBHOOK_URL") else "Make.com"
+
+    if not WEBHOOK_URL:
+        logger.warning("⏭️ Skipping X/Twitter (Missing ZAPIER_WEBHOOK_URL or MAKE_WEBHOOK_URL secret)")
+        logger.warning("👉 Fix: Go to zapier.com → Create free account → Webhooks by Zapier trigger → X (Twitter) action → paste URL into GitHub secret ZAPIER_WEBHOOK_URL")
         return False
 
-    logger.info("📤 Starting X/Twitter upload via Make.com Webhook...")
+    logger.info(f"📤 Starting X/Twitter upload via {WEBHOOK_SERVICE} Webhook...")
     try:
-        # We need a public URL for Make.com to download and post the video.
+        # Upload video to get a public URL the webhook service can download
         video_url = upload_to_tmpfiles(video_path)
         if not video_url:
             logger.error("❌ Failed to get public URL for X/Twitter Webhook. Skipping.")
             return False
 
-        # Clean up tweet text (X limits to 280 chars)
+        # X limits tweets to 280 chars
         tweet_text = description
         if len(tweet_text) > 270:
             tweet_text = tweet_text[:267] + "..."
 
         payload = {
             "video_url": video_url,
-            "caption": tweet_text
+            "caption": tweet_text,
+            "text": tweet_text,    # Zapier uses 'data' field names from payload
+            "message": tweet_text  # Some services use 'message'
         }
 
-        res = requests.post(MAKE_WEBHOOK_URL, json=payload)
-        
-        if res.status_code in [200, 202, 204] or res.text == "Accepted":
-            logger.info("✅ Successfully sent payload to Make.com for X/Twitter!")
+        res = requests.post(WEBHOOK_URL, json=payload, timeout=30)
+
+        if res.status_code in [200, 202, 204] or "success" in res.text.lower() or res.text.strip() in ["Accepted", "ok", "1"]:
+            logger.info(f"✅ Successfully sent payload to {WEBHOOK_SERVICE} for X/Twitter!")
             return True
         else:
-            logger.error(f"❌ Failed to trigger Make.com webhook: {res.status_code} - {res.text}")
+            logger.error(f"❌ Failed to trigger {WEBHOOK_SERVICE} webhook: {res.status_code} - {res.text}")
             return False
-            
+
     except Exception as e:
-        logger.error(f"X Upload via Make.com Exception: {e}")
+        logger.error(f"X Upload via {WEBHOOK_SERVICE} Exception: {e}")
     return False
 
 def distribute_to_all_platforms(video_path, description):
@@ -306,7 +316,7 @@ def distribute_to_all_platforms(video_path, description):
     fb = upload_to_facebook_reels(video_path, description)
     ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x_via_make(video_path, description)
+    x = upload_to_x_via_webhook(video_path, description)
     
     logger.info("🚀 Distribution Complete!")
     
