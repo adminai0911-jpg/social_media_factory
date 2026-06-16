@@ -391,7 +391,7 @@ def download_dynamic_backgrounds(public_dir):
         try:
             # Get top 15 results for this search query
             result = subprocess.run(
-                ["yt-dlp", f"ytsearch15:{query}", "--get-id", "--match-filter", "duration < 180"],
+                [sys.executable, "-m", "yt_dlp", f"ytsearch15:{query}", "--get-id", "--match-filter", "duration < 180"],
                 capture_output=True, text=True, timeout=30
             )
             
@@ -407,7 +407,7 @@ def download_dynamic_backgrounds(public_dir):
             logger.info(f"📥 Downloading selected video ({selected_id}) for {name}...")
             
             subprocess.run([
-                "yt-dlp", "-f", "bestvideo[ext=mp4][height<=1080]",
+                sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]",
                 url, "-o", raw_out, "--no-playlist", "--quiet"
             ], check=True, timeout=120)
 
