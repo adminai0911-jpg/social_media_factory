@@ -65,19 +65,45 @@ def post_to_x(caption: str, video_path: str = None) -> bool:
 
             # Enter username / email
             logger.info(f"📧 Entering username: {X_USERNAME}")
-            username_input = page.wait_for_selector('input[autocomplete="username"]', timeout=15000)
+            try:
+                username_input = page.wait_for_selector('input[autocomplete="username"]', timeout=8000)
+            except Exception:
+                logger.info("⚠️ input[autocomplete='username'] not found. Trying text label...")
+                try:
+                    username_input = page.get_by_label("Phone, email, or username")
+                    username_input.wait_for(timeout=5000)
+                except Exception:
+                    username_input = page.get_by_label("Email or username")
+                    username_input.wait_for(timeout=5000)
+            
             username_input.fill(X_USERNAME)
             time.sleep(1)
             page.keyboard.press("Enter")
-            time.sleep(2)
+            time.sleep(3)
 
             # Sometimes X asks for email verification (unusual login detection)
-            verify_input = page.locator('input[data-testid="ocfEnterTextTextInput"]')
-            if verify_input.is_visible(timeout=3000):
+            # Locate input field asking for verify
+            verify_input = None
+            try:
+                verify_input = page.locator('input[data-testid="ocfEnterTextTextInput"]')
+                if not verify_input.is_visible(timeout=2000):
+                    verify_input = None
+            except Exception:
+                pass
+
+            if not verify_input:
+                try:
+                    verify_input = page.get_by_label("Enter your phone number or email address")
+                    if not verify_input.is_visible(timeout=2000):
+                        verify_input = None
+                except Exception:
+                    pass
+
+            if verify_input:
                 logger.info("🔍 X asked for extra verification — entering email/phone...")
                 verify_input.fill(X_EMAIL)
                 page.keyboard.press("Enter")
-                time.sleep(2)
+                time.sleep(3)
 
             # Enter password
             logger.info("🔑 Entering password...")
