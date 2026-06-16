@@ -422,15 +422,14 @@ def build_v32_payload():
     studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
     ensure_sfx(studio_dir)
         
-    logger.info("🎬 Triggering V34 4K Premium Remotion Render (CRF=12, Scale=2, Concurrency=2)...")
+    logger.info("🎬 Triggering V34 1080p Premium Remotion Render (CRF=12, Scale=1, Concurrency=2)...")
     out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V34_ULTRA_4K.mp4"))
 
     # ── V34 Render Flags — Max Quality + Optimized Speed ─────────────────────
-    # --scale=2         → Double resolution (1080x1920 to 2160x3840 = True 4K!)
+    # --scale=1         → Native resolution (1080x1920 vertical HD)
     # --crf=12          → Near-lossless visual quality (ultra-glossy, crisp text)
-    # --video-bitrate=8000k → High bitrate for pristine 4K playback
     # --concurrency=2   → Parallel rendering on both runner CPU cores
-    # --timeout=1200    → Kill after 20 minutes to save Actions minutes if hung
+    # --timeout=1200000 → Kill after 20 minutes to save Actions minutes if hung
     # --gl=swangle      → Software WebGL rendering on headless Linux
     # ─────────────────────────────────────────────────────────────────────────
 
@@ -441,7 +440,7 @@ def build_v32_payload():
         "npx", "remotion", "render",
         "src/index.ts", "MainVideo", out_file,
         "--props", json_path,
-        "--scale=2",
+        "--scale=1",
         "--crf=12",
         f"--concurrency={concurrency}",
         "--timeout=1200000",
