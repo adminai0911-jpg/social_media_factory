@@ -414,7 +414,7 @@ def distribute_to_all_platforms(video_path, description):
     }
 
 if __name__ == "__main__":
-    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V32_ULTIMATE_AESTHETIC.mp4"))
+    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V34_ULTRA_4K.mp4"))
     json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "remotion-studio", "public", "v32_script.json"))
     
     if not os.path.exists(video_path):

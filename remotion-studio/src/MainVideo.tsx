@@ -12,42 +12,43 @@ import {
 } from "remotion";
 import React from "react";
 
-// Load HD Hindi-supporting Google Font via @font-face in index.css is not reliable in Remotion.
-// Instead we inline a global style element to load from Google Fonts CDN.
-const GlobalFontStyle = () => (
+// ─── FONT LOADER ────────────────────────────────────────────────────────────
+const GlobalStyle = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@900&family=Bebas+Neue&family=Inter:wght@900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@700;900&family=Montserrat:wght@900&family=Bebas+Neue&display=swap');
+    * { box-sizing: border-box; }
   `}</style>
 );
 
-// Hindi-supporting font stack – fallback includes system Hindi fonts
-const HINDI_FONT = "'Noto Sans Devanagari', 'Mangal', 'Sanskrit Text', sans-serif";
-const IMPACT_FONT = "'Bebas Neue', 'Impact', sans-serif";
+// ─── DESIGN SYSTEM ──────────────────────────────────────────────────────────
+const HINDI_FONT  = "'Noto Sans Devanagari', 'Mangal', 'Sanskrit Text', Arial, sans-serif";
+const TITLE_FONT  = "'Bebas Neue', 'Montserrat', Impact, sans-serif";
 
-const COLORS = [
-  ["#FF0055", "#00FFCC", "#7700FF"], // Cyberpunk Neon
-  ["#FFEA00", "#FF00AA", "#00A1FF"], // Vibrant Pop
-  ["#00FF66", "#0066FF", "#FF00FF"], // Digital Matrix
-  ["#FF3366", "#FF9933", "#00FFCC"], // Tropical Sunset
-  ["#FF00CC", "#3300FF", "#00FFFF"]  // Deep Synthwave
+// Premium palette pairs: [primary, accent, glow]
+const PALETTES = [
+  { p: "#FF0055", a: "#00F5FF", g: "#FF00CC", bg: ["#0A0018", "#200040", "#0D0030"] },
+  { p: "#FFD700", a: "#FF6600", g: "#FF00AA", bg: ["#1A0800", "#2D1200", "#0D0500"] },
+  { p: "#00FF88", a: "#0066FF", g: "#00FFFF", bg: ["#000D1A", "#001A0D", "#000820"] },
+  { p: "#FF3366", a: "#FF9933", g: "#FFCC00", bg: ["#1A0008", "#200010", "#100008"] },
+  { p: "#AA00FF", a: "#00CCFF", g: "#FF00AA", bg: ["#080018", "#0A0025", "#050012"] },
 ];
 
-const BASE_RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "KYA"];
-
-// Dynamic rotating neural alerts – changes on every run
 const NEURAL_ALERTS = [
-  { icon: "⚠️", text: "NEURAL LINK ACTIVE" },
-  { icon: "🧠", text: "MIND HACK DETECTED" },
-  { icon: "🔴", text: "DOPAMINE SPIKE NOW" },
-  { icon: "⚡", text: "BRAIN SIGNAL LOCKED" },
-  { icon: "🚨", text: "ATTENTION HIJACKED" },
-  { icon: "💀", text: "REALITY GLITCHING" },
-  { icon: "🔥", text: "ADRENALINE TRIGGER" },
-  { icon: "👁️", text: "SUBLIMINAL UPLOAD" },
-  { icon: "🌀", text: "HYPNOSIS IN PROGRESS" },
-  { icon: "❌", text: "ESCAPE IS IMPOSSIBLE" },
+  "⚠️  NEURAL LINK ACTIVE",
+  "🧠  MIND HACK DETECTED",
+  "⚡  DOPAMINE SPIKE NOW",
+  "🔴  BRAIN SIGNAL LOCKED",
+  "🚨  ATTENTION HIJACKED",
+  "💀  REALITY GLITCHING",
+  "🔥  ADRENALINE TRIGGER",
+  "👁️  SUBLIMINAL UPLOAD",
+  "🌀  HYPNOSIS IN PROGRESS",
+  "❌  ESCAPE IS IMPOSSIBLE",
 ];
 
+const RED_WORDS = ["WAKE","SIMULATION","SHADOWS","TRAP","LYING","FAKE","DREAM","FEAR","PANIC","NOW","LIES","BREAK","KYA","SCAM","CHEAT"];
+
+// ─── COMPONENT ──────────────────────────────────────────────────────────────
 export const MainVideo: React.FC<{
   script: any;
   timings: any[];
@@ -55,258 +56,319 @@ export const MainVideo: React.FC<{
   total_duration: number;
 }> = ({ script, timings, audio_offsets, total_duration }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const currentTime = frame / fps;
+  const { fps, width, height } = useVideoConfig();
+  const t = frame / fps;
 
   if (!script || !audio_offsets || audio_offsets.length < 5) return null;
 
-  // Data from Python
-  const styleSeed = script.style_seed || 1;
-  const emojis = script.emojis || ["👀", "🔥", "💀"];
-  const dynamicRedWord = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9%]/g, '') : "WARNING";
-  const subliminalWord = script.subliminal_flash_word ? script.subliminal_flash_word.toUpperCase() : "WAKE UP";
-  const RED_WORDS = [...BASE_RED_WORDS, dynamicRedWord];
-  const serotoninTarget = script.serotonin_payoff_number || 47212;
-  
-  // Pick a unique neural alert based on styleSeed so it changes each run
-  const alertIndex = styleSeed % NEURAL_ALERTS.length;
-  const currentAlert = NEURAL_ALERTS[alertIndex];
-  
-  const colorPalette = COLORS[styleSeed % COLORS.length];
+  const seed       = script.style_seed || 1;
+  const emojis     = script.emojis || ["👀","🔥","💀"];
+  const pal        = PALETTES[seed % PALETTES.length];
+  const alertText  = NEURAL_ALERTS[seed % NEURAL_ALERTS.length];
+  const redKw      = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g,"") : "WARNING";
+  const subliminal = (script.subliminal_flash_word || "WAKE UP").toUpperCase();
+  const serotonin  = script.serotonin_payoff_number || 88319;
+  const activeRedWords = [...RED_WORDS, redKw];
 
-  // Mathematical Timestamps
-  const p1_start = 0;
-  const p2_start = audio_offsets[1];
-  const p3_start = audio_offsets[2];
-  const p4_start = audio_offsets[3];
-  const p5_start = audio_offsets[4];
-
-  // Current Math Phase
+  const [p1,p2,p3,p4,p5] = audio_offsets;
   let phase = 1;
-  if (currentTime >= p2_start && currentTime < p3_start) phase = 2;
-  else if (currentTime >= p3_start && currentTime < p4_start) phase = 3;
-  else if (currentTime >= p4_start && currentTime < p5_start) phase = 4;
-  else if (currentTime >= p5_start) phase = 5;
+  if (t >= p2 && t < p3) phase = 2;
+  else if (t >= p3 && t < p4) phase = 3;
+  else if (t >= p4 && t < p5) phase = 4;
+  else if (t >= p5) phase = 5;
 
-  // Word Timing Tracking
-  const currentWordIndex = timings.findIndex(
-    (t) => currentTime >= t.start && currentTime <= t.end + 0.1
-  );
-  const currentWord = timings[currentWordIndex];
+  const wordIdx = timings.findIndex(w => t >= w.start && t <= w.end + 0.1);
+  const word    = timings[wordIdx];
+  const isRed   = word ? activeRedWords.some(r => word.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r)) : false;
 
-  // Effects Logic
-  const isPhase3Glitch = phase === 3 && frame > 0 && frame % 60 === 0;
-  const isVHSGlitch = frame % 150 > 140; 
-  const subliminalFrame = Math.round(p3_start * fps) + 90; 
-  const isSubliminal = frame === subliminalFrame; 
-  const shatterSnapActive = phase === 4 && frame < Math.round(p4_start * fps) + 15; 
+  // VHS glitch pulse
+  const isVHS         = frame % 120 > 112;
+  const sublimFrame   = Math.round(p3 * fps) + 90;
+  const isSubliminal  = frame === sublimFrame;
+  const shatterActive = phase === 4 && frame < Math.round(p4 * fps) + 12;
 
-  // Red Box Word Detection
-  let isRedBox = false;
-  if (currentWord) {
-    const upperWord = currentWord.word.toUpperCase().replace(/[^A-Z0-9%]/g, '');
-    if (RED_WORDS.some(rw => upperWord.includes(rw))) {
-       isRedBox = true;
-    }
-  }
+  // Micro camera shake — only on dramatic events
+  const shakeAmt = isRed ? 18 : shatterActive ? 40 : (isVHS ? 6 : 0);
+  const sx = shakeAmt > 0 ? (random(frame)     - 0.5) * shakeAmt : 0;
+  const sy = shakeAmt > 0 ? (random(frame + 1) - 0.5) * shakeAmt : 0;
 
-  // Camera Shake
-  let shakeAmount = 0;
-  if (isPhase3Glitch) shakeAmount = 20;
-  if (isRedBox) shakeAmount = 30;
-  if (shatterSnapActive) shakeAmount = 50;
-  const shakeX = shakeAmount > 0 ? (random(frame) - 0.5) * shakeAmount : 0;
-  const shakeY = shakeAmount > 0 ? (random(frame + 1) - 0.5) * shakeAmount : 0;
+  // Animated background orbs
+  const bgAngle = (frame * 0.4) % 360;
+  const o1x = 50 + Math.sin(frame / 45) * 35;
+  const o1y = 50 + Math.cos(frame / 38) * 35;
+  const o2x = 50 + Math.cos(frame / 30) * 42;
+  const o2y = 50 + Math.sin(frame / 52) * 42;
+  const o3x = 50 + Math.sin(frame / 60 + 2) * 30;
+  const o3y = 50 + Math.cos(frame / 48 + 1) * 38;
 
-  // Tension Meter Progress Math
-  const tensionProgress = phase < 4 ? interpolate(frame, [0, p4_start * fps], [0, 100], {extrapolateRight: "clamp"}) : 100;
+  // Alert flash
+  const alertFlash = frame % 6 < 3;
 
-  // 8D Stereo Simulation - slow left-right audio panning effect via visual shift indicator
-  const stereoPan = Math.sin(frame / (fps * 3)) * 0.5 + 0.5; // 0 to 1 oscillation
+  // Tension bar
+  const tension = phase < 4
+    ? interpolate(frame, [0, p4 * fps], [0, 100], { extrapolateRight: "clamp" })
+    : 100;
 
-  // Liquid Mixing Background Math (Bright & HD)
-  const bgAngle = (frame * 0.5) % 360;
-  const orb1X = 50 + Math.sin(frame / 40) * 30;
-  const orb1Y = 50 + Math.cos(frame / 30) * 30;
-  const orb2X = 50 + Math.cos(frame / 35) * 40;
-  const orb2Y = 50 + Math.sin(frame / 45) * 40;
+  // 8D panning indicator for visual sync (audio pans L→R→L)
+  const panAngle    = (frame / fps) * 0.2 * Math.PI * 2;
+  const panLeft     = 0.5 + 0.5 * Math.cos(panAngle);  // 0→1 oscillation
+  const panGlowLeft = `rgba(${Math.round(panLeft * 255)},50,255,0.6)`;
 
-  // Neural Alert blinking
-  const alertFlash = frame % 8 < 4;
+  // ── Floating screen bob
+  const bobY = Math.sin(frame / 22) * 14;
+
+  // ── Serotonin counter
+  const counterVal = phase === 2 ? null :
+    Math.floor(interpolate(frame, [p3 * fps, p4 * fps], [0, serotonin], {
+      extrapolateLeft: "clamp", extrapolateRight: "clamp"
+    }));
 
   return (
-    <AbsoluteFill style={{ 
-      backgroundColor: colorPalette[0],
-      transform: `translate(${shakeX}px, ${shakeY}px)`,
+    <AbsoluteFill style={{
+      backgroundColor: pal.bg[0],
+      transform: `translate(${sx}px,${sy}px)`,
+      overflow: "hidden"
     }}>
-      
-      {/* Inline font loader */}
-      <GlobalFontStyle />
-      
-      {/* 1. AUDIO LAYER - Voice Over */}
-      <Sequence from={0}><Audio src={staticFile(`v32_audio_0.mp3`)} volume={1.5} /></Sequence>
-      {audio_offsets[1] && <Sequence from={Math.round(p2_start * fps)}><Audio src={staticFile(`v32_audio_1.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile(`v32_audio_2.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile(`v32_audio_3.mp3`)} volume={1.5} /></Sequence>}
-      {audio_offsets[4] && <Sequence from={Math.round(p5_start * fps)}><Audio src={staticFile(`v32_audio_4.mp3`)} volume={1.5} /></Sequence>}
+      <GlobalStyle />
 
-      {/* HYPNOTIC BACKGROUND MUSIC (loops throughout video) */}
-      <Sequence from={0}><Audio src={staticFile(`hypno.wav`)} volume={0.3} loop /></Sequence>
+      {/* ── AUDIO ─────────────────────────────────────────────────────── */}
+      <Sequence from={0}><Audio src={staticFile("v32_audio_0.mp3")} volume={1.6} /></Sequence>
+      {p2 && <Sequence from={Math.round(p2*fps)}><Audio src={staticFile("v32_audio_1.mp3")} volume={1.6} /></Sequence>}
+      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("v32_audio_2.mp3")} volume={1.6} /></Sequence>}
+      {p4 && <Sequence from={Math.round(p4*fps)}><Audio src={staticFile("v32_audio_3.mp3")} volume={1.6} /></Sequence>}
+      {p5 && <Sequence from={Math.round(p5*fps)}><Audio src={staticFile("v32_audio_4.mp3")} volume={1.6} /></Sequence>}
+
+      {/* 8D Hypnotic Spatial Music */}
+      <Sequence from={0}><Audio src={staticFile("hypno.wav")} volume={0.35} loop /></Sequence>
 
       {/* SFX */}
-      {Array.from({length: 20}).map((_, i) => {
-          const glitchFrame = Math.round(p3_start * fps) + (i * 60);
-          if (glitchFrame < p4_start * fps) {
-             return <Sequence key={`ding-${i}`} from={glitchFrame}><Audio src={staticFile("ding.wav")} volume={0.8} /></Sequence>
-          }
-          return null;
+      {Array.from({length:20}).map((_,i)=>{
+        const gf = Math.round(p3*fps)+(i*60);
+        if(gf < p4*fps) return <Sequence key={i} from={gf}><Audio src={staticFile("ding.wav")} volume={0.7}/></Sequence>;
+        return null;
       })}
-      {audio_offsets[2] && <Sequence from={Math.round(p3_start * fps)}><Audio src={staticFile("riser.wav")} volume={0.5} /></Sequence>}
-      {audio_offsets[3] && <Sequence from={Math.round(p4_start * fps)}><Audio src={staticFile("impact.wav")} volume={2} /></Sequence>}
+      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("riser.wav")} volume={0.5}/></Sequence>}
+      {p4 && <Sequence from={Math.round(p4*fps)}><Audio src={staticFile("impact.wav")} volume={2.0}/></Sequence>}
 
-      {/* 2. THE HD LIGHT COLOR BLENDING BACKGROUND */}
-      <AbsoluteFill style={{ 
-          zIndex: 0, 
-          background: `linear-gradient(${bgAngle}deg, ${colorPalette[0]}, ${colorPalette[1]}, ${colorPalette[2]})`,
-          overflow: "hidden" 
-      }}>
-         <div style={{ position:"absolute", width: "150%", height: "150%", top: "-25%", left: "-25%", filter: "blur(60px)"}}>
-            <div style={{ position:"absolute", left: `${orb1X}%`, top: `${orb1Y}%`, width: "800px", height: "800px", borderRadius: "50%", background: colorPalette[1], opacity: 0.85, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
-            <div style={{ position:"absolute", left: `${orb2X}%`, top: `${orb2Y}%`, width: "900px", height: "900px", borderRadius: "50%", background: colorPalette[2], opacity: 0.85, transform: "translate(-50%, -50%)", mixBlendMode: "screen" }} />
-         </div>
-         {/* Scan lines overlay for that cinematic HD feel */}
-         <div style={{ position:"absolute", width:"100%", height:"100%", backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)", zIndex:1 }} />
+      {/* ── LAYER 1: DEEP DARK PREMIUM BACKGROUND ─────────────────────── */}
+      <AbsoluteFill style={{ zIndex: 0 }}>
+        {/* Deep mesh gradient base */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: `radial-gradient(ellipse at 50% 0%, ${pal.bg[1]} 0%, ${pal.bg[0]} 60%, ${pal.bg[2]} 100%)`
+        }}/>
+        {/* Animated colour orbs */}
+        <div style={{ position:"absolute", inset:0, filter:"blur(80px)", opacity:0.9 }}>
+          <div style={{ position:"absolute", left:`${o1x}%`, top:`${o1y}%`, width:900, height:900, borderRadius:"50%", background:pal.p, opacity:0.55, transform:"translate(-50%,-50%)", mixBlendMode:"screen" }}/>
+          <div style={{ position:"absolute", left:`${o2x}%`, top:`${o2y}%`, width:1000, height:1000, borderRadius:"50%", background:pal.a, opacity:0.45, transform:"translate(-50%,-50%)", mixBlendMode:"screen" }}/>
+          <div style={{ position:"absolute", left:`${o3x}%`, top:`${o3y}%`, width:700, height:700, borderRadius:"50%", background:pal.g, opacity:0.35, transform:"translate(-50%,-50%)", mixBlendMode:"screen" }}/>
+        </div>
+        {/* Fine scanlines for cinematic texture */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)", pointerEvents:"none" }}/>
+        {/* Vignette overlay */}
+        <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.7) 100%)", pointerEvents:"none" }}/>
       </AbsoluteFill>
 
-      {/* 3. THE VISUAL CORE - Bigger Floating Screen */}
+      {/* ── LAYER 2: MAIN VISUAL SCREEN ───────────────────────────────── */}
       <AbsoluteFill style={{ zIndex: 10 }}>
-        {/* Phase 1 & 2: Floating Box — BIGGER & GLOSSY */}
-        <Sequence from={0} durationInFrames={Math.round(p3_start * fps)}>
-           <div style={{
-             position: "absolute", top: "20%", left: "3%", width: "94%", height: "58%",
-             transform: `translateY(${Math.sin(frame / 20) * 15}px)`, 
-             // HD glossy border with neon glow — NO grey background box
-             boxShadow: `0 40px 100px rgba(0,0,0,0.6), 0 0 120px ${colorPalette[1]}, inset 0 0 30px rgba(255,255,255,0.1)`, 
-             border: `5px solid rgba(255,255,255,0.8)`, 
-             borderRadius: "36px", overflow: "hidden",
-             backdropFilter: "blur(10px)",
-           }}>
-              {/* Inner gloss effect at top */}
-              <div style={{ position:"absolute", top:0, left:0, right:0, height:"30%", background:"linear-gradient(to bottom, rgba(255,255,255,0.25), transparent)", zIndex:2, pointerEvents:"none", borderRadius:"36px 36px 0 0" }} />
-              <OffthreadVideo 
-                src={staticFile(styleSeed % 2 === 0 ? "gta.mp4" : "sand.mp4")} 
-                style={{ width: "100%", height: "100%", objectFit: "cover", filter: "saturate(1.4) contrast(1.1) brightness(1.1)" }} 
-              />
-           </div>
+
+        {/* Phase 1 & 2: Premium Floating Glass Screen */}
+        <Sequence from={0} durationInFrames={Math.round(p3*fps)}>
+          <div style={{
+            position:"absolute", top:"18%", left:"4%", width:"92%", height:"60%",
+            transform:`translateY(${bobY}px)`,
+            borderRadius:40,
+            overflow:"hidden",
+            // Multi-layer glow for that premium 4K monitor feel
+            boxShadow:`
+              0 0 0 2px rgba(255,255,255,0.15),
+              0 0 0 4px ${pal.p}60,
+              0 0 40px ${pal.p}80,
+              0 0 80px ${pal.a}50,
+              0 0 160px ${pal.g}30,
+              0 50px 120px rgba(0,0,0,0.8),
+              inset 0 1px 0 rgba(255,255,255,0.4)
+            `,
+          }}>
+            {/* The actual video */}
+            <OffthreadVideo
+              src={staticFile(seed%2===0?"gta.mp4":"sand.mp4")}
+              style={{ width:"100%", height:"100%", objectFit:"cover",
+                filter:`saturate(1.6) contrast(1.15) brightness(1.05) sharpen(1)` }}
+            />
+            {/* Glass gloss — top reflection */}
+            <div style={{
+              position:"absolute", top:0, left:0, right:0, height:"45%",
+              background:"linear-gradient(to bottom, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 60%, transparent 100%)",
+              pointerEvents:"none", borderRadius:"40px 40px 0 0"
+            }}/>
+            {/* Bottom gradient fade into background */}
+            <div style={{
+              position:"absolute", bottom:0, left:0, right:0, height:"35%",
+              background:`linear-gradient(to top, ${pal.bg[0]}CC 0%, transparent 100%)`,
+              pointerEvents:"none"
+            }}/>
+            {/* Neon corner accents */}
+            {[["0%","0%","0 0"],["100%","0%","0 0"],["0%","100%","0 0"],["100%","100%","0 0"]].map(([x,y,r],i)=>(
+              <div key={i} style={{
+                position:"absolute", left:x, top:y, width:40, height:40,
+                borderTop:i<2?`3px solid ${pal.p}`:undefined,
+                borderBottom:i>=2?`3px solid ${pal.p}`:undefined,
+                borderLeft:i%2===0?`3px solid ${pal.p}`:undefined,
+                borderRight:i%2===1?`3px solid ${pal.p}`:undefined,
+                borderRadius:r, pointerEvents:"none",
+                boxShadow:`0 0 20px ${pal.p}`,
+                opacity:0.9
+              }}/>
+            ))}
+          </div>
         </Sequence>
 
-        {/* Phase 3: SMOOTH SPLIT SCREEN */}
-        <Sequence from={Math.round(p3_start * fps)} durationInFrames={Math.round((p4_start - p3_start) * fps)}>
-           <AbsoluteFill style={{ display: "flex", flexDirection: "column", padding: "15px", gap: "15px" }}>
-             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `5px solid ${colorPalette[0]}`, boxShadow: `0 0 60px ${colorPalette[0]}, inset 0 0 20px rgba(255,255,255,0.05)` }}>
-                <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)", filter:"saturate(1.5) contrast(1.1)" }} />
-             </div>
-             <div style={{ flex: 1, overflow: "hidden", borderRadius: "30px", border: `5px solid ${colorPalette[1]}`, boxShadow: `0 0 60px ${colorPalette[1]}, inset 0 0 20px rgba(255,255,255,0.05)` }}>
-                <OffthreadVideo src={staticFile("sand.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter:"saturate(1.5) contrast(1.1)" }} />
-             </div>
-           </AbsoluteFill>
+        {/* Phase 3: Split Screen */}
+        <Sequence from={Math.round(p3*fps)} durationInFrames={Math.round((p4-p3)*fps)}>
+          <AbsoluteFill style={{ display:"flex", flexDirection:"column", padding:16, gap:16 }}>
+            {[{src:"gta.mp4", flip:true, col:pal.p},{src:"sand.mp4", flip:false, col:pal.a}].map(({src,flip,col},i)=>(
+              <div key={i} style={{
+                flex:1, overflow:"hidden", borderRadius:32,
+                boxShadow:`0 0 0 2px ${col}80, 0 0 50px ${col}60, 0 0 100px ${col}30`,
+              }}>
+                <OffthreadVideo src={staticFile(src)} style={{
+                  width:"100%", height:"100%", objectFit:"cover",
+                  transform:flip?"scaleX(-1)":undefined,
+                  filter:"saturate(1.7) contrast(1.15) brightness(1.05)"
+                }}/>
+                <div style={{ position:"absolute", inset:0, background:`linear-gradient(135deg,${col}22,transparent 60%)`, pointerEvents:"none" }}/>
+              </div>
+            ))}
+          </AbsoluteFill>
         </Sequence>
 
-        {/* Phase 4 & 5: THE JACKPOT CLIMAX */}
-        <Sequence from={Math.round(p4_start * fps)}>
-           {shatterSnapActive ? (
-              <AbsoluteFill style={{ flexWrap: "wrap", display: "flex", flexDirection: "row" }}>
-                 {Array.from({length: 8}).map((_, i) => (
-                    <div key={i} style={{
-                      width: "50%", height: "25%", overflow: "hidden",
-                      transform: `scale(${1 + random(i)*0.2}) rotate(${(random(i)-0.5)*20}deg) translate(${(random(i)-0.5)*100}px, ${(random(i)-0.5)*100}px)`,
-                      border: `5px solid ${colorPalette[i%3]}`,
-                      filter: `hue-rotate(${i * 45}deg)`
-                    }}>
-                      <OffthreadVideo src={staticFile(styleSeed % 2 === 0 ? "sand.mp4" : "gta.mp4")} style={{ width: "200%", height: "400%", objectFit: "cover", transform: `translate(-${(i%2)*50}%, -${Math.floor(i/2)*25}%)` }} />
-                    </div>
-                 ))}
-              </AbsoluteFill>
-           ) : (
-              <AbsoluteFill>
-                 <div style={{ position: "absolute", width: "100%", height: "100%", background: `repeating-linear-gradient(0deg, transparent, transparent 40px, ${colorPalette[0]} 40px, ${colorPalette[0]} 45px)`, opacity: 0.3, transform: `translateY(${(frame*5)%45}px)` }} />
-                 <div style={{
-                    position: "absolute", top: "22%", left: "3%", width: "94%", height: "56%",
-                    transform: `scale(${spring({fps, frame: frame - (Math.round(p4_start*fps)+15), config: {damping: 12}})})`,
-                    boxShadow: `0 0 200px ${colorPalette[1]}, 0 0 60px white`, 
-                    border: `8px solid white`, borderRadius: "40px", overflow: "hidden",
-                  }}>
-                     <div style={{ position:"absolute", top:0, left:0, right:0, height:"30%", background:"linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)", zIndex:2, pointerEvents:"none" }} />
-                     <OffthreadVideo src={staticFile(styleSeed % 2 === 0 ? "sand.mp4" : "gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "saturate(1.6) contrast(1.2) brightness(1.1)" }} />
-                 </div>
-                 {/* PAYOUT counter — pure text, NO dark box */}
-                 <div style={{ position: "absolute", bottom: "5%", width: "94%", left: "3%", textAlign: "center" }}>
-                     <h1 style={{ 
-                       margin: 0, color: "white", fontSize: "90px", 
-                       fontFamily: IMPACT_FONT, 
-                       textShadow: `0 0 60px ${colorPalette[1]}, 0 0 20px white, 4px 4px 0 black`,
-                       WebkitTextStroke: "3px black"
-                     }}>PAYOUT: {serotoninTarget.toLocaleString()}</h1>
-                 </div>
-              </AbsoluteFill>
-           )}
+        {/* Phase 4 & 5: Climax */}
+        <Sequence from={Math.round(p4*fps)}>
+          {shatterActive ? (
+            <AbsoluteFill style={{ display:"flex", flexWrap:"wrap" }}>
+              {Array.from({length:8}).map((_,i)=>(
+                <div key={i} style={{
+                  width:"50%", height:"25%", overflow:"hidden",
+                  transform:`scale(${1+random(i)*0.25}) rotate(${(random(i)-0.5)*25}deg) translate(${(random(i)-0.5)*120}px,${(random(i)-0.5)*120}px)`,
+                  border:`4px solid ${PALETTES[i%PALETTES.length].p}`,
+                  filter:`hue-rotate(${i*45}deg) saturate(2)`
+                }}>
+                  <OffthreadVideo src={staticFile(seed%2===0?"sand.mp4":"gta.mp4")} style={{ width:"200%",height:"400%",objectFit:"cover",transform:`translate(-${(i%2)*50}%,-${Math.floor(i/2)*25}%)` }}/>
+                </div>
+              ))}
+            </AbsoluteFill>
+          ) : (
+            <AbsoluteFill>
+              {/* Scan pulse lines */}
+              <div style={{ position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,transparent,transparent 44px,${pal.p}18 44px,${pal.p}18 48px)`,transform:`translateY(${(frame*4)%48}px)`,opacity:0.4 }}/>
+              {/* Climax Screen */}
+              <div style={{
+                position:"absolute", top:"20%", left:"4%", width:"92%", height:"58%",
+                transform:`scale(${spring({fps,frame:frame-(Math.round(p4*fps)+12),config:{damping:14}})})`,
+                borderRadius:44, overflow:"hidden",
+                boxShadow:`0 0 0 3px rgba(255,255,255,0.3),0 0 60px ${pal.a},0 0 120px ${pal.p},0 0 200px ${pal.g}55,0 60px 140px rgba(0,0,0,0.9)`,
+              }}>
+                <OffthreadVideo src={staticFile(seed%2===0?"sand.mp4":"gta.mp4")} style={{ width:"100%",height:"100%",objectFit:"cover",filter:"saturate(1.8) contrast(1.2) brightness(1.1)" }}/>
+                <div style={{ position:"absolute",top:0,left:0,right:0,height:"40%",background:"linear-gradient(to bottom,rgba(255,255,255,0.25),transparent)",pointerEvents:"none" }}/>
+              </div>
+              {/* PAYOUT — pure gradient text, zero box */}
+              <div style={{ position:"absolute",bottom:"6%",width:"92%",left:"4%",textAlign:"center" }}>
+                <div style={{
+                  fontSize:96, fontFamily:TITLE_FONT, fontWeight:900,
+                  background:`linear-gradient(90deg,${pal.p},${pal.a},${pal.g})`,
+                  WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+                  filter:`drop-shadow(0 0 30px ${pal.a}) drop-shadow(0 0 60px ${pal.p})`,
+                  letterSpacing:4
+                }}>
+                  PAYOUT: {serotonin.toLocaleString()}
+                </div>
+              </div>
+            </AbsoluteFill>
+          )}
         </Sequence>
       </AbsoluteFill>
 
-      {/* 4. DYNAMIC NEURAL ALERT BAR — changes every run, no grey box */}
-      {(phase === 2 || phase === 3) && (
-         <AbsoluteFill style={{ pointerEvents: "none", zIndex: 150 }}>
-            <div style={{ 
-                position: "absolute", top: "4%", left: "3%", width: "94%", 
-                background: alertFlash 
-                  ? `linear-gradient(90deg, #FF0044, #FF6600)` 
-                  : "transparent",
-                border: `5px solid ${alertFlash ? "white" : "#FF0044"}`,
-                color: alertFlash ? "white" : "#FF0044",
-                padding: "14px 20px", textAlign: "center",
-                fontFamily: IMPACT_FONT, 
-                fontSize: "52px", fontWeight: "bold",
-                letterSpacing: "4px",
-                boxShadow: alertFlash ? "0 0 60px red, 0 0 20px orange" : "none",
-                borderRadius: "18px",
-                // NO background box when not flashing — just border and text
-            }}>
-                {currentAlert.icon} {currentAlert.text}
-            </div>
-         </AbsoluteFill>
+      {/* ── LAYER 3: TENSION BAR (top edge progress) ──────────────────── */}
+      <AbsoluteFill style={{ zIndex:120, pointerEvents:"none" }}>
+        <div style={{
+          position:"absolute", top:0, left:0, height:6,
+          width:`${tension}%`,
+          background:`linear-gradient(90deg,${pal.p},${pal.a},${pal.g})`,
+          boxShadow:`0 0 20px ${pal.a}, 0 0 40px ${pal.p}`,
+          transition:"none"
+        }}/>
+      </AbsoluteFill>
+
+      {/* ── LAYER 4: DYNAMIC NEURAL ALERT ─────────────────────────────── */}
+      {(phase===2||phase===3) && (
+        <AbsoluteFill style={{ zIndex:150, pointerEvents:"none" }}>
+          <div style={{
+            position:"absolute", top:"4%", left:"4%", width:"92%",
+            padding:"12px 24px",
+            background: alertFlash
+              ? `linear-gradient(90deg,${pal.p}EE,${pal.g}EE,${pal.a}EE)`
+              : "transparent",
+            border:`3px solid ${alertFlash ? "rgba(255,255,255,0.9)" : pal.p}`,
+            borderRadius:20,
+            textAlign:"center",
+            fontFamily:TITLE_FONT, fontSize:48, letterSpacing:6, fontWeight:900,
+            color: alertFlash ? "#fff" : pal.p,
+            textShadow: alertFlash
+              ? `0 0 30px white, 0 0 60px ${pal.p}`
+              : `0 0 20px ${pal.p}, 0 0 40px ${pal.g}`,
+            boxShadow: alertFlash
+              ? `0 0 40px ${pal.p}88, 0 0 80px ${pal.g}44, inset 0 1px 0 rgba(255,255,255,0.3)`
+              : "none",
+            backdropFilter: alertFlash ? "blur(4px)" : "none",
+          }}>
+            {alertText}
+          </div>
+        </AbsoluteFill>
       )}
 
-      {/* 5. GAMIFICATION DOPAMINE COUNTER — NO dark box, pure glowing text */}
-      <Sequence from={Math.round(p2_start * fps)} durationInFrames={Math.round((p4_start - p2_start) * fps)}>
-        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", zIndex: 150, pointerEvents: "none" }}>
+      {/* ── LAYER 5: SEROTONIN COUNTER ─────────────────────────────────── */}
+      <Sequence from={Math.round(p2*fps)} durationInFrames={Math.round((p4-p2)*fps)}>
+        <AbsoluteFill style={{ zIndex:160, pointerEvents:"none", justifyContent:"flex-end", alignItems:"center", paddingBottom:60 }}>
           <div style={{
-              // NO background/box — pure text with strong glow
-              padding: "0",
-              color: colorPalette[0],
-              fontFamily: IMPACT_FONT, 
-              fontSize: "80px", fontWeight: "bold",
-              textShadow: `0 0 40px ${colorPalette[0]}, 0 0 80px white, 4px 4px 0 black`,
-              WebkitTextStroke: "3px black",
-              transform: `translateY(300px)`,
-              letterSpacing: "2px"
+            fontFamily:TITLE_FONT, fontSize:88, fontWeight:900, letterSpacing:3,
+            background:`linear-gradient(90deg,${pal.p},${pal.a})`,
+            WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+            filter:`drop-shadow(0 0 24px ${pal.p}) drop-shadow(0 0 48px ${pal.a})`,
           }}>
-              {phase === 2 ? "SCANNING..." : Math.floor(interpolate(frame, [p3_start * fps, p4_start * fps], [0, serotoninTarget], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })).toLocaleString()}
+            {phase===2 ? "SCANNING..." : counterVal?.toLocaleString()}
           </div>
         </AbsoluteFill>
       </Sequence>
 
-      {/* 6. DYNAMIC 4D EMOJIS */}
-      <AbsoluteFill style={{ zIndex: 200, pointerEvents: "none" }}>
-        {emojis.map((emoji: string, i: number) => {
-          const spawnTime = p3_start + (i * 3);
-          const spawnFrame = Math.round(spawnTime * fps);
-          if (frame < spawnFrame || frame >= spawnFrame + fps * 2) return null;
+      {/* ── LAYER 6: 8D AUDIO VISUAL PANNING INDICATOR ────────────────── */}
+      {/* Subtle circular ring that shows audio moving L↔R */}
+      <AbsoluteFill style={{ zIndex:130, pointerEvents:"none" }}>
+        <div style={{
+          position:"absolute", bottom:"30%", right:"5%",
+          width:60, height:60, borderRadius:"50%",
+          border:`2px solid ${pal.a}44`,
+          background:`radial-gradient(circle at ${Math.round(panLeft*100)}% 50%, ${pal.a}66, transparent 70%)`,
+          boxShadow:`0 0 20px ${pal.a}44`,
+          opacity: phase === 1 || phase === 5 ? 0 : 0.7,
+        }}/>
+      </AbsoluteFill>
+
+      {/* ── LAYER 7: 4D EMOJIS ─────────────────────────────────────────── */}
+      <AbsoluteFill style={{ zIndex:200, pointerEvents:"none" }}>
+        {emojis.map((emoji:string,i:number)=>{
+          const sf = Math.round((p3+(i*2.5))*fps);
+          if(frame<sf||frame>=sf+fps*2) return null;
+          const elapsed = frame-sf;
           return (
             <div key={i} style={{
-              position: "absolute", left: `${25 + (i * 25)}%`, top: "48%", fontSize: "160px",
-              transform: `scale(${spring({ fps, frame: frame - spawnFrame, config: { damping: 10 } })}) translateY(${interpolate(frame - spawnFrame, [0, fps * 2], [0, -450])}px)`,
-              opacity: interpolate(frame - spawnFrame, [0, fps*1.5, fps*2], [1, 1, 0]),
-              filter: `drop-shadow(0 0 20px white)`
+              position:"absolute",
+              left:`${20+(i*30)}%`,
+              top:"45%",
+              fontSize:180,
+              transform:`scale(${spring({fps,frame:elapsed,config:{damping:8}})}) translateY(${interpolate(elapsed,[0,fps*2],[0,-500])}px) rotate(${interpolate(elapsed,[0,fps*2],[0,i%2===0?20:-20])}deg)`,
+              opacity:interpolate(elapsed,[0,fps*1.6,fps*2],[1,1,0]),
+              filter:`drop-shadow(0 0 30px white) drop-shadow(0 0 60px ${pal.p})`,
             }}>
               {emoji}
             </div>
@@ -314,117 +376,110 @@ export const MainVideo: React.FC<{
         })}
       </AbsoluteFill>
 
-      {/* 7. HD CAPTION ENGINE — NO background box, text-shadow + glow only */}
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", zIndex: 300, pointerEvents: "none" }}>
-        {currentWord && (() => {
-          const timeSinceWordStart = currentTime - currentWord.start;
-          const animStyle = currentWordIndex % 6;
-          
-          let transformStr = "";
-          let opacityVal = 1;
+      {/* ── LAYER 8: HD CAPTION ENGINE ─────────────────────────────────── */}
+      <AbsoluteFill style={{ zIndex:300, justifyContent:"center", alignItems:"center", pointerEvents:"none" }}>
+        {word && (()=>{
+          const elapsed = t - word.start;
+          const ai = wordIdx % 6;
+          let tf = "";
+          let op = 1;
 
-          if (animStyle === 0) {
-            transformStr = `scale(${spring({ fps, frame: frame - Math.round(currentWord.start * fps), config: { damping: 12 } })})`;
-          } else if (animStyle === 1) {
-            transformStr = `translate(${Math.sin(frame)*15}px, ${Math.cos(frame)*15}px) scale(1.1)`;
-          } else if (animStyle === 2) {
-            opacityVal = frame % 4 < 2 ? 1 : 0;
-            transformStr = `scale(1.2)`;
-          } else if (animStyle === 3) {
-            const rotX = interpolate(timeSinceWordStart, [0, 0.2], [-90, 0], { extrapolateRight: "clamp" });
-            transformStr = `perspective(500px) rotateX(${rotX}deg) scale(1.1)`;
-          } else if (animStyle === 4) {
-            const s = interpolate(timeSinceWordStart, [0, 0.2], [2, 1], { extrapolateRight: "clamp" });
-            transformStr = `scale(${s})`;
+          if(ai===0) tf=`scale(${spring({fps,frame:frame-Math.round(word.start*fps),config:{damping:12}})})`;
+          else if(ai===1) tf=`translate(${Math.sin(frame)*12}px,${Math.cos(frame)*12}px) scale(1.08)`;
+          else if(ai===2){ op=frame%4<2?1:0; tf=`scale(1.15)`; }
+          else if(ai===3){
+            const rx=interpolate(elapsed,[0,0.18],[-90,0],{extrapolateRight:"clamp"});
+            tf=`perspective(600px) rotateX(${rx}deg)`;
+          } else if(ai===4){
+            const s=interpolate(elapsed,[0,0.18],[2.2,1],{extrapolateRight:"clamp"});
+            tf=`scale(${s})`;
           } else {
-            transformStr = `scale(${spring({ fps, frame: frame - Math.round(currentWord.start * fps), config: { tension: 300, friction: 10 } })}) rotate(${(currentWordIndex % 2 === 0 ? 1 : -1) * 8}deg)`;
+            tf=`scale(${spring({fps,frame:frame-Math.round(word.start*fps),config:{tension:280,friction:12}})}) rotate(${wordIdx%2===0?8:-8}deg)`;
           }
 
-          const glitchShadow = isVHSGlitch 
-            ? "10px 0 red, -10px 0 cyan" 
-            : `0 0 40px white, 0 0 80px ${colorPalette[currentWordIndex % colorPalette.length]}, 4px 4px 0 black`;
-          
-          if (isRedBox) {
-            // Red-highlighted words: vivid color, NO background box — just border + shadow
+          const glitch = isVHS?"12px 0 red,-12px 0 cyan":"none";
+
+          if(isRed){
+            // RED keyword — gradient glow, zero background box
             return (
               <div style={{
-                  border: `6px solid white`,
-                  borderRadius: "16px",
-                  padding: "8px 40px", 
-                  background: `linear-gradient(135deg, #FF0044, #FF6600)`,
-                  fontSize: "90px", fontFamily: IMPACT_FONT, fontWeight: "900", color: "#FFF",
-                  textAlign: "center", transform: transformStr, opacity: opacityVal,
-                  textShadow: "0 0 80px #FF0044, 4px 4px 0 black",
-                  boxShadow: "0 0 100px #FF0044, 0 0 40px orange",
-                  maxWidth: "88%", wordWrap: "break-word", lineHeight: "1.1",
-                  letterSpacing: "2px"
-                }}>
-                {currentWord.word.toUpperCase()}
+                fontFamily:TITLE_FONT, fontSize:100, fontWeight:900,
+                background:`linear-gradient(135deg,#FF0044,#FF6600,#FFD700)`,
+                WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+                filter:`drop-shadow(0 0 30px #FF0044) drop-shadow(0 0 60px #FF6600) drop-shadow(0 0 4px black)`,
+                transform:tf, opacity:op,
+                textAlign:"center", maxWidth:"90%",
+                lineHeight:1.1, letterSpacing:4,
+                WebkitTextStroke:"1px rgba(255,100,0,0.3)"
+              }}>
+                {word.word.toUpperCase()}
               </div>
             );
           } else {
+            // Normal word — pure text, zero box, max readability
             return (
               <div style={{
-                  // ZERO background/box — only text with multi-layer shadow for HD readability
-                  fontSize: "80px", fontFamily: HINDI_FONT, fontWeight: "900", 
-                  color: "white", 
-                  textAlign: "center",
-                  textShadow: glitchShadow,
-                  WebkitTextStroke: "2px black",
-                  transform: transformStr, opacity: opacityVal,
-                  maxWidth: "88%", wordWrap: "break-word", lineHeight: "1.2",
-                  // NO background, NO borderRadius, NO padding box
-                }}>
-                {currentWord.word}
+                fontFamily:HINDI_FONT, fontSize:84, fontWeight:900,
+                color:"#FFFFFF",
+                textShadow:`
+                  0 0 2px black,
+                  2px 2px 0 black,
+                  -2px -2px 0 black,
+                  2px -2px 0 black,
+                  -2px 2px 0 black,
+                  0 0 20px ${pal.p},
+                  0 0 40px ${pal.a},
+                  0 0 80px ${pal.g}88
+                `,
+                WebkitTextStroke:"2px rgba(0,0,0,0.6)",
+                transform:tf, opacity:op,
+                textAlign:"center", maxWidth:"90%",
+                lineHeight:1.2, letterSpacing:2,
+              }}>
+                {word.word}
               </div>
             );
           }
         })()}
       </AbsoluteFill>
 
-      {/* 8. SUBLIMINAL FLASH */}
-      {isSubliminal && (
-        <AbsoluteFill style={{ zIndex: 999, backgroundColor: "white", opacity: 0.9 }}>
-          <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-            <div style={{ 
-              fontSize: "200px", fontFamily: IMPACT_FONT, color: "black", fontWeight: "900",
-              textShadow: "none"
-            }}>{subliminalWord}</div>
+      {/* ── LAYER 9: COVER FRAME (frame 0 only) ───────────────────────── */}
+      {frame===0 && (
+        <AbsoluteFill style={{ zIndex:1000 }}>
+          <OffthreadVideo src={staticFile("gta.mp4")} style={{ width:"100%",height:"100%",objectFit:"cover",filter:"saturate(1.5) contrast(1.2) brightness(0.85)" }}/>
+          <div style={{ position:"absolute",inset:0,background:`linear-gradient(160deg,${pal.p}77,${pal.g}44,${pal.a}66)` }}/>
+          <AbsoluteFill style={{ justifyContent:"center",alignItems:"center" }}>
+            <div style={{
+              fontFamily:TITLE_FONT, fontSize:130, fontWeight:900, letterSpacing:8,
+              background:`linear-gradient(135deg,#fff,${pal.p},${pal.a})`,
+              WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+              filter:`drop-shadow(0 0 40px ${pal.p}) drop-shadow(0 0 80px ${pal.g})`,
+              textAlign:"center", maxWidth:"92%", lineHeight:1,
+              padding:"0 24px"
+            }}>
+              {redKw||"SIMULATION"}
+            </div>
           </AbsoluteFill>
         </AbsoluteFill>
       )}
 
-      {/* 9. THE ADRENALINE COVER (Frame 0 only) */}
-      {frame === 0 && (
-        <AbsoluteFill style={{ zIndex: 1000 }}>
-             <OffthreadVideo src={staticFile("gta.mp4")} style={{ width: "100%", height: "100%", objectFit: "cover", filter:"saturate(1.4) contrast(1.1)" }} />
-             <div style={{ position: "absolute", width: "100%", height: "100%", background: `linear-gradient(45deg, ${colorPalette[0]}88, ${colorPalette[1]}88)` }} />
-             <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-                 <div style={{
-                      background: `linear-gradient(135deg, #FF0044, #FF6600)`,
-                      padding: "20px 50px", 
-                      border: "10px solid white",
-                      fontSize: "120px", fontFamily: IMPACT_FONT, fontWeight: "900", color: "#FFF",
-                      textAlign: "center", 
-                      boxShadow: "0 0 150px #FF0044, 0 0 50px orange",
-                      textShadow: "0 0 80px #FF0044, 6px 6px 0 black",
-                      maxWidth: "90%", wordWrap: "break-word",
-                      borderRadius: "24px",
-                      letterSpacing: "4px"
-                    }}>
-                     {dynamicRedWord || "SIMULATION"}
-                  </div>
-             </AbsoluteFill>
+      {/* ── LAYER 10: SUBLIMINAL FLASH ────────────────────────────────── */}
+      {isSubliminal && (
+        <AbsoluteFill style={{ zIndex:999, backgroundColor:"#fff" }}>
+          <AbsoluteFill style={{ justifyContent:"center",alignItems:"center" }}>
+            <div style={{ fontFamily:TITLE_FONT,fontSize:220,fontWeight:900,color:"#000",letterSpacing:8 }}>
+              {subliminal}
+            </div>
+          </AbsoluteFill>
         </AbsoluteFill>
       )}
 
-      {/* 10. THE LOOP MIRROR (fade out) */}
-      {phase === 5 && (
-         <AbsoluteFill style={{ 
-            backgroundColor: "black", 
-            opacity: interpolate(frame, [p5_start * fps, total_duration * fps], [0, 1], {extrapolateRight:"clamp"}), 
-            zIndex: 1000 
-         }} />
+      {/* ── LAYER 11: FADE OUT (Phase 5) ──────────────────────────────── */}
+      {phase===5 && (
+        <AbsoluteFill style={{
+          zIndex:1000, backgroundColor:"black",
+          opacity:interpolate(frame,[p5*fps,total_duration*fps],[0,1],{extrapolateRight:"clamp"})
+        }}/>
       )}
 
     </AbsoluteFill>

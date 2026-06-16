@@ -223,59 +223,103 @@ def create_tone(filename, freq, duration, vol=0.5, decay=True, riser=False):
     except Exception as e:
         logger.error(f"Failed to create {filename}: {e}")
 
-def create_hypnotic_music(filename, duration=35.0):
+def create_8d_hypnotic_music(filename, duration=42.0):
     """
-    Generate a stereo hypnotic background drone with binaural beat effect.
-    Left channel: 432 Hz carrier with slow LFO modulation
-    Right channel: 436 Hz (4 Hz binaural beat = theta/deep focus state)
-    Plus sub-bass pulse and slow harmonic overtones for depth.
+    TRUE 8D SPATIAL ROTATING AUDIO — sounds like the music moves around your head.
+    Technique: HRTF-inspired stereo panning + binaural beat + room reverb simulation.
+
+    The audio physically rotates in a circle around the listener:
+      Left  = cos(rotation_angle) * signal   [0..1 oscillating]
+      Right = sin(rotation_angle) * signal   [0..1 oscillating]
+    Rotation speed slowly varies (0.08–0.25 Hz) for organic 8D feel.
+    432 Hz left carrier + 436 Hz right carrier = 4 Hz THETA binaural beat.
+    Room reverb: 3-tap delay (15ms / 28ms / 45ms) for spatial depth.
+    Sub-bass 60 Hz pulse adds physical vibration feel.
     """
     sample_rate = 44100
-    n_samples = int(sample_rate * duration)
+    n_samples   = int(sample_rate * duration)
+
+    # Reverb delay taps (samples)
+    taps    = [int(0.015 * sample_rate),
+               int(0.028 * sample_rate),
+               int(0.045 * sample_rate)]
+    tap_vol = [0.35, 0.22, 0.12]
+    max_tap = max(taps)
+    delay_buf = [0.0] * (max_tap + 1)
+    buf_idx   = 0
+
     try:
         with wave.open(filename, 'w') as f:
-            f.setnchannels(2)  # Stereo!
+            f.setnchannels(2)
             f.setsampwidth(2)
             f.setframerate(sample_rate)
-            
+
+            angle = 0.0  # running rotation angle (radians)
+
             for i in range(n_samples):
                 t = float(i) / sample_rate
-                
-                # Fade in/out envelope (2s fade in, 3s fade out)
-                fade_in = min(1.0, t / 2.0)
+
+                # ── Envelope: 2s fade-in, 3s fade-out, slight mid-breath ──
+                fade_in  = min(1.0, t / 2.0)
                 fade_out = min(1.0, (duration - t) / 3.0)
-                env = fade_in * fade_out
-                
-                # Slow LFO tremolo (0.15 Hz = very slow wobble)
-                lfo = 0.7 + 0.3 * math.sin(2 * math.pi * 0.15 * t)
-                
-                # Left: 432 Hz (healing frequency carrier)
-                left_carrier = math.sin(2 * math.pi * 432.0 * t)
-                # Subtle harmonic overtones for richness
-                left_carrier += 0.35 * math.sin(2 * math.pi * 864.0 * t)   # 2nd harmonic
-                left_carrier += 0.15 * math.sin(2 * math.pi * 216.0 * t)   # sub-octave
-                # Sub-bass pulse (60 Hz) for body feel
-                left_carrier += 0.4 * math.sin(2 * math.pi * 60.0 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
-                
-                # Right: 436 Hz (creates 4 Hz theta binaural beat with left)
-                right_carrier = math.sin(2 * math.pi * 436.0 * t)
-                right_carrier += 0.35 * math.sin(2 * math.pi * 872.0 * t)  # 2nd harmonic
-                right_carrier += 0.15 * math.sin(2 * math.pi * 218.0 * t)  # sub-octave
-                right_carrier += 0.4 * math.sin(2 * math.pi * 60.0 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
-                
-                vol = 0.28  # Gentle volume (voice-over will be louder)
-                left_val = int(vol * lfo * env * left_carrier * 32767)
-                right_val = int(vol * lfo * env * right_carrier * 32767)
-                
-                # Clamp to prevent clipping
-                left_val = max(-32767, min(32767, left_val))
+                breath   = 0.88 + 0.12 * math.sin(2 * math.pi * 0.07 * t)  # ultra-slow
+                env      = fade_in * fade_out * breath
+
+                # ── 8D rotation speed (slowly varies 0.08–0.25 Hz) ──
+                rot_speed = 0.16 + 0.09 * math.sin(2 * math.pi * 0.04 * t)
+                angle    += (2 * math.pi * rot_speed) / sample_rate
+
+                # ── Power-preserving panning (never fully silent) ──
+                # Values stay in [0.15 .. 1.0] so sound always present
+                pan_l = 0.15 + 0.85 * ((1 + math.cos(angle)) / 2)
+                pan_r = 0.15 + 0.85 * ((1 + math.sin(angle)) / 2)
+
+                # ── Distance attenuation (sound feels near/far) ──
+                dist_mod = 0.75 + 0.25 * math.sin(2 * math.pi * 0.11 * t)
+
+                # ── Source signal ──
+                # 432 Hz healing carrier (left ear) + harmonics
+                sig_l  = math.sin(2 * math.pi * 432.0 * t)
+                sig_l += 0.32 * math.sin(2 * math.pi * 216.0 * t)   # sub-octave
+                sig_l += 0.20 * math.sin(2 * math.pi * 864.0 * t)   # 2nd harmonic
+                sig_l += 0.12 * math.sin(2 * math.pi * 1296.0 * t)  # 3rd harmonic
+                # 436 Hz binaural beat carrier (right ear) — 4 Hz diff = theta waves
+                sig_r  = math.sin(2 * math.pi * 436.0 * t)
+                sig_r += 0.32 * math.sin(2 * math.pi * 218.0 * t)
+                sig_r += 0.20 * math.sin(2 * math.pi * 872.0 * t)
+                sig_r += 0.12 * math.sin(2 * math.pi * 1308.0 * t)
+                # Sub-bass pulse shared (for headphone vibration)
+                sub = 0.45 * math.sin(2 * math.pi * 60.0 * t) * \
+                      (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
+                sig_l += sub
+                sig_r += sub
+
+                # ── Room reverb (3 taps) ──
+                reverb_l = 0.0
+                reverb_r = 0.0
+                for tap_i, tap_samp in enumerate(taps):
+                    idx_past = (buf_idx - tap_samp) % (max_tap + 1)
+                    reverb_l += tap_vol[tap_i] * delay_buf[idx_past]
+                    reverb_r += tap_vol[tap_i] * delay_buf[idx_past]
+
+                wet_l = sig_l * 0.7 + reverb_l * 0.3
+                wet_r = sig_r * 0.7 + reverb_r * 0.3
+
+                # Store in delay buffer (mono mix)
+                delay_buf[buf_idx] = (sig_l + sig_r) * 0.5
+                buf_idx = (buf_idx + 1) % (max_tap + 1)
+
+                # ── Final mix with 8D panning applied ──
+                vol = 0.26
+                left_val  = int(vol * pan_l * dist_mod * env * wet_l * 32767)
+                right_val = int(vol * pan_r * dist_mod * env * wet_r * 32767)
+                left_val  = max(-32767, min(32767, left_val))
                 right_val = max(-32767, min(32767, right_val))
-                
                 f.writeframes(struct.pack('<hh', left_val, right_val))
-                
-        logger.info(f"✅ Created hypnotic background music: {filename}")
+
+        logger.info(f"✅ True 8D spatial audio generated: {filename}")
     except Exception as e:
-        logger.error(f"Failed to create {filename}: {e}")
+        logger.error(f"Failed to create 8D audio {filename}: {e}")
 
 def ensure_sfx(studio_dir):
     sfx_dir = os.path.join(studio_dir, "public")
@@ -286,9 +330,9 @@ def ensure_sfx(studio_dir):
         create_tone(os.path.join(sfx_dir, "riser.wav"), 100, 2.0, riser=True)
     if not os.path.exists(os.path.join(sfx_dir, "impact.wav")):
         create_tone(os.path.join(sfx_dir, "impact.wav"), 60, 1.5)
-    # Always regenerate hypno.wav so it uses the latest duration
-    logger.info("Generating hypnotic background music (binaural 432Hz/436Hz stereo drone)...")
-    create_hypnotic_music(os.path.join(sfx_dir, "hypno.wav"), duration=40.0)
+    # Always regenerate — pure 8D spatial audio every run
+    logger.info("🎧 Generating TRUE 8D spatial audio (432/436 Hz binaural + rotating pan + reverb)...")
+    create_8d_hypnotic_music(os.path.join(sfx_dir, "hypno.wav"), duration=42.0)
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
@@ -378,14 +422,39 @@ def build_v32_payload():
     studio_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio"))
     ensure_sfx(studio_dir)
         
-    logger.info("Triggering Remotion Render (V32 - Ultimate Aesthetic)...")
-    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V32_ULTIMATE_AESTHETIC.mp4"))
-    
-    # BUG FIX: Removed shell=True on Linux; pass command as list for cross-platform safety
-    cmd = ["npx", "remotion", "render", "src/index.ts", "MainVideo", out_file, "--props", json_path]
-    subprocess.run(cmd, cwd=studio_dir, check=True)
-    logger.info(f"✅ SUCCESSFULLY RENDERED V32 REEL: {out_file}")
-    
+    logger.info("🎬 Triggering V34 4K-Quality Remotion Render...")
+    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V34_ULTRA_4K.mp4"))
+
+    # ── V34 Quality Flags ─────────────────────────────────────────────────────
+    # --crf=10        → Near-lossless H.264 (0=lossless, 51=worst; 10=excellent)
+    # --video-bitrate=8000k → Force high bitrate cap for 4K-quality clarity
+    # --gl=angle      → Hardware-accelerated WebGL (works on GH Actions Linux)
+    # ─────────────────────────────────────────────────────────────────────────
+    cmd = [
+        "npx", "remotion", "render",
+        "src/index.ts", "MainVideo", out_file,
+        "--props", json_path,
+        "--crf=10",
+        "--video-bitrate=8000k",
+        "--gl=angle",
+    ]
+    try:
+        subprocess.run(cmd, cwd=studio_dir, check=True)
+        logger.info(f"✅ V34 4K-Quality render complete: {out_file}")
+    except subprocess.CalledProcessError:
+        # Fallback: try without --gl flag (some runners don't support angle)
+        logger.warning("angle GL failed, retrying with swangle...")
+        cmd_fallback = [
+            "npx", "remotion", "render",
+            "src/index.ts", "MainVideo", out_file,
+            "--props", json_path,
+            "--crf=10",
+            "--video-bitrate=8000k",
+            "--gl=swangle",
+        ]
+        subprocess.run(cmd_fallback, cwd=studio_dir, check=True)
+        logger.info(f"✅ V34 render complete (swangle): {out_file}")
+
     logger.info("Video rendering complete. Script execution finished.")
 
     return out_file
