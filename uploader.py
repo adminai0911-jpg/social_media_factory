@@ -259,51 +259,42 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x_via_webhook(video_path, description):
-    """Post to X/Twitter via a free webhook service (Zapier or Make.com).
-    Set ZAPIER_WEBHOOK_URL or MAKE_WEBHOOK_URL in GitHub Secrets.
-    Zapier is recommended: free at zapier.com, 100 posts/month, no API key needed.
+def upload_to_x_via_playwright(video_path, description):
+    """Post to X/Twitter using real browser automation (Playwright).
+    ✅ 100% FREE — no API key, no webhook service, no paid subscription.
+    Requires X_USERNAME and X_PASSWORD in GitHub Secrets.
     """
-    # Support both Zapier (recommended, free) and Make.com webhooks
-    WEBHOOK_URL = os.environ.get("ZAPIER_WEBHOOK_URL") or os.environ.get("MAKE_WEBHOOK_URL", "")
-    WEBHOOK_SERVICE = "Zapier" if os.environ.get("ZAPIER_WEBHOOK_URL") else "Make.com"
+    import subprocess, sys
 
-    if not WEBHOOK_URL:
-        logger.warning("⏭️ Skipping X/Twitter (Missing ZAPIER_WEBHOOK_URL or MAKE_WEBHOOK_URL secret)")
-        logger.warning("👉 Fix: Go to zapier.com → Create free account → Webhooks by Zapier trigger → X (Twitter) action → paste URL into GitHub secret ZAPIER_WEBHOOK_URL")
+    x_user = os.environ.get("X_USERNAME", "")
+    x_pass = os.environ.get("X_PASSWORD", "")
+
+    if not x_user or not x_pass:
+        logger.warning("⏭️ Skipping X/Twitter (Missing X_USERNAME or X_PASSWORD secret)")
+        logger.warning("👉 Fix: Add X_USERNAME and X_PASSWORD to GitHub Secrets — that's it, no API key needed!")
         return False
 
-    logger.info(f"📤 Starting X/Twitter upload via {WEBHOOK_SERVICE} Webhook...")
+    logger.info("📤 Starting X/Twitter post via Playwright browser automation...")
     try:
-        # Upload video to get a public URL the webhook service can download
-        video_url = upload_to_tmpfiles(video_path)
-        if not video_url:
-            logger.error("❌ Failed to get public URL for X/Twitter Webhook. Skipping.")
-            return False
-
-        # X limits tweets to 280 chars
-        tweet_text = description
-        if len(tweet_text) > 270:
-            tweet_text = tweet_text[:267] + "..."
-
-        payload = {
-            "video_url": video_url,
-            "caption": tweet_text,
-            "text": tweet_text,    # Zapier uses 'data' field names from payload
-            "message": tweet_text  # Some services use 'message'
-        }
-
-        res = requests.post(WEBHOOK_URL, json=payload, timeout=30)
-
-        if res.status_code in [200, 202, 204] or "success" in res.text.lower() or res.text.strip() in ["Accepted", "ok", "1"]:
-            logger.info(f"✅ Successfully sent payload to {WEBHOOK_SERVICE} for X/Twitter!")
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_playwright.py")
+        result = subprocess.run(
+            [sys.executable, script_path, description, video_path],
+            timeout=300,
+            capture_output=True,
+            text=True,
+            env={**os.environ}
+        )
+        logger.info(result.stdout)
+        if result.returncode == 0:
+            logger.info("✅ Successfully posted to X (Twitter)!")
             return True
         else:
-            logger.error(f"❌ Failed to trigger {WEBHOOK_SERVICE} webhook: {res.status_code} - {res.text}")
+            logger.error(f"❌ X Playwright posting failed:\n{result.stderr}")
             return False
-
+    except subprocess.TimeoutExpired:
+        logger.error("❌ X posting timed out after 5 minutes")
     except Exception as e:
-        logger.error(f"X Upload via {WEBHOOK_SERVICE} Exception: {e}")
+        logger.error(f"❌ X Upload Exception: {e}")
     return False
 
 def distribute_to_all_platforms(video_path, description):
@@ -316,7 +307,7 @@ def distribute_to_all_platforms(video_path, description):
     fb = upload_to_facebook_reels(video_path, description)
     ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x_via_webhook(video_path, description)
+    x = upload_to_x_via_playwright(video_path, description)
     
     logger.info("🚀 Distribution Complete!")
     
