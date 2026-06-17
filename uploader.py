@@ -260,7 +260,7 @@ def upload_to_youtube_shorts(video_path, description):
     return False
 
 def upload_to_x_via_playwright(video_path, description):
-    """Post to X/Twitter using real browser automation (Playwright).
+    """Post to X/Twitter using internal API automation (twikit).
     ✅ 100% FREE — no API key, no webhook service, no paid subscription.
     Requires X_USERNAME and X_PASSWORD in GitHub Secrets.
     """
@@ -274,9 +274,9 @@ def upload_to_x_via_playwright(video_path, description):
         logger.warning("👉 Fix: Add X_USERNAME and X_PASSWORD to GitHub Secrets — that's it, no API key needed!")
         return False
 
-    logger.info("📤 Starting X/Twitter post via Playwright browser automation...")
+    logger.info("📤 Starting X/Twitter post via Internal API (twikit)...")
     try:
-        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_playwright.py")
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_twikit.py")
         result = subprocess.run(
             [sys.executable, script_path, description, video_path],
             timeout=300,
@@ -289,7 +289,7 @@ def upload_to_x_via_playwright(video_path, description):
             logger.info("✅ Successfully posted to X (Twitter)!")
             return True
         else:
-            logger.error(f"❌ X Playwright posting failed:\n{result.stderr}")
+            logger.error(f"❌ X API posting failed:\n{result.stderr}")
             return False
     except subprocess.TimeoutExpired:
         logger.error("❌ X posting timed out after 5 minutes")
