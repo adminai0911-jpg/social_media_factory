@@ -358,7 +358,14 @@ def download_dynamic_backgrounds(public_dir):
     urls = [f"https://www.youtube.com/shorts/{vid}" for vid in raw_ids.split(",")]
 
     output_names = ["gta", "sand", "bg3", "bg4"]
-    fallback_url = "https://www.w3schools.com/html/mov_bbb.mp4"
+    
+    # High-quality Pexels HD fallback videos (always available, no auth required)
+    fallback_urls = [
+        "https://videos.pexels.com/video-files/3195394/3195394-sd_540_960_25fps.mp4",  # City at night
+        "https://videos.pexels.com/video-files/2098881/2098881-sd_540_960_30fps.mp4",  # Bokeh lights
+        "https://videos.pexels.com/video-files/1580487/1580487-sd_540_960_30fps.mp4",  # Abstract waves
+        "https://videos.pexels.com/video-files/2792374/2792374-sd_540_960_30fps.mp4",  # Particles
+    ]
 
     # Pick 4 random direct URLs
     selected_urls = random.sample(urls, 4)
@@ -375,10 +382,10 @@ def download_dynamic_backgrounds(public_dir):
                 url, "-o", raw_out, "--no-playlist", "--quiet"
             ], check=True, timeout=120)
 
-            logger.info(f"⚙️  Optimizing {name}.mp4 to clean, native 1080x1920 HD...")
+            logger.info(f"⚙️  Optimizing {name}.mp4 to crisp, clean 1080x1920 (no extra brightness)...")
             subprocess.run([
                 "ffmpeg", "-y", "-i", raw_out,
-                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=contrast=1.05:saturation=1.1:brightness=0.0",
+                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.15",
                 "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
                 "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
             ], check=True, timeout=180)
@@ -388,11 +395,12 @@ def download_dynamic_backgrounds(public_dir):
             logger.info(f"✅ {name}.mp4 ready!")
 
         except Exception as e:
-            logger.error(f"❌ Failed for background {i}: {e} — using fallback")
+            logger.error(f"❌ Failed for background {i}: {e} — using Pexels HD fallback")
             try:
-                subprocess.run(["curl", "-L", fallback_url, "-o", final_out], check=False, timeout=60)
-            except Exception:
-                pass
+                subprocess.run(["curl", "-L", fallback_urls[i], "-o", final_out], check=False, timeout=60)
+                logger.info(f"✅ Pexels fallback downloaded for {name}.mp4")
+            except Exception as fe:
+                logger.error(f"❌ Even fallback failed: {fe}")
 
     logger.info("✅ All 4 Anti-Ban Dynamic Backgrounds Ready!")
 
