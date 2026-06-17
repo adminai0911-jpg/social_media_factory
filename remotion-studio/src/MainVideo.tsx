@@ -512,7 +512,7 @@ export const MainVideo: React.FC<{
           if (isRed) {
             return (
               <div style={{
-                fontFamily: TITLE_FONT, fontSize: 120, fontWeight: 900,
+                fontFamily: TITLE_FONT, fontSize: 108, fontWeight: 900,
                 color: "#FF0044",
                 textShadow: `
                   0 0 0 #000,
@@ -533,7 +533,7 @@ export const MainVideo: React.FC<{
             const glowCol = glowColors[wordIdx % glowColors.length];
             return (
               <div style={{
-                fontFamily: HINDI_FONT, fontSize: 100, fontWeight: 900,
+                fontFamily: HINDI_FONT, fontSize: 88, fontWeight: 900,
                 color: "#FFFFFF",
                 textShadow: `
                   -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000,
