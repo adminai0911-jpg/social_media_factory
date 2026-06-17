@@ -419,32 +419,26 @@ export const MainVideo: React.FC<{
         }}/>
       </AbsoluteFill>
 
-      {/* ── LAYER 4: NEURAL ALERT ────────────────────────────────── */}
+      {/* ── LAYER 4: NEURAL ALERT — pure text glow, NO BOX ──────────── */}
       {(phase === 2 || phase === 3) && (
         <AbsoluteFill style={{ zIndex: 150, pointerEvents: "none" }}>
           <div style={{
             position: "absolute", top: "4%", left: "3%", width: "94%",
-            padding: "14px 24px",
-            background: alertFlash
-              ? `linear-gradient(90deg, ${pal.p}EE, ${pal.g}EE, ${pal.a}EE)`
-              : `${pal.bg1}CC`,
-            border: `3px solid ${alertFlash ? "rgba(255,255,255,0.95)" : pal.p}`,
-            borderRadius: 22,
             textAlign: "center",
-            fontFamily: TITLE_FONT, fontSize: 50, letterSpacing: 5, fontWeight: 900,
-            color: alertFlash ? "#fff" : pal.p,
+            fontFamily: TITLE_FONT, fontSize: 52, letterSpacing: 6, fontWeight: 900,
+            color: alertFlash ? "#FFFFFF" : pal.p,
             textShadow: alertFlash
-              ? `0 0 30px white, 0 0 60px ${pal.p}, 0 0 90px ${pal.g}`
-              : `0 0 20px ${pal.p}, 0 0 40px ${pal.g}`,
-            boxShadow: alertFlash
-              ? `0 0 60px ${pal.p}99, 0 0 100px ${pal.g}55, inset 0 1px 0 rgba(255,255,255,0.4)`
-              : "none",
-            backdropFilter: "blur(8px)",
+              ? `0 0 20px white, 0 0 50px ${pal.p}, 0 0 100px ${pal.g}, 0 4px 12px black`
+              : `0 0 16px ${pal.p}, 0 0 40px ${pal.g}, 0 4px 12px black`,
+            background: "none",
+            border: "none",
+            padding: "10px 0",
           }}>
             {alertText}
           </div>
         </AbsoluteFill>
       )}
+
 
       {/* ── LAYER 5: SEROTONIN COUNTER ───────────────────────────── */}
       <Sequence from={Math.round(p2*fps)} durationInFrames={Math.round((p4-p2)*fps)}>
@@ -494,9 +488,8 @@ export const MainVideo: React.FC<{
         })}
       </AbsoluteFill>
 
-      {/* ── LAYER 8: HD CAPTION ENGINE ───────────────────────────── */}
-      {/* Positioned at BOTTOM 30% — not center — clean gradient text, NO box background */}
-      <AbsoluteFill style={{ zIndex: 300, justifyContent: "flex-end", alignItems: "center", paddingBottom: "18%", pointerEvents: "none" }}>
+      {/* ── LAYER 8: HD CAPTION ENGINE — NO BOX, PURE GLOW TEXT ──── */}
+      <AbsoluteFill style={{ zIndex: 300, justifyContent: "flex-end", alignItems: "center", paddingBottom: "16%", pointerEvents: "none" }}>
         {word && (() => {
           const elapsed = t - word.start;
           const ai = wordIdx % 6;
@@ -504,54 +497,55 @@ export const MainVideo: React.FC<{
           let op = 1;
 
           if (ai === 0) tf = `scale(${spring({fps, frame: frame - Math.round(word.start * fps), config: {damping: 12}})})`;
-          else if (ai === 1) tf = `translate(${Math.sin(frame) * 10}px,${Math.cos(frame) * 8}px) scale(1.06)`;
-          else if (ai === 2) { op = frame % 4 < 2 ? 1 : 0.6; tf = `scale(1.12)`; }
+          else if (ai === 1) tf = `translate(${Math.sin(frame) * 8}px,${Math.cos(frame) * 6}px) scale(1.05)`;
+          else if (ai === 2) { op = frame % 4 < 2 ? 1 : 0.7; tf = `scale(1.1)`; }
           else if (ai === 3) {
-            const rx = interpolate(elapsed, [0, 0.18], [-80, 0], {extrapolateRight: "clamp"});
+            const rx = interpolate(elapsed, [0, 0.18], [-60, 0], {extrapolateRight: "clamp"});
             tf = `perspective(600px) rotateX(${rx}deg)`;
           } else if (ai === 4) {
-            const s = interpolate(elapsed, [0, 0.18], [2.0, 1], {extrapolateRight: "clamp"});
+            const s = interpolate(elapsed, [0, 0.18], [1.8, 1], {extrapolateRight: "clamp"});
             tf = `scale(${s})`;
           } else {
-            tf = `scale(${spring({fps, frame: frame - Math.round(word.start * fps), config: {stiffness: 280, damping: 12}})}) rotate(${wordIdx % 2 === 0 ? 7 : -7}deg)`;
+            tf = `scale(${spring({fps, frame: frame - Math.round(word.start * fps), config: {stiffness: 280, damping: 12}})}) rotate(${wordIdx % 2 === 0 ? 5 : -5}deg)`;
           }
 
           if (isRed) {
             return (
               <div style={{
-                fontFamily: TITLE_FONT, fontSize: 108, fontWeight: 900,
-                background: `linear-gradient(135deg,#FF0044,#FF6600,#FFD700)`,
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                filter: `drop-shadow(0 0 20px #FF0044) drop-shadow(0 0 40px #FF6600) drop-shadow(0 4px 8px black)`,
+                fontFamily: TITLE_FONT, fontSize: 120, fontWeight: 900,
+                color: "#FF0044",
+                textShadow: `
+                  0 0 0 #000,
+                  -4px -4px 0 #000, 4px -4px 0 #000, -4px 4px 0 #000, 4px 4px 0 #000,
+                  0 0 25px #FF0044, 0 0 50px #FF6600, 0 0 90px #FFD700
+                `,
                 transform: tf, opacity: op,
                 textAlign: "center", maxWidth: "92%",
-                lineHeight: 1.1, letterSpacing: 5,
+                lineHeight: 1.1, letterSpacing: 6,
+                WebkitTextStroke: "3px black",
               }}>
                 {word.word.toUpperCase()}
               </div>
             );
           } else {
-            // Hindi word — vibrant gradient color, strong glow, NO background box
-            const colors = [
-              `linear-gradient(135deg,#FFFFFF,${pal.p})`,
-              `linear-gradient(135deg,${pal.p},${pal.a})`,
-              `linear-gradient(135deg,${pal.a},${pal.g})`,
-              `linear-gradient(135deg,${pal.g},#FFFFFF)`,
-              `linear-gradient(135deg,${pal2.p},${pal2.a})`,
-              `linear-gradient(135deg,#FFD700,#FF5500)`,
-            ];
-            const wordGrad = colors[wordIdx % colors.length];
-            const glowCol = [pal.p, pal.a, pal.g, "#FFFFFF", pal2.p, "#FFD700"][wordIdx % 6];
+            // Hindi caption — bright white with vivid colour glow + thick black stroke for readability
+            const glowColors = [pal.p, pal.a, pal.g, "#FFD700", pal2.p, "#FF69B4"];
+            const glowCol = glowColors[wordIdx % glowColors.length];
             return (
               <div style={{
-                fontFamily: HINDI_FONT, fontSize: 88, fontWeight: 900,
-                background: wordGrad,
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                filter: `drop-shadow(0 0 12px ${glowCol}) drop-shadow(0 0 30px ${glowCol}88) drop-shadow(0 4px 8px rgba(0,0,0,0.9))`,
+                fontFamily: HINDI_FONT, fontSize: 100, fontWeight: 900,
+                color: "#FFFFFF",
+                textShadow: `
+                  -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000,
+                  0 0 20px ${glowCol}, 0 0 50px ${glowCol}BB, 0 0 90px ${glowCol}77
+                `,
+                WebkitTextStroke: "2px black",
                 transform: tf, opacity: op,
                 textAlign: "center", maxWidth: "92%",
-                lineHeight: 1.2, letterSpacing: 2,
+                lineHeight: 1.25, letterSpacing: 2,
+                background: "none",
+                border: "none",
+                padding: 0,
               }}>
                 {word.word}
               </div>
