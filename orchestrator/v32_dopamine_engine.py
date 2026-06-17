@@ -348,73 +348,37 @@ def get_audio_duration(file_path):
         return 2.0
 
 def download_dynamic_backgrounds(public_dir):
-    """Downloads 4 random high-quality background videos using infinite dynamic YouTube search."""
-    logger.info("🎬 Initializing Infinite Dynamic Visual Engine V3...")
-    send_telegram_alert("🎬 <b>Infinite Visuals V3</b>\nScraping fresh satisfying videos from YouTube Search...")
+    """Downloads 4 random high-quality background videos from a massive pool of 211 direct URLs to bypass GitHub IP bans on ytsearch."""
+    logger.info("🎬 Initializing Infinite Dynamic Visual Engine V4 (Anti-Ban Edition)...")
+    send_telegram_alert("🎬 <b>Infinite Visuals V4</b>\nFetching 4 fresh satisfying videos from massive anti-ban pool...")
 
-    # Massive pool of search queries to guarantee we never see the same stuff
-    search_queries = [
-        "satisfying loop shorts hd",
-        "kinetic sand slicing asmr shorts",
-        "luxury cars cinematic 4k shorts",
-        "abstract 3d loop blender shorts",
-        "relaxing nature drone 4k shorts",
-        "gta v parkour gameplay shorts",
-        "fluid simulation loop satisfying shorts",
-        "asmr soap cutting satisfying shorts",
-        "satisfying paint mixing macro shorts",
-        "cyberpunk city rain loop shorts",
-        "space galaxy stars loop shorts",
-        "satisfying factory machine loop shorts",
-        "woodworking resin satisfying shorts",
-        "hydraulic press crushing shorts",
-        "satisfying slime mixing shorts",
-        "minecraft parkour gameplay background shorts",
-        "satisfying glass blowing shorts",
-        "satisfying calligraphy writing shorts",
-        "oddly satisfying 3d animation shorts",
-        "satisfying kinetic sand crushing shorts"
-    ]
+    # Massive pool of 211 satisfying, 4K, kinetic sand, luxury, and abstract shorts
+    raw_ids = "gZNZ09Ipma0,YOla8Witpsw,W16ZYbVv9HQ,Syd_4J6OWRk,xbbY4mwSnpU,Sb-hF0VxFAQ,39M4Y90P31g,AyL1vQT7vCo,A1nNEigi0sI,KF1p-aEWwDY,6aG36N_Fq00,tdvCen2-KWc,XcM1dbJlxmM,m-5v7tVR-d4,jn26FpJOzV0,842cQ-DVkgU,-vfBJzP3CoQ,GZz9pehwlgA,TXm39ahUdCE,jei0yDqTZEs,ZTy5KWnt__8,joI85ThNqfg,Ks_YLm9khYI,u8zHXq58r4k,fZxbZ54JAr4,e4ITqxOFkhk,-zeZjZjoH2c,blJsl1TxC6Y,DuclUv4q7dE,hmKdLa9m2f0,yiWxYWhzplc,DpCl9xPpwhg,tZgJObochEs,FBIhovLTOno,-QVXZPlPsx0,nDM6VYZElN0,cYHXJaF55E8,KbszjfNRYIU,lUc3FhOjZYY,daPgqtgvAOU,HPpfIHCBie4,5tSs_LAXN9s,bASxRUonggg,NmHYknWACK0,bHIFP44j_lU,6p1YEKKOdPI,T0yrzsgRmdM,18NaqLokQDw,9wzQSOSgUNA,LDYzC0hP-yg,1vCccIcUsTw,ynldNIHy_JY,drL8M9Vjuyc,zFEDCo-eyi4,zJAw8b43Cro,U_QDzkZ1e1w,leTDwQ-RpPA,-uubmFW4npk,H-0Hjm7b_XQ,Cv19w_2-rMc,NvKbHpcymIc,Ck86_rYjFtg,8-tVlZE_dx4,YSwha0Va08s,HvgTc1kK6wk,GPv9699gmHc,GdhUPN96GXM,BbxMC7WYUjI,mPxLJJE1n-o,w4kMt3sXZoM,kzxetZaAEBA,FHJ3CMWnVxY,vtxVK3sbZ0o,FSD9CSaDIEI,zcoEptW-e0U,17uv5_1EVnU,1zRt35DuUFk,-x3NVlK_k20,Cgf-S57gvvI,JgT9FvoDOYY,iLRsCtd5P9s,H4ePSTpwEf8,-rdjhVbhz3U,JEougUq9NPE,3ll5jzjNIcs,6O1bSNc3zik,nVwjnE7uRII,MWG3axiXPAQ,T8YdFHgNBz0,_zosu3mWD74,rAHXaByYFfc,lL1tw13fqSM,AvKf22KPbZs,82VgATisNFk,HLJ-u9-UAGE,jUNiQ-FH1x0,_7P-IvX-HGA,YtDKpxp56p8,b7Cl7S0pLRw,-9YigXrOrtw,YQTfXb0zvec,lOPDr8C4z_A,1xPDDLJiqHA,HZ2MghRKK0E,w_uJhdwIjW0,3-unrKVo8yg,D15el6p5fDs,kcfs1-ryKWE,hBia7Qfhbns,7EqsLd6YHy4,0UU8r2IdVEw,T8naeMyroIA,ZLnM_PbzTjg,Ul1CuejYFIs,H0ocsEiwEOM,eDzuw1je-Q8,_8dccTPJSJs,R9Zz4T0O_-g,ck7RGv4sJZM,msBue-eKiTw,m_kG1kyRiGA,x_o9rwq4QSk,Y6d9f6w4oRE,y8CAxo3QuRU,lP_hWQ1yiko,Ue4scIiV6BY,FIwvZWZoDpk,E0SH7LdHyF0,UF2GUZpyxjc,Uq4OLSRgSQE,wkJvBub5GIA,C6lF9yv0tXY,tmluNCd2a8g,2H_YyklnpFM,3a4iW1Nsq4g,6PQIBM1Fo64,lmOhLna4cgc,o3tMjM7uRME,ccEn8rKotTo,xdPfWDJ1664,278IRQ6HSi4,XR1jUhreXbs,n-lB3F9n_Y4,22KgACvhAXQ,pIUgYkpQEAs,nD4TQtF1baM,FE8rqdSNams,f9jbUEaOUeI,Cv19w_2-rMc,fzzcwMXAXgw,-fikg4wIy74,LxITuvJvryM,oqKXrLlW3_I,mLwlGsRhNIU,hQPR_x1aWng,0xhzwDXfLds,WBHDqnBeJVg,JX2oiG8N6jw,DA1CPXxJpHc,epAZs3kCot0,zlRqCxR7op8,cjAc6tZyf6c,atdsgdl37hg,vsnwEE94Sbg,vIrpykXum80,JhZrM4j1iu8,ptDgX3Vmx4Q,p7XQnAgt18g,5eWNzsThkFI,GbkFn2yaOgg,rF6awqlStl4,Xulwwt5b_GY,NNbUUS9xMNk,RJjaX9yOpQQ,SbI5EWTE4Uk,1EK3bFCZ4mw,MY7jJNE6JUg,t2yjLQ76b_I,agEN2zPaEzY,YAFUyPp_238,y8t5EU5S3xc,x2aAiBlJgTY,9AJGRwIo66I,6HZLhhNQ3D0,4FeU53QiRkY,0RcX_U2xWFs,qs9cf7_mZow,_ZJHzkE1vgI,pWVwVaYAVlM,cAJKxrSaKIA,R4MV2KZlFXE,iUtnZpzkbG8,JD61QhddkNk,9P-3HgcHbS0,ToH0W-0UV3U,oCGBpv_CqYU,t9-cMiEDNyk,D8XSlj_8h_c,L0q1hABMBug,SwqMsUR11EI,6g-3BGPLJcc,mPP7PQvjoDI,3SOY7a73Jzo,57xosdOWbFc,od6m7Z0Pu1w,9F7fNYjFByI,8BYrvVeejzg,Y4Z3GAGFyIs,LTwJnD0KtBU,g41ztfhuFIM,dVtZ3D-1PgM,Kb1WN3g9jOw,AM8zBqUuI3E,Elhj-UOTv0M,CWUvP0iYYOc,5jcUqJZt8F0,nmdpQDEMUio,SR1PF3ZTDBc,b70-_6EgXZw,FwJ50UzkXI4"
+    
+    urls = [f"https://www.youtube.com/shorts/{vid}" for vid in raw_ids.split(",")]
 
     output_names = ["gta", "sand", "bg3", "bg4"]
     fallback_url = "https://www.w3schools.com/html/mov_bbb.mp4"
 
-    # Pick 4 random search queries
-    selected_queries = random.sample(search_queries, 4)
+    # Pick 4 random direct URLs
+    selected_urls = random.sample(urls, 4)
 
-    for i, query in enumerate(selected_queries):
+    for i, url in enumerate(selected_urls):
         name = output_names[i]
         raw_out   = os.path.join(public_dir, f"{name}_raw.mp4")
         final_out = os.path.join(public_dir, f"{name}.mp4")
 
-        logger.info(f"🔍 Searching YouTube for: '{query}'")
+        logger.info(f"📥 Downloading direct video URL: {url}")
         try:
-            # Get top 15 results for this search query
-            result = subprocess.run(
-                [sys.executable, "-m", "yt_dlp", f"ytsearch15:{query}", "--get-id", "--match-filter", "duration < 180"],
-                capture_output=True, text=True, timeout=30
-            )
-            
-            video_ids = [vid for vid in result.stdout.strip().split('\n') if len(vid) == 11]
-            
-            if not video_ids:
-                raise Exception("No videos found for query")
-
-            # Pick a completely random video from the top 15
-            selected_id = random.choice(video_ids)
-            url = f"https://www.youtube.com/watch?v={selected_id}"
-
-            logger.info(f"📥 Downloading selected video ({selected_id}) for {name}...")
-            
             subprocess.run([
                 sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]",
                 url, "-o", raw_out, "--no-playlist", "--quiet"
             ], check=True, timeout=120)
 
-            logger.info(f"⚙️  Optimizing {name}.mp4 to 4K-like Ultra HD (1080x1920)...")
+            logger.info(f"⚙️  Optimizing {name}.mp4 to clean, native 1080x1920 HD...")
             subprocess.run([
                 "ffmpeg", "-y", "-i", raw_out,
-                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,unsharp=5:5:1.0:5:5:0.0,eq=contrast=1.15:saturation=1.25:brightness=0.03",
+                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=contrast=1.05:saturation=1.1:brightness=0.0",
                 "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
                 "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
             ], check=True, timeout=180)
@@ -430,7 +394,7 @@ def download_dynamic_backgrounds(public_dir):
             except Exception:
                 pass
 
-    logger.info("✅ All 4 Infinite Dynamic Backgrounds Ready!")
+    logger.info("✅ All 4 Anti-Ban Dynamic Backgrounds Ready!")
 
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
