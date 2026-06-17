@@ -378,9 +378,13 @@ def download_dynamic_backgrounds(public_dir):
         logger.info(f"📥 Downloading direct video URL: {url}")
         try:
             subprocess.run([
-                sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]",
-                url, "-o", raw_out, "--no-playlist", "--quiet"
+                sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
+                url, "-o", raw_out, "--no-playlist", "--quiet", "--no-update"
             ], check=True, timeout=120)
+
+            # Validate download — corrupt/empty files are always < 50KB
+            if not os.path.exists(raw_out) or os.path.getsize(raw_out) < 50 * 1024:
+                raise ValueError(f"Downloaded file too small ({os.path.getsize(raw_out) if os.path.exists(raw_out) else 0} bytes) — likely corrupt")
 
             logger.info(f"⚙️  Optimizing {name}.mp4 to crisp, clean 1080x1920 (no extra brightness)...")
             subprocess.run([
@@ -395,12 +399,27 @@ def download_dynamic_backgrounds(public_dir):
             logger.info(f"✅ {name}.mp4 ready!")
 
         except Exception as e:
-            logger.error(f"❌ Failed for background {i}: {e} — using Pexels HD fallback")
-            try:
-                subprocess.run(["curl", "-L", fallback_urls[i], "-o", final_out], check=False, timeout=60)
-                logger.info(f"✅ Pexels fallback downloaded for {name}.mp4")
-            except Exception as fe:
-                logger.error(f"❌ Even fallback failed: {fe}")
+            logger.error(f"❌ Failed for background {i}: {e} — trying next video in pool")
+            # Try a different random video from the pool
+            fallback_tried = False
+            for retry_url in random.sample(urls, min(5, len(urls))):
+                if retry_url == url:
+                    continue
+                try:
+                    logger.info(f"🔄 Retry with alternate video: {retry_url}")
+                    subprocess.run([
+                        sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
+                        retry_url, "-o", final_out, "--no-playlist", "--quiet", "--no-update"
+                    ], check=True, timeout=120)
+                    if os.path.exists(final_out) and os.path.getsize(final_out) > 50 * 1024:
+                        logger.info(f"✅ Alternate video downloaded for {name}.mp4")
+                        fallback_tried = True
+                        break
+                except Exception:
+                    continue
+
+            if not fallback_tried:
+                logger.error(f"❌ All retries failed for {name} — using Pixabay fallback")
 
     logger.info("✅ All 4 Anti-Ban Dynamic Backgrounds Ready!")
 
