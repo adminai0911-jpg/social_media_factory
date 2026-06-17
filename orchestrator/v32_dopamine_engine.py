@@ -419,7 +419,33 @@ def download_dynamic_backgrounds(public_dir):
                     continue
 
             if not fallback_tried:
-                logger.error(f"❌ All retries failed for {name} — using Pixabay fallback")
+                logger.error(f"❌ All retries failed for {name} — GENERATING SYNTHETIC FALLBACK VIA PICSUM + FFMPEG")
+                try:
+                    # 1. Download a random high-res blurry abstract image from picsum (Never blocks bots)
+                    img_path = os.path.join(public_dir, f"{name}_bg.jpg")
+                    subprocess.run(["curl", "-sL", f"https://picsum.photos/1080/1920/?blur=2&random={random.randint(1,10000)}", "-o", img_path], check=True, timeout=30)
+                    
+                    # 2. Use FFmpeg to create a slow Ken Burns zoom-in animation (15 seconds) from the image
+                    # This bypasses all scraper protections and creates a beautiful, unique HD video every time!
+                    logger.info(f"⚙️  Rendering 15s synthetic satisfying loop for {name}.mp4...")
+                    subprocess.run([
+                        "ffmpeg", "-y", "-loop", "1", "-i", img_path,
+                        "-vf", "zoompan=z='zoom+0.0005':d=450:s=1080x1920",
+                        "-c:v", "libx264", "-preset", "superfast", "-tune", "stillimage",
+                        "-crf", "20", "-t", "15", "-pix_fmt", "yuv420p", "-an", final_out
+                    ], check=True, timeout=120)
+                    
+                    if os.path.exists(img_path):
+                        os.remove(img_path)
+                    
+                    logger.info(f"✅ Synthetic video generated for {name}.mp4")
+                except Exception as fe:
+                    logger.error(f"❌ Ultimate synthetic fallback failed: {fe}")
+                    # Absolute last resort: create a 2-second blank video so Remotion compositor NEVER crashes with 404
+                    subprocess.run([
+                        "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=black:s=1080x1920:d=2",
+                        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
+                    ], check=False)
 
     logger.info("✅ All 4 Anti-Ban Dynamic Backgrounds Ready!")
 
