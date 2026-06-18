@@ -444,7 +444,12 @@ def download_dynamic_backgrounds(public_dir):
                         if hd_files:
                             video_url = hd_files[0]["link"]
                             logger.info(f"⬇️  Downloading: {video_url[:80]}...")
-                            dl_resp = requests.get(video_url, stream=True, timeout=120)
+                            dl_resp = requests.get(
+                                video_url, 
+                                stream=True, 
+                                timeout=120,
+                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                            )
                             if dl_resp.status_code == 200:
                                 with open(raw_out, "wb") as f:
                                     for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
@@ -506,8 +511,12 @@ def download_dynamic_backgrounds(public_dir):
             for direct_url in pool:
                 try:
                     logger.info(f"📥 [{name}] Curated fallback: {direct_url[:80]}...")
-                    dl_resp = requests.get(direct_url, stream=True, timeout=60,
-                                          headers={"User-Agent": "Mozilla/5.0"})
+                    dl_resp = requests.get(
+                        direct_url, 
+                        stream=True, 
+                        timeout=60,
+                        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                    )
                     if dl_resp.status_code == 200:
                         with open(raw_out, "wb") as f:
                             for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
