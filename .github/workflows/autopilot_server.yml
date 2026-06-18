@@ -86,6 +86,10 @@ jobs:
           python -m pip install --upgrade pip --quiet
           pip install google-generativeai python-dotenv requests mutagen edge-tts requests-oauthlib --quiet
 
+      # ── STEP 7b: Install FFmpeg for synthetic video generation ──────────
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       # ── STEP 8: Install Node deps ONLY if cache missed ────────────────────
       - name: Install Remotion Dependencies
         if: steps.node-cache.outputs.cache-hit != 'true'
