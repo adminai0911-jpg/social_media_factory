@@ -384,6 +384,7 @@ def download_dynamic_backgrounds(public_dir):
         try:
             subprocess.run([
                 sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
+                "--extractor-args", "youtube:player_client=android",
                 url, "-o", raw_out, "--no-playlist", "--quiet", "--no-update"
             ], check=True, timeout=120)
 
@@ -414,6 +415,7 @@ def download_dynamic_backgrounds(public_dir):
                     logger.info(f"🔄 Retry with alternate video: {retry_url}")
                     subprocess.run([
                         sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
+                        "--extractor-args", "youtube:player_client=android",
                         retry_url, "-o", final_out, "--no-playlist", "--quiet", "--no-update"
                     ], check=True, timeout=120)
                     if os.path.exists(final_out) and os.path.getsize(final_out) > 50 * 1024:
