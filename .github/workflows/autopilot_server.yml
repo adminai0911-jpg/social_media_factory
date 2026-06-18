@@ -111,6 +111,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           # Tell Remotion render to use all 2 runner vCPUs for max parallel frame rendering
           REMOTION_CONCURRENCY: "2"
         run: |

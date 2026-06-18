@@ -473,44 +473,82 @@ def download_dynamic_backgrounds(public_dir):
             except Exception as e:
                 logger.error(f"❌ [{name}] Pexels download failed: {e}")
 
-        # ── FALLBACK: Pexels curated video IDs (no API key needed) ─────────
+        # ── SECONDARY: Pixabay API Fallback (Free, no-auth support) ──────────
         if not downloaded:
-            # These are direct permanent Pexels CDN links — always available
-            curated_pools = {
-                "gta":  [
-                    "https://videos.pexels.com/video-files/3571264/3571264-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/3109669/3109669-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/5752729/5752729-uhd_2160_4096_25fps.mp4",
-                    "https://videos.pexels.com/video-files/855869/855869-hd_1080_1920_30fps.mp4",
-                    "https://videos.pexels.com/video-files/2098881/2098881-hd_1080_1920_25fps.mp4",
+            pixabay_key = os.getenv("PIXABAY_API_KEY", "")
+            if pixabay_key:
+                try:
+                    logger.info(f"📥 [{name}] Fetching Pixabay video for: '{query}'")
+                    resp = requests.get(
+                        "https://pixabay.com/api/videos/",
+                        params={"key": pixabay_key, "q": query, "per_page": 20},
+                        timeout=15
+                    )
+                    if resp.status_code == 200:
+                        hits = resp.json().get("hits", [])
+                        if hits:
+                            video_hit = random.choice(hits)
+                            videos_dict = video_hit.get("videos", {})
+                            # Pick medium or large mp4 video
+                            target_video = videos_dict.get("medium") or videos_dict.get("large") or videos_dict.get("small")
+                            if target_video:
+                                video_url = target_video.get("url")
+                                logger.info(f"⬇️ Downloading Pixabay: {video_url[:80]}...")
+                                dl_resp = requests.get(
+                                    video_url, 
+                                    stream=True, 
+                                    timeout=120,
+                                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                                )
+                                if dl_resp.status_code == 200:
+                                    with open(raw_out, "wb") as f:
+                                        for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
+                                            f.write(chunk)
+                                    if os.path.exists(raw_out) and os.path.getsize(raw_out) > 500 * 1024:
+                                        logger.info(f"⚙️ Processing {name}.mp4...")
+                                        subprocess.run([
+                                            "ffmpeg", "-y", "-i", raw_out,
+                                            "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                                                   "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
+                                            "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
+                                            "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
+                                        ], check=True, timeout=180, capture_output=True)
+                                        os.remove(raw_out)
+                                        logger.info(f"✅ [{name}] Pixabay HD video ready!")
+                                        downloaded = True
+                except Exception as pe:
+                    logger.warning(f"⚠️ Pixabay API failed: {pe}")
+
+        # ── TERTIARY: Direct Open-Source Public Video Loops (No Auth, Instant CDN Download) ──
+        if not downloaded:
+            # High quality direct vertical mp4 loop urls from open resources that do not block datacenters
+            direct_pools = {
+                "gta": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-fluid-art-of-blue-and-purple-ink-41618-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-acrylic-paint-mixing-abstract-art-41617-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-abstract-golden-particle-waves-background-loop-42867-large.mp4"
                 ],
                 "sand": [
-                    "https://videos.pexels.com/video-files/3758881/3758881-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/3726879/3726879-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/4168969/4168969-uhd_2160_3840_25fps.mp4",
-                    "https://videos.pexels.com/video-files/3195394/3195394-hd_1080_1920_25fps.mp4",
-                    "https://videos.pexels.com/video-files/1535654/1535654-hd_1080_1920_24fps.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-sand-dunes-in-a-desert-4416-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-waves-in-a-blue-ocean-aerial-4401-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-pouring-colorful-sand-satisfying-video-43093-large.mp4"
                 ],
-                "bg3":  [
-                    "https://videos.pexels.com/video-files/3990234/3990234-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/4629753/4629753-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/5792527/5792527-hd_1080_1920_25fps.mp4",
-                    "https://videos.pexels.com/video-files/2611816/2611816-hd_1080_1920_30fps.mp4",
-                    "https://videos.pexels.com/video-files/1580487/1580487-hd_1080_1920_30fps.mp4",
+                "bg3": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-neon-light-from-a-tunnel-in-a-futuristic-city-43187-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-glowing-neon-lights-42548-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-background-loop-42879-large.mp4"
                 ],
-                "bg4":  [
-                    "https://videos.pexels.com/video-files/3109678/3109678-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/4121999/4121999-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/4884240/4884240-uhd_1440_2560_25fps.mp4",
-                    "https://videos.pexels.com/video-files/2792374/2792374-hd_1080_1920_30fps.mp4",
-                    "https://videos.pexels.com/video-files/857251/857251-hd_1080_1920_24fps.mp4",
-                ],
+                "bg4": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-driving-in-a-futuristic-neon-city-timelapse-43185-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-a-forest-aerial-view-4402-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-slow-motion-water-splashes-in-dark-background-42352-large.mp4"
+                ]
             }
-            pool = curated_pools.get(name, curated_pools["gta"])
+            pool = direct_pools.get(name, direct_pools["gta"])
             random.shuffle(pool)
             for direct_url in pool:
                 try:
-                    logger.info(f"📥 [{name}] Curated fallback: {direct_url[:80]}...")
+                    logger.info(f"📥 [{name}] Direct fallback: {direct_url[:80]}...")
                     dl_resp = requests.get(
                         direct_url, 
                         stream=True, 
@@ -530,11 +568,11 @@ def download_dynamic_backgrounds(public_dir):
                                 "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
                             ], check=True, timeout=180, capture_output=True)
                             os.remove(raw_out)
-                            logger.info(f"✅ [{name}] Curated fallback ready!")
+                            logger.info(f"✅ [{name}] Direct fallback ready!")
                             downloaded = True
                             break
                 except Exception as ce:
-                    logger.warning(f"⚠️  Curated URL failed: {ce}")
+                    logger.warning(f"⚠️ Direct URL failed: {ce}")
                     continue
 
         if not downloaded:
@@ -545,7 +583,7 @@ def download_dynamic_backgrounds(public_dir):
                 "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
             ], check=False, capture_output=True)
 
-    logger.info("✅ All 4 HD Backgrounds Ready (Pexels Engine)!")
+    logger.info("✅ All 4 HD Backgrounds Ready (Pexels/Pixabay/Mixkit Engine)!")
 
 
 
