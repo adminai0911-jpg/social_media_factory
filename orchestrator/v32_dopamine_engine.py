@@ -9,7 +9,8 @@ import time
 import wave
 import math
 import struct
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from mutagen.mp3 import MP3
 
@@ -89,20 +90,24 @@ def generate_dynamic_script():
     
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
-        genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            client = genai.Client(api_key=key)
+        except Exception as e:
+            logger.error(f"Failed to initialize genai client: {e}")
+            continue
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
-                response = model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
                         response_mime_type="application/json"
                     )
                 )
                 
-                if not response.candidates or not response.text:
-                    logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
+                if not response.text:
+                    logger.error(f"Gemini response blocked or empty.")
                     time.sleep(2)
                     continue
                     
