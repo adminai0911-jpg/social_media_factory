@@ -3,5 +3,6 @@ node_modules/
 *.mp4
 *.wav
 *.mp3
+*.part
 __pycache__/
 remotion-studio/out/
