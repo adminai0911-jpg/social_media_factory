@@ -1,0 +1,80 @@
+# ============================================================
+# Workflow 2: CLOUD POSTER (GitHub Cloud — ubuntu-latest)
+# ============================================================
+# Runs on GitHub's FREE cloud servers.
+# Posts 3 times per day to 4 Platforms (YouTube, Instagram, Facebook, X)
+# Runtime: ~2-3 minutes per run × 3 × 30 days = ~270 min/month
+# GitHub free tier: 2,000 min/month → Very safe and fully free!
+#
+# Post Schedule (IST):
+#   - 8:00 AM  (2:30 UTC)
+#   - 12:00 PM (6:30 UTC)
+#   - 8:00 PM  (14:30 UTC)
+#
+# Jitter: Each run sleeps random minutes so posts look natural.
+# ============================================================
+
+name: "2 — Cloud Poster (3x Daily Multi-Platform)"
+
+on:
+  schedule:
+    # 8:00 AM IST = 2:30 UTC
+    - cron: "30 2 * * *"
+    # 12:00 PM IST = 6:30 UTC
+    - cron: "30 6 * * *"
+    # 8:00 PM IST = 14:30 UTC
+    - cron: "30 14 * * *"
+
+  workflow_dispatch:
+    inputs:
+      skip_jitter:
+        description: "Skip random jitter delay (for testing)"
+        required: false
+        default: "false"
+
+jobs:
+  post-from-buffer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (fast — no Node/Remotion needed)
+        run: |
+          pip install twikit requests instagrapi google-api-python-client google-auth-httplib2 google-auth-oauthlib python-dotenv
+
+      - name: Run poster script
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          
+          # Telegram
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          
+          # X / Twitter
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_EMAIL: ${{ secrets.TWITTER_EMAIL }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
+          TWITTER_COOKIES_JSON: ${{ secrets.TWITTER_COOKIES_JSON }}
+          
+          # YouTube Shorts
+          YOUTUBE_CREDENTIALS_JSON: ${{ secrets.YOUTUBE_CREDENTIALS_JSON }}
+          
+          # Instagram Reels
+          INSTAGRAM_USERNAME: ${{ secrets.INSTAGRAM_USERNAME }}
+          INSTAGRAM_PASSWORD: ${{ secrets.INSTAGRAM_PASSWORD }}
+          INSTAGRAM_SESSION_JSON: ${{ secrets.INSTAGRAM_SESSION_JSON }}
+          
+          # Facebook Page
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+        run: |
+          python orchestrator/post_video.py

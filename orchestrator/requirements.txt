@@ -4,3 +4,5 @@ mutagen
 python-dotenv
 requests
 requests-oauthlib
+yt-dlp
+playwright

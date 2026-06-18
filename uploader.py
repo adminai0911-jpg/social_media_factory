@@ -259,122 +259,42 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x(video_path, description):
-    if not TWITTER_API_KEY or not TWITTER_API_SECRET or not TWITTER_ACCESS_TOKEN or not TWITTER_ACCESS_SECRET:
-        logger.warning("⏭️ Skipping X/Twitter (Missing Credentials)")
+def upload_to_x_via_playwright(video_path, description):
+    """Post to X/Twitter using internal API automation (twikit).
+    ✅ 100% FREE — no API key, no webhook service, no paid subscription.
+    Requires X_USERNAME and X_PASSWORD in GitHub Secrets.
+    """
+    import subprocess, sys
+
+    x_user = os.environ.get("X_USERNAME", "")
+    x_pass = os.environ.get("X_PASSWORD", "")
+
+    if not x_user or not x_pass:
+        logger.warning("⏭️ Skipping X/Twitter (Missing X_USERNAME or X_PASSWORD secret)")
+        logger.warning("👉 Fix: Add X_USERNAME and X_PASSWORD to GitHub Secrets — that's it, no API key needed!")
         return False
 
-    # Ensure requests_oauthlib is available
+    logger.info("📤 Starting X/Twitter post via Internal API (twikit)...")
     try:
-        from requests_oauthlib import OAuth1
-    except ImportError:
-        logger.error("❌ requests_oauthlib not installed. Run: pip install requests-oauthlib")
-        return False
-
-    logger.info("📤 Starting X/Twitter upload...")
-    try:
-        auth = OAuth1(
-            TWITTER_API_KEY, TWITTER_API_SECRET,
-            TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_twikit.py")
+        result = subprocess.run(
+            [sys.executable, script_path, description, video_path],
+            timeout=300,
+            capture_output=True,
+            text=True,
+            env={**os.environ}
         )
-
-        # Truncate tweet text to X's 280-char limit (safe at 240 to leave room)
-        tweet_text = description
-        if len(tweet_text) > 240:
-            tweet_text = tweet_text[:237] + "..."
-        logger.info(f"Tweet text ({len(tweet_text)} chars): {tweet_text}")
-
-        # ── Phase 1: INIT ──────────────────────────────────────────────────────
-        upload_url = "https://upload.twitter.com/1.1/media/upload.json"
-        file_size = os.path.getsize(video_path)
-        init_data = {
-            "command": "INIT",
-            "media_type": "video/mp4",
-            "total_bytes": str(file_size),
-            "media_category": "tweet_video"
-        }
-        init_res = requests.post(upload_url, auth=auth, data=init_data)
-        logger.info(f"X INIT status: {init_res.status_code}")
-        init_json = init_res.json()
-        if "media_id_string" not in init_json:
-            logger.error(f"Failed to initialize X media upload: {init_json}")
-            return False
-
-        media_id = init_json["media_id_string"]
-        logger.info(f"X media_id: {media_id}")
-
-        # ── Phase 2: APPEND (chunked) ──────────────────────────────────────────
-        chunk_size = 4 * 1024 * 1024  # 4 MB chunks (Twitter max per chunk)
-        segment_index = 0
-        with open(video_path, "rb") as f:
-            while True:
-                chunk = f.read(chunk_size)
-                if not chunk:
-                    break
-                append_data = {
-                    "command": "APPEND",
-                    "media_id": media_id,
-                    "segment_index": str(segment_index)
-                }
-                files = {"media": ("chunk", chunk, "application/octet-stream")}
-                append_res = requests.post(upload_url, auth=auth, data=append_data, files=files)
-                if append_res.status_code not in (200, 204):
-                    logger.error(f"Failed to append X chunk {segment_index}: {append_res.status_code} - {append_res.text[:300]}")
-                    return False
-                logger.info(f"X APPEND segment {segment_index} OK")
-                segment_index += 1
-
-        # ── Phase 3: FINALIZE ──────────────────────────────────────────────────
-        finalize_data = {"command": "FINALIZE", "media_id": media_id}
-        finalize_res = requests.post(upload_url, auth=auth, data=finalize_data)
-        logger.info(f"X FINALIZE status: {finalize_res.status_code}")
-        finalize_json = finalize_res.json()
-
-        # ── Phase 4: Poll STATUS until succeeded/failed ────────────────────────
-        processing_info = finalize_json.get("processing_info", {})
-        state = processing_info.get("state", "succeeded")
-        max_polls = 30
-        polls = 0
-        while state in ("pending", "in_progress") and polls < max_polls:
-            wait = processing_info.get("check_after_secs", 5)
-            logger.info(f"X processing state: {state}. Waiting {wait}s... (poll {polls+1}/{max_polls})")
-            time.sleep(wait)
-            status_res = requests.get(
-                upload_url, auth=auth,
-                params={"command": "STATUS", "media_id": media_id}
-            )
-            status_json = status_res.json()
-            processing_info = status_json.get("processing_info", {})
-            state = processing_info.get("state", "succeeded")
-            polls += 1
-            if state == "failed":
-                logger.error(f"X media processing FAILED: {processing_info}")
-                return False
-
-        logger.info(f"X media processing complete. Final state: {state}")
-
-        # ── Phase 5: POST TWEET with media ────────────────────────────────────
-        tweet_url = "https://api.twitter.com/2/tweets"
-        tweet_payload = {
-            "text": tweet_text,
-            "media": {"media_ids": [media_id]}
-        }
-        # CRITICAL: Must send Content-Type: application/json for v2 API
-        tweet_headers = {"Content-Type": "application/json"}
-        tweet_res = requests.post(
-            tweet_url, auth=auth,
-            json=tweet_payload,
-            headers=tweet_headers
-        )
-        logger.info(f"X Tweet POST status: {tweet_res.status_code} | {tweet_res.text[:300]}")
-        tweet_json = tweet_res.json()
-        if "data" in tweet_json and "id" in tweet_json["data"]:
-            logger.info(f"✅ Successfully published to X/Twitter! Tweet ID: {tweet_json['data']['id']}")
+        logger.info(result.stdout)
+        if result.returncode == 0:
+            logger.info("✅ Successfully posted to X (Twitter)!")
             return True
         else:
-            logger.error(f"Failed to post Tweet: {tweet_json}")
+            logger.error(f"❌ X API posting failed:\n{result.stderr}")
+            return False
+    except subprocess.TimeoutExpired:
+        logger.error("❌ X posting timed out after 5 minutes")
     except Exception as e:
-        logger.error(f"X Upload Exception: {e}")
+        logger.error(f"❌ X Upload Exception: {e}")
     return False
 
 def distribute_to_all_platforms(video_path, description):
@@ -387,7 +307,7 @@ def distribute_to_all_platforms(video_path, description):
     fb = upload_to_facebook_reels(video_path, description)
     ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x(video_path, description)
+    x = upload_to_x_via_playwright(video_path, description)
     
     logger.info("🚀 Distribution Complete!")
     
@@ -414,14 +334,13 @@ def distribute_to_all_platforms(video_path, description):
     }
 
 if __name__ == "__main__":
-    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V34_ULTRA_4K.mp4"))
+    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "FINAL_V35_HD.mp4"))
     json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "remotion-studio", "public", "v32_script.json"))
     
     if not os.path.exists(video_path):
         logger.error(f"Rendered video not found at {video_path}")
-        logger.warning("Creating a dummy video file for local testing...")
-        with open(video_path, "wb") as f:
-            f.write(b"dummy video data")
+        # Stop execution so we don't upload a dummy file that breaks IG/X and silently fails on FB/YT
+        raise FileNotFoundError(f"Video file missing: {video_path}")
         
     caption = "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
     if os.path.exists(json_path):
