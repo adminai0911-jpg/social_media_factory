@@ -65,28 +65,56 @@ def generate_dynamic_script():
         
     random.shuffle(valid_keys)
 
-    prompt = """
-    You are an elite, neuro-marketing viral scriptwriter.
-    Generate a highly engaging short-form video script specifically designed to trigger dopamine and adrenaline in the viewer.
-    The script MUST be in Hindi (Devanagari or Roman Hindi).
-    You must return ONLY a raw JSON object (no markdown, no backticks, no explanation).
-    
-    Structure:
-    {
-      "micro_niche": "A highly specific, unique niche (e.g., 'Quantum Gardening for City Dwellers', 'Psychology of Getting Rich')",
-      "style_seed": <integer 1-100>,
-      "emojis": ["<emoji1>", "<emoji2>", "<emoji3>"],
-      "red_box_keyword": "A single intense 4-6 letter English word (e.g., FAKE, LIES, TRAP, SCAM)",
-      "subliminal_flash_word": "A short English phrase (e.g., WAKE UP, LOOK CLOSER)",
-      "serotonin_payoff_number": <random large integer between 10000 and 999999>,
-      "phase_1": "The Hook. 1 sentence in Hindi. Create a curiosity gap.",
-      "phase_2": "The Build-up. 1 sentence in Hindi. Personal/relatable stakes.",
-      "phase_3": "The Pattern Interrupt. 2-3 sentences in Hindi. A shocking realization or weird fact.",
-      "phase_4": "The Payoff. 1-2 sentences in Hindi. The resolution to the hook.",
-      "phase_5": "The Loop/CTA. 1 sentence in Hindi. A valuable takeaway that mirrors the opening.",
-      "caption": "A single engaging Hindi caption sentence followed by EXACTLY 5 English hashtags (NO MORE, NO LESS)."
-    }
-    """
+    # ── Viral Hook & CTA rotation — never same pattern twice ─────────────────
+    hooks = [
+        "यह देखने के बाद आपकी सोच बदल जाएगी...",
+        "99% लोग यह नहीं जानते — और यही उनकी सबसे बड़ी गलती है।",
+        "अगर आपने यह नहीं समझा तो पैसे कभी नहीं बनेंगे।",
+        "क्या आप भी वही गलती कर रहे हैं जो बाकी सब करते हैं?",
+        "आज मैं वो secret share करूँगा जो अमीर लोग कभी नहीं बताते।",
+        "School ने यह कभी नहीं सिखाया — पर आज जान लो।",
+        "1 minute में आपकी life की सबसे important lesson...",
+        "यह video देखकर आप खुद से पूछोगे: मैंने पहले क्यों नहीं सोचा?"
+    ]
+    ctas = [
+        "Comment में लिखो READY अगर तुम यह change करना चाहते हो 👇",
+        "इसे Save करो — 6 महीने बाद तुम खुद को thanks कहोगे 📌",
+        "उस दोस्त को Tag करो जिसे यह सुनना जरूरी है 🔖",
+        "Part 2 चाहिए? Comment में YES लिखो 🔥",
+        "Share करो उन लोगों के साथ जिनकी life बदलनी चाहिए 🚀",
+        "Like करो अगर यह आपके साथ भी हुआ है ❤️",
+        "Save करो + Share करो — किसी की life बदल सकती है 🙏"
+    ]
+    hook = random.choice(hooks)
+    cta  = random.choice(ctas)
+
+    prompt = f"""You are an elite neuro-marketing viral scriptwriter for Indian social media.
+Generate a short-form video script that triggers dopamine and adrenaline.
+Script MUST be in Hindi (Devanagari or Hinglish mix).
+Return ONLY raw JSON — no markdown, no backticks.
+
+Mandatory: phase_1 MUST use this hook exactly: {hook}
+Mandatory: phase_5 MUST use this CTA exactly: {cta}
+
+JSON:
+{{
+  "micro_niche": "Highly specific unique niche topic",
+  "style_seed": 42,
+  "emojis": ["🧠", "🔥", "💡"],
+  "red_box_keyword": "TRAP",
+  "subliminal_flash_word": "WAKE UP",
+  "serotonin_payoff_number": 847293,
+  "phase_1": "{hook}",
+  "phase_2": "Build-up. 1 sentence Hindi. Personal relatable emotional stakes.",
+  "phase_3": "Pattern Interrupt. 2-3 sentences. Shocking counter-intuitive truth.",
+  "phase_4": "Payoff. 1-2 sentences. Actionable insight that feels like revelation.",
+  "phase_5": "{cta}",
+  "caption_instagram": "Emotional Hindi caption. 1-2 sentences + EXACTLY 5 hashtags.",
+  "caption_x": "Punchy Hinglish. Max 250 chars. No hashtags. End with question.",
+  "caption_youtube": "SEO title. Numbers + emotion + benefit. Max 70 chars.",
+  "caption_facebook": "Conversational Hindi. 2-3 sentences. End with question.",
+  "caption": "Same as caption_instagram."
+}}"""
     
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
