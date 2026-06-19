@@ -45,16 +45,12 @@ JITTER_SECONDS     = random.randint(30, 300)  # 30s – 5 min jitter
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def send_telegram(message):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        return
     try:
-        requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-            data={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"},
-            timeout=10
-        )
+        from ghost.notifications import broadcast_alert
+        broadcast_alert(message)
     except Exception as e:
-        logger.warning(f"Telegram failed: {e}")
+        logger.error(f"Failed to broadcast notification: {e}")
+
 
 
 def get_buffer_assets():
@@ -321,20 +317,85 @@ def main():
     # ── Check buffer ──────────────────────────────────────────────────────────
     buffer_count = get_mp4_count()
     logger.info(f"📦 Buffer: {buffer_count} video(s) ready.")
-    send_telegram(f"📦 <b>Poster Starting</b>\nBuffer: {buffer_count} videos ready.\nPosting to 4 platforms...")
 
     if buffer_count == 0:
-        logger.warning("⚠️ Buffer is EMPTY — nothing to post.")
-        send_telegram(
-            "⚠️ <b>Buffer EMPTY!</b>\nNo video posted today.\n"
-            "Please turn on your PC to generate more videos!"
-        )
+        logger.info("⚠️ Buffer is EMPTY — Dynamically generating video on GitHub Actions...")
+        send_telegram("⚠️ <b>Buffer EMPTY!</b>\nDynamically generating a fresh viral video directly on GitHub Actions...")
+        
+        # Run v32_dopamine_engine.py
+        try:
+            engine_path = os.path.join(os.path.dirname(__file__), "v32_dopamine_engine.py")
+            subprocess.run([sys.executable, engine_path], check=True, timeout=1200)
+        except Exception as e:
+            logger.error(f"❌ Dynamic video generation failed: {e}")
+            send_telegram(f"❌ <b>Generation Failed!</b>\nCould not generate video dynamically: {e}")
+            sys.exit(1)
+            
+        # Verify video exists
+        video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V35_HD.mp4"))
+        json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public", "v32_script.json"))
+        
+        if not os.path.exists(video_path):
+            logger.error(f"Rendered video not found at {video_path}")
+            send_telegram("❌ <b>Render Failed!</b>\nRendered video file is missing. Aborting post.")
+            sys.exit(1)
+            
+        caption = "अपना जीवन बदलो। #motivation #success #hindi #viral #shorts"
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    caption = data["script"]["caption"]
+            except Exception as e:
+                logger.error(f"Failed to read caption from JSON: {e}")
+                
+        # ── Jitter ────────────────────────────────────────────────────────────────
+        logger.info(f"⏱️ Jitter: waiting {JITTER_SECONDS}s before posting...")
+        time.sleep(JITTER_SECONDS)
+
+        # Post to all platforms
+        results = {}
+        logger.info("🐦 Posting to X/Twitter...")
+        results["Twitter"] = post_twitter(video_path, caption)
+        time.sleep(random.randint(5, 15))
+
+        logger.info("📺 Posting to YouTube Shorts...")
+        results["YouTube"] = post_youtube(video_path, caption)
+        time.sleep(random.randint(5, 15))
+
+        logger.info("📸 Posting to Instagram Reels...")
+        results["Instagram"] = post_instagram(video_path, caption)
+        time.sleep(random.randint(5, 15))
+
+        logger.info("📘 Posting to Facebook Page...")
+        results["Facebook"] = post_facebook(video_path, caption)
+
+        success_list = [p for p, ok in results.items() if ok]
+        failed_list  = [p for p, ok in results.items() if not ok]
+
+        if success_list:
+            status_lines = "\n".join(
+                [f"✅ {p}" for p in success_list] +
+                [f"❌ {p} (failed)" for p in failed_list]
+            )
+            send_telegram(
+                f"📤 <b>Dynamic Video Posted!</b>\n"
+                f"{status_lines}\n\n"
+                f"Caption: {caption[:80]}..."
+            )
+        else:
+            logger.error("❌ ALL platforms failed for dynamic video.")
+            send_telegram("❌ <b>All Platforms Failed!</b>\nDynamic video posting failed for all accounts.")
+            sys.exit(1)
+            
         sys.exit(0)
+
+    # ── If buffer_count > 0, post from buffer as usual ───────────────────────
+    send_telegram(f"📦 <b>Poster Starting</b>\nBuffer: {buffer_count} videos ready.\nPosting to 4 platforms...")
 
     if buffer_count <= BUFFER_WARN:
         send_telegram(
-            f"🔶 <b>Low Buffer!</b>\nOnly {buffer_count} video(s) left.\n"
-            "Please turn on your PC to generate more."
+            f"🔶 <b>Low Buffer!</b>\nOnly {buffer_count} video(s) left."
         )
 
     # ── Jitter ────────────────────────────────────────────────────────────────
