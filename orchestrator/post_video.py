@@ -1,21 +1,9 @@
 """
-post_video.py — Multi-Platform Buffer Consumer v2
+post_video.py — Pure Cloud-Based On-Demand Poster
 ===================================================
-Runs on GitHub cloud (ubuntu-latest) in under 3 minutes.
-
-Posts to ALL 4 platforms with jitter:
-  1. X / Twitter    (twikit)
-  2. YouTube Shorts (google-api-python-client)
-  3. Instagram Reels (instagrapi)
-  4. Facebook Page   (Graph API)
-
-Logic:
-  - Fetches the OLDEST .mp4 + .txt from the 'buffer_queue' GitHub Release
-  - Posts to all 4 platforms (failures on individual platforms are logged but don't stop others)
-  - Deletes the assets from the release ONLY after all platforms attempted
-  - Reports results to Telegram
-
-Schedule: 8:00 AM / 12:00 PM / 8:00 PM IST (with 0-5 min random jitter)
+Runs on GitHub cloud (ubuntu-latest).
+Dynamically generates, renders, and posts a fresh video on every run.
+No buffer queue, no releases, no local downloads.
 """
 
 import os
@@ -25,8 +13,6 @@ import time
 import random
 import logging
 import subprocess
-import tempfile
-import requests
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,11 +23,7 @@ logger = logging.getLogger(__name__)
 # ── Environment ────────────────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID", "")
-REPO               = os.environ.get("GITHUB_REPOSITORY", "")
-RELEASE_TAG        = "buffer_queue"
-BUFFER_WARN        = 3      # Telegram alert if buffer drops below this
 JITTER_SECONDS     = random.randint(60, 3600)  # 1 to 60 minutes human jitter
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -52,248 +34,167 @@ def send_telegram(message):
     except Exception as e:
         logger.error(f"Failed to broadcast notification: {e}")
 
-
-
-def get_buffer_assets():
-    """List all assets in the buffer_queue release, sorted by name (oldest first)."""
-    result = subprocess.run(
-        ["gh", "release", "view", RELEASE_TAG, "--json", "assets"],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        return []
-    data = json.loads(result.stdout)
-    assets = data.get("assets", [])
-    return sorted(assets, key=lambda x: x["name"])
-
-
-def get_mp4_count():
-    try:
-        return len([a for a in get_buffer_assets() if a["name"].endswith(".mp4")])
-    except Exception:
-        return 0
-
-
-def download_asset(asset_name, dest_dir):
-    subprocess.run(
-        ["gh", "release", "download", RELEASE_TAG,
-         "--pattern", asset_name, "--dir", dest_dir],
-        check=True
-    )
-
-
-def delete_asset(asset_name):
-    try:
-        subprocess.run(
-            ["gh", "release", "delete-asset", RELEASE_TAG, asset_name, "--yes"],
-            check=True
-        )
-    except Exception as e:
-        logger.warning(f"Could not delete {asset_name}: {e}")
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # PLATFORM 1 — X / TWITTER
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_twitter(video_path, caption):
     """Post to X/Twitter using twikit."""
-    import asyncio
-
     try:
-        import twikit
-    except ImportError:
-        logger.error("twikit not installed")
-        return False
-
-    username   = os.environ.get("TWITTER_USERNAME")
-    email      = os.environ.get("TWITTER_EMAIL")
-    password   = os.environ.get("TWITTER_PASSWORD")
-    cookies_j  = os.environ.get("TWITTER_COOKIES_JSON", "")
-
-    if not username:
-        logger.warning("Twitter: TWITTER_USERNAME not set — skipping.")
-        return False
-
-    async def _run():
-        client = twikit.Client("en-US")
-        cookie_path = "/tmp/tw_cookies.json"
-        if cookies_j:
-            with open(cookie_path, "w") as f:
-                f.write(cookies_j)
-            client.load_cookies(cookie_path)
-        else:
-            await client.login(
-                auth_info_1=username,
-                auth_info_2=email,
-                password=password
-            )
-            client.save_cookies(cookie_path)
-
-        media_id = await client.upload_media(video_path, media_type="video/mp4")
-        await client.create_tweet(text=caption[:280], media_ids=[media_id])
-        logger.info("✅ Twitter: Posted!")
+        from post_x_twikit import upload_video_to_x
+        # twikit will read X_AUTH_TOKEN and X_CT0 from environment automatically
+        upload_video_to_x(video_path, caption)
+        logger.info("✅ X/Twitter: Video posted!")
         return True
-
-    try:
-        return asyncio.run(_run())
     except Exception as e:
-        logger.error(f"❌ Twitter failed: {e}")
+        logger.error(f"❌ X/Twitter failed: {e}")
         return False
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PLATFORM 2 — YOUTUBE SHORTS
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_youtube(video_path, caption):
-    """Upload to YouTube Shorts via YouTube Data API v3."""
+    """Post to YouTube Shorts using official Google APIs Client Library."""
     try:
-        from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.oauth2.credentials import Credentials
         from googleapiclient.http import MediaFileUpload
-    except ImportError:
-        logger.error("google-api-python-client not installed")
-        return False
+        
+        # Read from environment refresh token
+        refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
+        client_id = os.environ.get("YOUTUBE_CLIENT_ID", "")
+        client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET", "")
+        
+        if not refresh_token or not client_id or not client_secret:
+            logger.error("Missing YouTube OAuth secrets!")
+            return False
 
-    creds_json = os.environ.get("YOUTUBE_CREDENTIALS_JSON", "")
-    if not creds_json:
-        logger.warning("YouTube: YOUTUBE_CREDENTIALS_JSON not set — skipping.")
-        return False
-
-    try:
-        creds_data = json.loads(creds_json)
         creds = Credentials(
-            token=creds_data.get("access_token"),
-            refresh_token=creds_data.get("refresh_token"),
-            client_id=creds_data.get("client_id"),
-            client_secret=creds_data.get("client_secret"),
+            token=None,
+            refresh_token=refresh_token,
             token_uri="https://oauth2.googleapis.com/token",
-            scopes=["https://www.googleapis.com/auth/youtube.upload"]
+            client_id=client_id,
+            client_secret=client_secret
         )
 
         youtube = build("youtube", "v3", credentials=creds)
 
-        # Title: first 100 chars of caption, body: full caption
-        title = caption[:97] + "..." if len(caption) > 100 else caption
-        # Append #Shorts so YouTube processes it as a Short
-        description = caption + "\n\n#Shorts"
+        body = {
+            "snippet": {
+                "title": caption[:100],  # Title limited to 100 chars
+                "description": caption,
+                "categoryId": "22",  # People & Blogs
+                "tags": ["shorts", "wealth", "mindset", "viral"]
+            },
+            "status": {
+                "privacyStatus": "public",
+                "selfDeclaredMadeForKids": False
+            }
+        }
+
+        media = MediaFileUpload(
+            video_path,
+            mimetype="video/mp4",
+            resumable=True
+        )
 
         request = youtube.videos().insert(
             part="snippet,status",
-            body={
-                "snippet": {
-                    "title": title,
-                    "description": description,
-                    "tags": ["shorts", "motivation", "hindi", "viral", "trending"],
-                    "categoryId": "22",  # People & Blogs
-                    "defaultLanguage": "hi",
-                },
-                "status": {
-                    "privacyStatus": "public",
-                    "selfDeclaredMadeForKids": False,
-                    "madeForKids": False,
-                }
-            },
-            media_body=MediaFileUpload(
-                video_path,
-                mimetype="video/mp4",
-                resumable=True,
-                chunksize=1024*1024*5  # 5 MB chunks
-            )
+            body=body,
+            media_body=media
         )
 
         response = None
         while response is None:
             status, response = request.next_chunk()
             if status:
-                logger.info(f"YouTube upload: {int(status.progress() * 100)}%")
+                logger.info(f"Uploading Shorts... {int(status.progress() * 100)}%")
 
-        video_id = response.get("id")
-        logger.info(f"✅ YouTube: Posted! https://youtube.com/shorts/{video_id}")
+        logger.info(f"✅ YouTube Shorts: Video posted! ID: {response['id']}")
         return True
 
     except Exception as e:
-        logger.error(f"❌ YouTube failed: {e}")
+        logger.error(f"❌ YouTube Shorts failed: {e}")
         return False
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PLATFORM 3 — INSTAGRAM REELS
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_instagram(video_path, caption):
-    """Upload to Instagram as a Reel using instagrapi."""
+    """Post to Instagram Reels using the Meta Graph API."""
     try:
-        from instagrapi import Client as IgClient
-    except ImportError:
-        logger.error("instagrapi not installed")
-        return False
+        # We use Meta Graph API for Business/Creator accounts
+        access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
+        ig_user_id   = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
 
-    username = os.environ.get("INSTAGRAM_USERNAME")
-    password = os.environ.get("INSTAGRAM_PASSWORD")
-    session_json = os.environ.get("INSTAGRAM_SESSION_JSON", "")
+        if not access_token or not ig_user_id:
+            logger.error("Missing Instagram Reels secrets!")
+            return False
 
-    if not username:
-        logger.warning("Instagram: INSTAGRAM_USERNAME not set — skipping.")
-        return False
-
-    try:
-        cl = IgClient()
-        cl.delay_range = [1, 3]
-
-        session_path = "/tmp/ig_session.json"
-        if session_json:
-            with open(session_path, "w") as f:
-                f.write(session_json)
-            cl.load_settings(session_path)
-            cl.login(username, password)
+        # Phase 1: Initialize container
+        # Note: Meta Graph API requires public URL for media container.
+        # Fallback to direct local posting using instagrapi since we don't have public URLs on GitHub runners
+        logger.info("Initializing direct Instagram Reels posting via instagrapi...")
+        from instagrapi import Client
+        cl = Client()
+        
+        # Safe login
+        ig_username = os.environ.get("INSTAGRAM_USERNAME", "")
+        ig_password = os.environ.get("INSTAGRAM_PASSWORD", "")
+        ig_session  = os.environ.get("INSTAGRAM_SESSION_JSON", "")
+        
+        if not ig_username or not ig_password:
+            logger.error("Missing Instagram credentials!")
+            return False
+            
+        if ig_session:
+            try:
+                cl.set_settings(json.loads(ig_session))
+                cl.login(ig_username, ig_password)
+            except Exception:
+                cl.login(ig_username, ig_password)
         else:
-            cl.login(username, password)
-            cl.dump_settings(session_path)
-
-        # Upload as Reel (vertical video)
-        media = cl.clip_upload(
-            video_path,
-            caption=caption
-        )
-        logger.info(f"✅ Instagram: Reel posted! ID: {media.pk}")
+            cl.login(ig_username, ig_password)
+            
+        cl.clip_upload(video_path, caption)
+        logger.info("✅ Instagram Reels: Video posted!")
         return True
 
     except Exception as e:
         logger.error(f"❌ Instagram failed: {e}")
         return False
 
-
 # ══════════════════════════════════════════════════════════════════════════════
-# PLATFORM 4 — FACEBOOK PAGE
+# PLATFORM 4 — FACEBOOK PAGE VIDEO
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_facebook(video_path, caption):
-    """Upload a video to a Facebook Page using the Graph API."""
-    page_id    = os.environ.get("FACEBOOK_PAGE_ID")
-    page_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
-
-    if not page_id or not page_token:
-        logger.warning("Facebook: FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN not set — skipping.")
-        return False
-
+    """Post video to Facebook Page using Facebook Graph API."""
     try:
-        url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
+        page_id      = os.environ.get("FACEBOOK_PAGE_ID", "")
+        access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
 
-        with open(video_path, "rb") as video_file:
-            response = requests.post(
-                url,
-                data={
-                    "description": caption,
-                    "published": "true",
-                    "access_token": page_token
-                },
-                files={"source": ("video.mp4", video_file, "video/mp4")},
-                timeout=300
-            )
+        if not page_id or not access_token:
+            logger.error("Missing Facebook Page credentials!")
+            return False
 
+        url = f"https://graph-video.facebook.com/v18.0/{page_id}/videos"
+        
+        files = {
+            "source": open(video_path, "rb")
+        }
+        payload = {
+            "description": caption,
+            "access_token": access_token
+        }
+
+        logger.info("Uploading video to Facebook Graph API...")
+        response = requests.post(url, files=files, data=payload, timeout=300)
         result = response.json()
+
         if "id" in result:
             logger.info(f"✅ Facebook: Video posted! ID: {result['id']}")
             return True
@@ -312,139 +213,60 @@ def post_facebook(video_path, caption):
 
 def main():
     logger.info("=" * 60)
-    logger.info("MULTI-PLATFORM BUFFER POSTER v2 STARTING")
+    logger.info("MULTI-PLATFORM ONDEMAND GENERATOR & POSTER")
     logger.info("=" * 60)
 
-    # ── Check buffer ──────────────────────────────────────────────────────────
-    buffer_count = get_mp4_count()
-    logger.info(f"📦 Buffer: {buffer_count} video(s) ready.")
-
-    if buffer_count == 0:
-        logger.info("⚠️ Buffer is EMPTY — Dynamically generating video on GitHub Actions...")
-        send_telegram("⚠️ <b>Buffer EMPTY!</b>\nDynamically generating a fresh viral video directly on GitHub Actions...")
-        
-        # Run v32_dopamine_engine.py
-        try:
-            engine_path = os.path.join(os.path.dirname(__file__), "v32_dopamine_engine.py")
-            subprocess.run([sys.executable, engine_path], check=True, timeout=1200)
-        except Exception as e:
-            logger.error(f"❌ Dynamic video generation failed: {e}")
-            send_telegram(f"❌ <b>Generation Failed!</b>\nCould not generate video dynamically: {e}")
-            sys.exit(1)
-            
-        # Verify video exists
-        video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V35_HD.mp4"))
-        json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public", "v32_script.json"))
-        
-        if not os.path.exists(video_path):
-            logger.error(f"Rendered video not found at {video_path}")
-            send_telegram("❌ <b>Render Failed!</b>\nRendered video file is missing. Aborting post.")
-            sys.exit(1)
-            
-        caption = "अपना जीवन बदलो। #motivation #success #hindi #viral #shorts"
-        if os.path.exists(json_path):
-            try:
-                with open(json_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    caption = data["script"]["caption"]
-            except Exception as e:
-                logger.error(f"Failed to read caption from JSON: {e}")
-                
-        # ── Jitter ────────────────────────────────────────────────────────────────
-        logger.info(f"⏱️ Jitter: waiting {JITTER_SECONDS}s before posting...")
-        time.sleep(JITTER_SECONDS)
-
-        # Post to all platforms
-        results = {}
-        logger.info("🐦 Posting to X/Twitter...")
-        results["Twitter"] = post_twitter(video_path, caption)
-        time.sleep(random.randint(5, 15))
-
-        logger.info("📺 Posting to YouTube Shorts...")
-        results["YouTube"] = post_youtube(video_path, caption)
-        time.sleep(random.randint(5, 15))
-
-        logger.info("📸 Posting to Instagram Reels...")
-        results["Instagram"] = post_instagram(video_path, caption)
-        time.sleep(random.randint(5, 15))
-
-        logger.info("📘 Posting to Facebook Page...")
-        results["Facebook"] = post_facebook(video_path, caption)
-
-        success_list = [p for p, ok in results.items() if ok]
-        failed_list  = [p for p, ok in results.items() if not ok]
-
-        if success_list:
-            status_lines = "\n".join(
-                [f"✅ {p}" for p in success_list] +
-                [f"❌ {p} (failed)" for p in failed_list]
-            )
-            send_telegram(
-                f"📤 <b>Dynamic Video Posted!</b>\n"
-                f"{status_lines}\n\n"
-                f"Caption: {caption[:80]}..."
-            )
-        else:
-            logger.error("❌ ALL platforms failed for dynamic video.")
-            send_telegram("❌ <b>All Platforms Failed!</b>\nDynamic video posting failed for all accounts.")
-            sys.exit(1)
-            
-        sys.exit(0)
-
-    # ── If buffer_count > 0, post from buffer as usual ───────────────────────
-    send_telegram(f"📦 <b>Poster Starting</b>\nBuffer: {buffer_count} videos ready.\nPosting to 4 platforms...")
-
-    if buffer_count <= BUFFER_WARN:
-        send_telegram(
-            f"🔶 <b>Low Buffer!</b>\nOnly {buffer_count} video(s) left."
-        )
-
     # ── Jitter ────────────────────────────────────────────────────────────────
-    logger.info(f"⏱️ Jitter: waiting {JITTER_SECONDS}s before posting...")
+    logger.info(f"⏱️ Jitter: waiting {JITTER_SECONDS}s before starting run...")
     time.sleep(JITTER_SECONDS)
 
-    # ── Get oldest video from buffer ──────────────────────────────────────────
-    assets   = get_buffer_assets()
-    mp4_list = [a for a in assets if a["name"].endswith(".mp4")]
-    oldest   = mp4_list[0]
-    mp4_name = oldest["name"]
-    txt_name = mp4_name.replace(".mp4", ".txt")
-
-    logger.info(f"📥 Downloading: {mp4_name}")
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        mp4_path = os.path.join(tmpdir, mp4_name)
-        txt_path = os.path.join(tmpdir, txt_name)
-
-        download_asset(mp4_name, tmpdir)
-
-        caption = "अपना जीवन बदलो। #motivation #success #hindi #viral #shorts"
+    logger.info("⚠️ Generating fresh video dynamically on GitHub Actions...")
+    send_telegram("⚠️ <b>Poster Starting</b>\nGenerating fresh viral video dynamically on GitHub Actions...")
+    
+    # Run v32_dopamine_engine.py
+    try:
+        engine_path = os.path.join(os.path.dirname(__file__), "v32_dopamine_engine.py")
+        subprocess.run([sys.executable, engine_path], check=True, timeout=1200)
+    except Exception as e:
+        logger.error(f"❌ Dynamic video generation failed: {e}")
+        send_telegram(f"❌ <b>Generation Failed!</b>\nCould not generate video dynamically: {e}")
+        sys.exit(1)
+        
+    # Verify video exists
+    video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V35_HD.mp4"))
+    json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public", "v32_script.json"))
+    
+    if not os.path.exists(video_path):
+        logger.error(f"Rendered video not found at {video_path}")
+        send_telegram("❌ <b>Render Failed!</b>\nRendered video file is missing. Aborting post.")
+        sys.exit(1)
+        
+    caption = "अपना जीवन बदलो। #motivation #success #hindi #viral #shorts"
+    if os.path.exists(json_path):
         try:
-            download_asset(txt_name, tmpdir)
-            with open(txt_path, "r", encoding="utf-8") as f:
-                caption = f.read().strip()
-        except Exception:
-            logger.warning("Caption .txt not found — using default caption.")
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                caption = data["script"]["caption"]
+        except Exception as e:
+            logger.error(f"Failed to read caption from JSON: {e}")
 
-        logger.info(f"📝 Caption: {caption}")
+    # Post to all platforms
+    results = {}
+    logger.info("🐦 Posting to X/Twitter...")
+    results["Twitter"] = post_twitter(video_path, caption)
+    time.sleep(random.randint(5, 15))
 
-        # ── Post to all 4 platforms ───────────────────────────────────────────
-        results = {}
+    logger.info("📺 Posting to YouTube Shorts...")
+    results["YouTube"] = post_youtube(video_path, caption)
+    time.sleep(random.randint(5, 15))
 
-        logger.info("🐦 Posting to X/Twitter...")
-        results["Twitter"] = post_twitter(mp4_path, caption)
-        time.sleep(random.randint(5, 15))  # small gap between platforms
+    logger.info("📸 Posting to Instagram Reels...")
+    results["Instagram"] = post_instagram(video_path, caption)
+    time.sleep(random.randint(5, 15))
 
-        logger.info("📺 Posting to YouTube Shorts...")
-        results["YouTube"] = post_youtube(mp4_path, caption)
-        time.sleep(random.randint(5, 15))
-
-        logger.info("📸 Posting to Instagram Reels...")
-        results["Instagram"] = post_instagram(mp4_path, caption)
-        time.sleep(random.randint(5, 15))
-
-        logger.info("📘 Posting to Facebook Page...")
-        results["Facebook"] = post_facebook(mp4_path, caption)
+    logger.info("📘 Posting to Facebook Page...")
+    import requests # Ensure requests import for Facebook API
+    results["Facebook"] = post_facebook(video_path, caption)
 
     # ── Report results ────────────────────────────────────────────────────────
     success_list = [p for p, ok in results.items() if ok]
@@ -452,29 +274,19 @@ def main():
 
     logger.info(f"Results: {results}")
 
-    # ── Delete from buffer if at least one platform succeeded ─────────────────
     if success_list:
-        logger.info(f"🗑️ Deleting {mp4_name} from buffer...")
-        delete_asset(mp4_name)
-        delete_asset(txt_name)
-
         status_lines = "\n".join(
             [f"✅ {p}" for p in success_list] +
             [f"❌ {p} (failed)" for p in failed_list]
         )
         send_telegram(
-            f"📤 <b>Posted!</b>\n"
+            f"📤 <b>Cloud Video Posted!</b>\n"
             f"{status_lines}\n\n"
-            f"Buffer remaining: {buffer_count - 1} videos\n"
             f"Caption: {caption[:80]}..."
         )
     else:
-        # ALL platforms failed — keep video in buffer for retry
-        logger.error("❌ ALL platforms failed. Video kept in buffer for next run.")
-        send_telegram(
-            "❌ <b>All Platforms Failed!</b>\n"
-            "Video kept in buffer — will retry at next scheduled time."
-        )
+        logger.error("❌ ALL platforms failed.")
+        send_telegram("❌ <b>All Platforms Failed!</b>\nVideo posting failed for all accounts.")
         sys.exit(1)
 
 
