@@ -40,7 +40,8 @@ TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID", "")
 REPO               = os.environ.get("GITHUB_REPOSITORY", "")
 RELEASE_TAG        = "buffer_queue"
 BUFFER_WARN        = 3      # Telegram alert if buffer drops below this
-JITTER_SECONDS     = random.randint(30, 300)  # 30s – 5 min jitter
+JITTER_SECONDS     = random.randint(60, 3600)  # 1 to 60 minutes human jitter
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
