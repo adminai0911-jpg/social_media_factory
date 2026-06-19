@@ -20,11 +20,9 @@ YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID", "")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET", "")
 YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
 
-# Twitter/X credentials
-TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
-TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
-TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
-TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
+# Twitter/X credentials (cookie-based — no API key needed)
+X_AUTH_TOKEN = os.environ.get("X_AUTH_TOKEN", "")
+X_CT0        = os.environ.get("X_CT0", "")
 
 # Telegram credentials
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -260,21 +258,25 @@ def upload_to_youtube_shorts(video_path, description):
     return False
 
 def upload_to_x_via_playwright(video_path, description):
-    """Post to X/Twitter using internal API automation (twikit).
-    ✅ 100% FREE — no API key, no webhook service, no paid subscription.
-    Requires X_USERNAME and X_PASSWORD in GitHub Secrets.
+    """Post to X/Twitter using cookie-based twikit authentication.
+    ✅ 100% FREE — no API key, no paid plan needed.
+    Requires X_AUTH_TOKEN and X_CT0 in GitHub Secrets.
+
+    How to refresh cookies (only needed if posting stops working):
+      1. Log into x.com in Chrome/Firefox
+      2. Press F12 → Application tab → Cookies → https://x.com
+      3. Copy 'auth_token' → update X_AUTH_TOKEN secret
+      4. Copy 'ct0'        → update X_CT0 secret
     """
     import subprocess, sys
 
-    x_user = os.environ.get("X_USERNAME", "")
-    x_pass = os.environ.get("X_PASSWORD", "")
-
-    if not x_user or not x_pass:
-        logger.warning("⏭️ Skipping X/Twitter (Missing X_USERNAME or X_PASSWORD secret)")
-        logger.warning("👉 Fix: Add X_USERNAME and X_PASSWORD to GitHub Secrets — that's it, no API key needed!")
+    if not X_AUTH_TOKEN or not X_CT0:
+        logger.warning("⏭️ Skipping X/Twitter (Missing X_AUTH_TOKEN or X_CT0 secret)")
+        logger.warning("👉 Fix: Get cookies from x.com → F12 → Application → Cookies")
+        logger.warning("   Add X_AUTH_TOKEN and X_CT0 to GitHub Secrets")
         return False
 
-    logger.info("📤 Starting X/Twitter post via Internal API (twikit)...")
+    logger.info("📤 Starting X/Twitter post via cookie auth (twikit)...")
     try:
         script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_twikit.py")
         result = subprocess.run(

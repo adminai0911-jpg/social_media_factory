@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+"""
+X/Twitter poster using browser cookie authentication.
+✅ 100% FREE — no API key, no paid plan needed.
+✅ PERMANENT FIX — cookies are far more stable than password login.
+
+Required GitHub Secrets:
+  X_AUTH_TOKEN  →  value of 'auth_token' cookie from x.com
+  X_CT0         →  value of 'ct0' cookie from x.com
+
+How to get cookies (one-time setup, lasts months):
+  1. Log into x.com in Chrome/Firefox
+  2. Press F12 → Application tab → Cookies → https://x.com
+  3. Copy 'auth_token' value → add to GitHub Secret as X_AUTH_TOKEN
+  4. Copy 'ct0' value       → add to GitHub Secret as X_CT0
+"""
 import os
 import sys
 import asyncio
@@ -8,55 +23,50 @@ from twikit import Client
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - X_API_POSTER - %(levelname)s - %(message)s")
 logger = logging.getLogger("XApiPoster")
 
-X_USERNAME = os.environ.get("X_USERNAME", "")
-X_PASSWORD = os.environ.get("X_PASSWORD", "")
-X_EMAIL    = os.environ.get("X_EMAIL", X_USERNAME)
+X_AUTH_TOKEN = os.environ.get("X_AUTH_TOKEN", "")
+X_CT0        = os.environ.get("X_CT0", "")
+
 
 async def post_to_x_api(caption: str, video_path: str = None) -> bool:
-    if not X_USERNAME or not X_PASSWORD:
-        logger.error("❌ Missing X_USERNAME or X_PASSWORD environment variables!")
+    # ── Validate credentials ──────────────────────────────────────────────────
+    if not X_AUTH_TOKEN or not X_CT0:
+        logger.error("❌ Missing X_AUTH_TOKEN or X_CT0 in environment!")
+        logger.error("👉 Fix: Add X_AUTH_TOKEN and X_CT0 to GitHub Secrets.")
+        logger.error("   Get them from: x.com → F12 → Application → Cookies → https://x.com")
         return False
 
+    # ── Inject cookies directly — no login() call needed ─────────────────────
     client = Client('en-US')
-    
-    # Try to load existing cookies to avoid repeated logins
-    cookies_path = "x_cookies.json"
-    if os.path.exists(cookies_path):
-        try:
-            client.load_cookies(cookies_path)
-            logger.info("🍪 Loaded existing cookies!")
-        except Exception:
-            pass
-
     try:
-        logger.info("🔐 Logging into X via Internal API...")
-        await client.login(
-            auth_info_1=X_USERNAME,
-            auth_info_2=X_EMAIL,
-            password=X_PASSWORD
-        )
-        logger.info("✅ Login successful!")
-        client.save_cookies(cookies_path)
+        logger.info("🍪 Authenticating via browser cookies (no password needed)...")
+        client.set_cookies({
+            "auth_token": X_AUTH_TOKEN,
+            "ct0":        X_CT0,
+        })
+        logger.info("✅ Cookie auth set successfully!")
     except Exception as e:
-        logger.error(f"❌ Login failed: {e}")
+        logger.error(f"❌ Failed to set cookies: {e}")
         return False
 
+    # ── Upload video (if provided) ────────────────────────────────────────────
     media_ids = None
     if video_path and os.path.exists(video_path):
         file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
-        logger.info(f"🎬 Uploading video: {file_size_mb:.1f} MB (This may take a minute)...")
+        logger.info(f"🎬 Uploading video: {file_size_mb:.1f} MB (may take a minute)...")
         try:
-            # Twikit handles chunked uploads automatically
             media_id = await client.upload_media(video_path, media_category='tweet_video')
             media_ids = [media_id]
-            logger.info(f"✅ Video uploaded successfully! Media ID: {media_id}")
+            logger.info(f"✅ Video uploaded! Media ID: {media_id}")
         except Exception as e:
             logger.error(f"❌ Video upload failed: {e}")
-            logger.warning("⚠️ Proceeding to post text-only...")
+            logger.warning("⚠️ Posting text-only tweet instead...")
             media_ids = None
+    elif video_path:
+        logger.warning(f"⚠️ Video file not found: {video_path} — posting text only")
 
+    # ── Post tweet ────────────────────────────────────────────────────────────
     try:
-        logger.info("🚀 Publishing Tweet...")
+        logger.info("🚀 Publishing tweet...")
         await client.create_tweet(
             text=caption,
             media_ids=media_ids
@@ -65,7 +75,14 @@ async def post_to_x_api(caption: str, video_path: str = None) -> bool:
         return True
     except Exception as e:
         logger.error(f"❌ Failed to publish tweet: {e}")
+        # Provide helpful cookie refresh guidance
+        if "32" in str(e) or "401" in str(e) or "authenticate" in str(e).lower():
+            logger.error("🔑 Cookies may have expired — refresh them:")
+            logger.error("   1. Log into x.com in browser")
+            logger.error("   2. F12 → Application → Cookies → https://x.com")
+            logger.error("   3. Update X_AUTH_TOKEN and X_CT0 in GitHub Secrets")
         return False
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
