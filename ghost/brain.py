@@ -69,21 +69,7 @@ def run_morning_session():
         logger.error(f"X ghost failed: {e}")
         results["x_engage"] = {}
 
-    # 3. Run main content pipeline
-    logger.info("🎬 Step 3: Running content pipeline...")
-    try:
-        import subprocess
-        proc = subprocess.run(
-            [sys.executable, "orchestrator/post_video.py"],
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            capture_output=True, text=True, timeout=1200
-        )
-        results["content_pipeline"] = proc.returncode == 0
-        if proc.returncode != 0:
-            logger.error(f"Content pipeline error: {proc.stderr[-500:]}")
-    except Exception as e:
-        logger.error(f"Content pipeline failed: {e}")
-        results["content_pipeline"] = False
+
 
     # Send Telegram summary
     status = "\n".join([f"  {k}: {'✅' if v else '❌'}" for k, v in results.items()])
@@ -123,21 +109,7 @@ def run_midday_session():
         logger.error(f"X ghost failed: {e}")
         results["x_engage"] = {}
 
-    # 3. Run main content pipeline (midday video)
-    logger.info("🎬 Step 3: Running content pipeline...")
-    try:
-        import subprocess
-        proc = subprocess.run(
-            [sys.executable, "orchestrator/post_video.py"],
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            capture_output=True, text=True, timeout=1200
-        )
-        results["content_pipeline"] = proc.returncode == 0
-        if proc.returncode != 0:
-            logger.error(f"Content pipeline error: {proc.stderr[-500:]}")
-    except Exception as e:
-        logger.error(f"Content pipeline failed: {e}")
-        results["content_pipeline"] = False
+
 
     status = "\n".join([f"  {k}: {'✅' if v else '❌'}" for k, v in results.items()])
     send_telegram(f"☀️ <b>Midday Session Complete</b>\n{status}")
@@ -157,21 +129,7 @@ def run_evening_session():
     
     results = {}
     
-    # 1. Run content pipeline again (second video of day)
-    logger.info("🎬 Step 1: Evening content pipeline...")
-    try:
-        import subprocess
-        proc = subprocess.run(
-            [sys.executable, "orchestrator/post_video.py"],
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            capture_output=True, text=True, timeout=1200
-        )
-        results["content_pipeline"] = proc.returncode == 0
-    except Exception as e:
-        logger.error(f"Content pipeline failed: {e}")
-        results["content_pipeline"] = False
 
-    human_delay(120, 300, "after_evening_video")
 
     # 2. Evening X thread
     logger.info("🧵 Step 2: Evening X thread...")
