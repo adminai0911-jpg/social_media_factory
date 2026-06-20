@@ -84,6 +84,23 @@ def format_detailed_report(session_name, results):
                 lines.append(f"    • {item}")
         if not has_engage:
             lines.append("\n❤️ No X engagement actions taken.")
+            
+    # Check IG proactive
+    if "ig_proactive" in results and isinstance(results["ig_proactive"], dict):
+        igp = results["ig_proactive"]
+        if igp.get("liked"):
+            lines.append("\n❤️ <b>IG Proactive Likes:</b>")
+            for item in igp["liked"][:5]: lines.append(f"    • {item}")
+        if igp.get("commented"):
+            lines.append("\n💬 <b>IG Proactive Comments:</b>")
+            for item in igp["commented"][:5]: lines.append(f"    • {item}")
+
+    # Check YT proactive
+    if "yt_proactive" in results and isinstance(results["yt_proactive"], dict):
+        ytp = results["yt_proactive"]
+        if ytp.get("commented"):
+            lines.append("\n▶️ <b>YT Proactive Comments:</b>")
+            for item in ytp["commented"][:5]: lines.append(f"    • {item}")
                 
     return "\n".join(lines)
 
@@ -157,6 +174,25 @@ def run_midday_session():
         logger.error(f"X ghost failed: {e}")
         results["x_engage"] = {}
 
+    # 3. IG Proactive Engagement
+    logger.info("📸 Step 3: IG Proactive engagement...")
+    try:
+        from ghost.ig_ghost import run_ig_proactive_session
+        results["ig_proactive"] = run_ig_proactive_session(session="midday")
+        human_delay(120, 300, "after_ig_midday")
+    except Exception as e:
+        logger.error(f"IG ghost failed: {e}")
+        results["ig_proactive"] = {}
+
+    # 4. YT Proactive Engagement
+    logger.info("▶️ Step 4: YT Proactive engagement...")
+    try:
+        from ghost.yt_ghost import run_yt_proactive_session
+        results["yt_proactive"] = run_yt_proactive_session(session="midday")
+    except Exception as e:
+        logger.error(f"YT ghost failed: {e}")
+        results["yt_proactive"] = {}
+
     report = format_detailed_report("☀️ Midday Session", results)
     send_telegram(report)
     logger.info(f"✅ Midday session done: {results}")
@@ -203,6 +239,18 @@ def run_evening_session():
     except Exception as e:
         logger.error(f"Comment bot failed: {e}")
         results["comment_replies"] = {}
+
+    # 5. IG + YT Evening Proactive
+    logger.info("📸 Step 5: IG & YT Proactive evening...")
+    try:
+        from ghost.ig_ghost import run_ig_proactive_session
+        results["ig_proactive"] = run_ig_proactive_session(session="evening")
+        from ghost.yt_ghost import run_yt_proactive_session
+        results["yt_proactive"] = run_yt_proactive_session(session="evening")
+    except Exception as e:
+        logger.error(f"IG/YT ghost failed: {e}")
+        results["ig_proactive"] = {}
+        results["yt_proactive"] = {}
 
     # Final stats
     stats = get_today_stats()
