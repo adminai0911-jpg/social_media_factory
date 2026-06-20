@@ -258,46 +258,10 @@ def upload_to_youtube_shorts(video_path, description):
     return False
 
 def upload_to_x_via_playwright(video_path, description):
-    """Post to X/Twitter using cookie-based twikit authentication.
-    ✅ 100% FREE — no API key, no paid plan needed.
-    Requires X_AUTH_TOKEN and X_CT0 in GitHub Secrets.
-
-    How to refresh cookies (only needed if posting stops working):
-      1. Log into x.com in Chrome/Firefox
-      2. Press F12 → Application tab → Cookies → https://x.com
-      3. Copy 'auth_token' → update X_AUTH_TOKEN secret
-      4. Copy 'ct0'        → update X_CT0 secret
-    """
-    import subprocess, sys
-
-    if not X_AUTH_TOKEN or not X_CT0:
-        logger.warning("⏭️ Skipping X/Twitter (Missing X_AUTH_TOKEN or X_CT0 secret)")
-        logger.warning("👉 Fix: Get cookies from x.com → F12 → Application → Cookies")
-        logger.warning("   Add X_AUTH_TOKEN and X_CT0 to GitHub Secrets")
-        return False
-
-    logger.info("📤 Starting X/Twitter post via cookie auth (twikit)...")
-    try:
-        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_twikit.py")
-        result = subprocess.run(
-            [sys.executable, script_path, description, video_path],
-            timeout=300,
-            capture_output=True,
-            text=True,
-            env={**os.environ}
-        )
-        logger.info(result.stdout)
-        if result.returncode == 0:
-            logger.info("✅ Successfully posted to X (Twitter)!")
-            return True
-        else:
-            logger.error(f"❌ X API posting failed:\n{result.stderr}")
-            return False
-    except subprocess.TimeoutExpired:
-        logger.error("❌ X posting timed out after 5 minutes")
-    except Exception as e:
-        logger.error(f"❌ X Upload Exception: {e}")
+    """Post to X/Twitter (Permanently Disabled by User Request)"""
+    logger.info("⏭️ Skipping X/Twitter Reels/Videos (Permanently Disabled)")
     return False
+
 
 def distribute_to_all_platforms(video_path, description):
     logger.info("🌐 Initiating 4-Platform Distribution Pipeline...")

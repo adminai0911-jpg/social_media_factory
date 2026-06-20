@@ -401,25 +401,22 @@ def download_dynamic_backgrounds(public_dir):
 
     output_names = ["gta", "sand", "bg3", "bg4"]
 
-    # Rotating set of visually stunning search queries — different results every run
     satisfying_queries = [
-        "kinetic sand satisfying",
-        "abstract fluid art",
         "nature waterfall aerial",
-        "neon city timelapse",
-        "satisfying marble run",
         "ocean waves close up",
-        "galaxy space stars",
-        "golden ratio spiral",
-        "slow motion water",
-        "colorful paint mixing",
-        "crystal geode close up",
         "forest rain bokeh",
-        "fire flames abstract",
         "aurora borealis night",
-        "slow motion flower bloom",
-        "urban city night lights",
+        "slow motion water splash",
+        "glacier ice aerial",
+        "underwater ocean rays",
+        "misty green forest stream",
+        "crystal geode blue",
+        "snow falling close up",
+        "abstract fluid art blue teal",
+        "winter mountain timelapse",
+        "raindrops on window slow motion"
     ]
+
 
     # Pick 4 different queries for variety
     chosen_queries = random.sample(satisfying_queries, 4)

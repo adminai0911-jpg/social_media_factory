@@ -30,39 +30,17 @@ const GlobalStyle = () => (
 const HINDI_FONT = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-serif`;
 const TITLE_FONT = `${bebasFont}, ${montserratFont}, Impact, sans-serif`;
 
-// ── 30 VIBRANT PALETTES — bright, alive, always visually different ──
 const PALETTES = [
-  { p: "#FF0055", a: "#00F5FF", g: "#FF00CC", bg1: "#1A0010", bg2: "#00101A" },
-  { p: "#FFD700", a: "#FF4500", g: "#FFAA00", bg1: "#1A1000", bg2: "#200500" },
-  { p: "#00FF88", a: "#0066FF", g: "#00FFFF", bg1: "#001A0F", bg2: "#000A1A" },
-  { p: "#FF3366", a: "#FF9900", g: "#FFE000", bg1: "#1A000E", bg2: "#1A0A00" },
-  { p: "#AA00FF", a: "#00CCFF", g: "#FF00AA", bg1: "#0E0020", bg2: "#001A25" },
-  { p: "#FF6600", a: "#FFDD00", g: "#FF0099", bg1: "#200800", bg2: "#1A1400" },
-  { p: "#00FFCC", a: "#FF00FF", g: "#00AAFF", bg1: "#00201A", bg2: "#1A001A" },
-  { p: "#FF1493", a: "#00FF7F", g: "#FFD700", bg1: "#200010", bg2: "#001A0A" },
-  { p: "#7B00FF", a: "#FF6600", g: "#00FFFF", bg1: "#0A0020", bg2: "#200800" },
-  { p: "#00BFFF", a: "#FF69B4", g: "#ADFF2F", bg1: "#001520", bg2: "#200010" },
-  { p: "#FF4500", a: "#1E90FF", g: "#FFD700", bg1: "#200500", bg2: "#001020" },
-  { p: "#39FF14", a: "#FF0090", g: "#00CFFF", bg1: "#011A00", bg2: "#1A0010" },
-  { p: "#FF007F", a: "#7FFF00", g: "#00AAFF", bg1: "#1A000A", bg2: "#0A1A00" },
-  { p: "#FFB300", a: "#FF4081", g: "#40C4FF", bg1: "#1A0E00", bg2: "#1A001A" },
-  { p: "#E040FB", a: "#00E676", g: "#FFEA00", bg1: "#150020", bg2: "#001A0A" },
-  { p: "#FF5722", a: "#00BCD4", g: "#CDDC39", bg1: "#200800", bg2: "#001520" },
-  { p: "#00E5FF", a: "#FF1744", g: "#76FF03", bg1: "#001520", bg2: "#200005" },
-  { p: "#FF6D00", a: "#00BFA5", g: "#FFD600", bg1: "#1A0800", bg2: "#001A15" },
-  { p: "#D500F9", a: "#00E5FF", g: "#FFFF00", bg1: "#12001A", bg2: "#001520" },
-  { p: "#F50057", a: "#00BFA5", g: "#FF6D00", bg1: "#1A000A", bg2: "#001A15" },
-  { p: "#76FF03", a: "#FF3D00", g: "#00B0FF", bg1: "#051A00", bg2: "#200500" },
-  { p: "#FFAB00", a: "#D500F9", g: "#00E5FF", bg1: "#1A0E00", bg2: "#12001A" },
-  { p: "#00E676", a: "#FF6D00", g: "#E040FB", bg1: "#001A0A", bg2: "#1A0800" },
-  { p: "#40C4FF", a: "#FF5252", g: "#FFD740", bg1: "#001520", bg2: "#1A0500" },
-  { p: "#FF5252", a: "#40C4FF", g: "#B2FF59", bg1: "#1A0500", bg2: "#001520" },
-  { p: "#FF80AB", a: "#80D8FF", g: "#CCFF90", bg1: "#1A0010", bg2: "#001520" },
-  { p: "#64FFDA", a: "#FF6E40", g: "#EA80FC", bg1: "#001A15", bg2: "#1A0800" },
-  { p: "#FFFF00", a: "#FF0055", g: "#00FFCC", bg1: "#1A1A00", bg2: "#1A0010" },
-  { p: "#FF1744", a: "#69F0AE", g: "#FF9100", bg1: "#1A0005", bg2: "#001A0A" },
-  { p: "#AA00FF", a: "#FFAB40", g: "#18FFFF", bg1: "#0E0020", bg2: "#1A0E00" },
+  { p: "#00E5FF", a: "#00FF88", g: "#0055FF", bg1: "#000A1A", bg2: "#00152B" }, // Electric Ice
+  { p: "#00FFCC", a: "#7B00FF", g: "#00E5FF", bg1: "#000D1A", bg2: "#0A001A" }, // Cyber Teal
+  { p: "#00FF88", a: "#00E5FF", g: "#00FFCC", bg1: "#000F15", bg2: "#001A25" }, // Mint Wave
+  { p: "#0055FF", a: "#00E5FF", g: "#39FF14", bg1: "#000914", bg2: "#00140A" }, // Deep Ocean / Lime
+  { p: "#18FFFF", a: "#00E5FF", g: "#AA00FF", bg1: "#010C1A", bg2: "#0C011A" }, // Glacier / Aurora
+  { p: "#00FFCC", a: "#00E5FF", g: "#00FF88", bg1: "#000A10", bg2: "#001B2E" }, // Clean Steel
+  { p: "#7B00FF", a: "#18FFFF", g: "#00FF88", bg1: "#07001A", bg2: "#001A10" }, // Cosmic Aurora
+  { p: "#00FF88", a: "#00E676", g: "#00E5FF", bg1: "#000D08", bg2: "#001A20" }, // Emerald Stream
 ];
+
 
 const NEURAL_ALERTS = [
   "⚠️  NEURAL LINK ACTIVE",
@@ -513,11 +491,11 @@ export const MainVideo: React.FC<{
             return (
               <div style={{
                 fontFamily: TITLE_FONT, fontSize: 108, fontWeight: 900,
-                color: "#FF0044",
+                color: "#00FFCC", // Electric Cyan highlight
                 textShadow: `
                   0 0 0 #000,
                   -4px -4px 0 #000, 4px -4px 0 #000, -4px 4px 0 #000, 4px 4px 0 #000,
-                  0 0 25px #FF0044, 0 0 50px #FF6600, 0 0 90px #FFD700
+                  0 0 25px #00FFCC, 0 0 50px #0055FF, 0 0 90px #00FF88
                 `,
                 transform: tf, opacity: op,
                 textAlign: "center", maxWidth: "92%",
@@ -529,7 +507,7 @@ export const MainVideo: React.FC<{
             );
           } else {
             // Hindi caption — bright white with vivid colour glow + thick black stroke for readability
-            const glowColors = [pal.p, pal.a, pal.g, "#FFD700", pal2.p, "#FF69B4"];
+            const glowColors = [pal.p, pal.a, pal.g, "#18FFFF", pal2.p, "#00FF88"]; // Cool colors only
             const glowCol = glowColors[wordIdx % glowColors.length];
             return (
               <div style={{

@@ -39,16 +39,10 @@ def send_telegram(message):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_twitter(video_path, caption):
-    """Post to X/Twitter using twikit."""
-    try:
-        from post_x_twikit import upload_video_to_x
-        # twikit will read X_AUTH_TOKEN and X_CT0 from environment automatically
-        upload_video_to_x(video_path, caption)
-        logger.info("✅ X/Twitter: Video posted!")
-        return True
-    except Exception as e:
-        logger.error(f"❌ X/Twitter failed: {e}")
-        return False
+    """Post to X/Twitter (Permanently Disabled by User Request)"""
+    logger.info("⏭️ Skipping X/Twitter posting (Permanently Disabled)")
+    return False
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PLATFORM 2 — YOUTUBE SHORTS

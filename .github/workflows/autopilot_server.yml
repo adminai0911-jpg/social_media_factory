@@ -32,13 +32,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ── STEP 2: Reduced Human Jitter (max 30s to optimize Actions billing) ──
+      # ── STEP 2: Full Human Jitter (1 to 60 minutes) ───────────────────────
       - name: Human Jitter (Anti-Bot Delay)
         if: github.event_name != 'workflow_dispatch'
         run: |
-          JITTER=$((RANDOM % 30))
-          echo "💤 Sleeping ${JITTER}s (anti-bot jitter, max 30s)"
+          # Random delay between 60 seconds (1 minute) and 3600 seconds (60 minutes)
+          JITTER=$((60 + RANDOM % 3540))
+          echo "💤 Sleeping ${JITTER}s (anti-bot jitter, 1 to 60 minutes)"
           sleep $JITTER
+
 
       # ── STEP 3: Setup Node.js ─────────────────────────────────────────────
       - name: Setup Node.js
