@@ -87,7 +87,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip --quiet
-          pip install google-genai python-dotenv requests mutagen edge-tts requests-oauthlib twikit --quiet
+          pip install google-genai python-dotenv requests mutagen edge-tts requests-oauthlib git+https://github.com/d60/twikit.git --quiet
           pip install -U yt-dlp --quiet
 
       # ── STEP 7b: Install FFmpeg for synthetic video generation ──────────
