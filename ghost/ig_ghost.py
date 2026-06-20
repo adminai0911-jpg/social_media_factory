@@ -90,14 +90,15 @@ def run_ig_proactive_session(session="morning"):
         hashtag = random.choice(NICHE_HASHTAGS)
         logger.info(f"🔍 IG Hunting under hashtag: #{hashtag}")
         
-        medias = cl.hashtag_medias_top(hashtag, amount=10)
+        medias = cl.hashtag_medias_top(hashtag, amount=25)
         random.shuffle(medias)
         
         likes_done = 0
         comments_done = 0
+        follows_done = 0
         
         for media in medias:
-            if not can_act("instagram", "like") or likes_done >= 3:
+            if not can_act("instagram", "like") or likes_done >= 15:
                 break
                 
             try:
@@ -110,7 +111,7 @@ def run_ig_proactive_session(session="morning"):
                 logger.info(f"❤️ IG Liked: {detail}")
                 human_delay(15, 35, "ig_after_like")
                 
-                if comments_done < 1 and media.like_count > 100 and can_act("instagram", "comment"):
+                if comments_done < 5 and media.like_count > 100 and can_act("instagram", "comment"):
                     human_delay(30, 60, "ig_think_comment")
                     comment_text = _generate_ig_hook(media.caption_text)
                     cl.media_comment(media.id, comment_text)
@@ -119,6 +120,17 @@ def run_ig_proactive_session(session="morning"):
                     results["commented"].append(f"@{media.user.username}: \"{comment_text[:40]}...\"")
                     logger.info(f"💬 IG Commented on @{media.user.username}")
                     human_delay(40, 80, "ig_after_comment")
+                    
+                # FOLLOW
+                if follows_done < 5 and can_act("instagram", "follow"):
+                    # Don't follow completely random people, check if they have a decent following
+                    human_delay(20, 45, "ig_think_follow")
+                    cl.user_follow(media.user.pk)
+                    record_action("instagram", "follow")
+                    follows_done += 1
+                    results["followed"].append(f"@{media.user.username}")
+                    logger.info(f"➕ IG Followed @{media.user.username}")
+                    human_delay(30, 60, "ig_after_follow")
                     
             except Exception as e:
                 logger.warning(f"IG engagement failed on media {media.id}: {e}")

@@ -55,22 +55,22 @@ def get_daily_action_limit(platform, action_type):
     """
     limits = {
         "instagram": {
-            "like":    30,   # Safe: up to 60, we use 30
-            "comment": 10,   # Safe: up to 20, we use 10
-            "follow":  15,   # Safe: up to 30, we use 15
-            "story":   5,    # Stories: always safe
+            "like":    80,   # High volume, safe with delays
+            "comment": 20,   # AI hooks
+            "follow":  30,   # Trigger follow-backs
+            "story":   10,
         },
         "x": {
-            "like":    50,   # Safe: up to 100, we use 50
-            "reply":   20,   # Safe: up to 50, we use 20
-            "follow":  10,   # Safe: up to 25, we use 10
-            "tweet":   5,    # Including thread tweets
-            "retweet": 5,
+            "like":    100,  # X allows high volume
+            "reply":   40,   # Massive engagement
+            "follow":  40,
+            "tweet":   10,
+            "retweet": 10,
         },
         "youtube": {
-            "like":    20,
-            "comment": 5,
-            "reply":   15,
+            "like":    30,
+            "comment": 15,   # High-value comments
+            "reply":   30,
         }
     }
     return limits.get(platform, {}).get(action_type, 5)

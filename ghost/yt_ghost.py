@@ -95,11 +95,10 @@ def run_yt_proactive_session(session="morning"):
         keyword = random.choice(NICHE_KEYWORDS)
         logger.info(f"🔍 YT Hunting for videos: '{keyword}'")
         
-        # Search for recent videos in the niche
         search_response = youtube.search().list(
             q=keyword,
             part="id,snippet",
-            maxResults=10,
+            maxResults=20,
             order="date", # Get recent ones
             type="video"
         ).execute()
@@ -110,7 +109,7 @@ def run_yt_proactive_session(session="morning"):
         comments_done = 0
         
         for video in videos:
-            if not can_act("youtube", "comment") or comments_done >= 2:
+            if not can_act("youtube", "comment") or comments_done >= 5:
                 break
                 
             video_id = video["id"]["videoId"]

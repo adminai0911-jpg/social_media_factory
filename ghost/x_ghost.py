@@ -64,13 +64,13 @@ async def like_niche_posts(max_likes=None):
     if not client:
         return []
 
-    limit = max_likes or random.randint(5, 10)
+    limit = max_likes or random.randint(15, 25)
     liked_details = []
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
         logger.info(f"🔍 Searching X for: '{keyword}'")
-        results = await client.search_tweet(keyword, product="Latest", count=20)
+        results = await client.search_tweet(keyword, product="Latest", count=40)
         tweets = list(results)
         random.shuffle(tweets)
         
@@ -122,7 +122,7 @@ async def reply_to_mentions():
     try:
         notifications = await client.get_notifications(type="Mentions")
         
-        for notif in list(notifications)[:5]:
+        for notif in list(notifications)[:15]:
             if not can_act("x", "reply"):
                 break
             try:
@@ -186,10 +186,10 @@ async def follow_niche_accounts():
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
-        results = await client.search_tweet(keyword, product="Top", count=15)
+        results = await client.search_tweet(keyword, product="Top", count=30)
         accounts_seen = set()
         
-        for tweet in list(results)[:15]:
+        for tweet in list(results)[:25]:
             if not can_act("x", "follow"):
                 break
             if tweet.user and tweet.user.screen_name not in accounts_seen:
@@ -230,9 +230,9 @@ async def comment_on_viral_posts():
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
-        results = await client.search_tweet(keyword, product="Top", count=10)
+        results = await client.search_tweet(keyword, product="Top", count=30)
         
-        for tweet in list(results)[:5]:
+        for tweet in list(results)[:15]:
             if not can_act("x", "reply"):
                 break
             # Only comment on posts with decent engagement
@@ -270,7 +270,7 @@ async def run_x_engagement_session(session="morning"):
     results = {"liked": [], "replied": [], "followed": [], "commented": []}
     
     if session == "morning":
-        results["liked"] = await like_niche_posts(random.randint(5, 8))
+        results["liked"] = await like_niche_posts(random.randint(15, 25))
         human_delay(60, 180, "between_x_actions")
         results["followed"] = await follow_niche_accounts()
         
@@ -280,7 +280,7 @@ async def run_x_engagement_session(session="morning"):
         results["commented"] = await comment_on_viral_posts()
         
     elif session == "evening":
-        results["liked"] = await like_niche_posts(random.randint(8, 12))
+        results["liked"] = await like_niche_posts(random.randint(20, 30))
         human_delay(60, 180, "between_x_actions")
         results["replied"] = await reply_to_mentions()
     
