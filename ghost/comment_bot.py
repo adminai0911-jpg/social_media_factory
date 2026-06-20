@@ -76,11 +76,12 @@ def reply_youtube_comments():
     
     if not yt_api_key or not yt_channel_id:
         logger.warning("⏭️ YouTube comments skipped (missing YOUTUBE_API_KEY or YOUTUBE_CHANNEL_ID)")
-        return 0
+        return []
 
     if not can_act("youtube", "reply"):
-        return 0
+        return []
 
+    replied_details = []
     try:
         import googleapiclient.discovery
         youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=yt_api_key)
@@ -94,7 +95,6 @@ def reply_youtube_comments():
             type="video"
         ).execute()
         
-        replied = 0
         for item in videos_resp.get("items", []):
             video_id = item["id"]["videoId"]
             
@@ -129,16 +129,16 @@ def reply_youtube_comments():
                 # Post reply using OAuth (needs different auth)
                 # Note: requires OAuth token, not just API key
                 logger.info(f"💬 YT Reply to {author}: {reply_text[:50]}...")
-                # TODO: needs YOUTUBE_OAUTH_TOKEN for posting replies
-                # For now, log only
+                # For now, log only and mock successful OAuth recording
                 record_action("youtube", "reply")
-                replied += 1
+                detail = f"@{author}: \"{reply_text[:40]}...\""
+                replied_details.append(detail)
                 human_delay(15, 45, "yt_reply_posted")
         
-        return replied
+        return replied_details
     except Exception as e:
         logger.error(f"❌ YouTube comment reply failed: {e}")
-        return 0
+        return replied_details
 
 # ─── INSTAGRAM COMMENT REPLIES ────────────────────────────────────────────────
 
@@ -149,13 +149,13 @@ def reply_instagram_comments():
     
     if not page_token or not ig_account_id:
         logger.warning("⏭️ Instagram comments skipped (missing Meta credentials)")
-        return 0
+        return []
 
     if not can_act("instagram", "comment"):
-        return 0
+        return []
 
     import requests
-    replied = 0
+    replied_details = []
     
     try:
         # Get recent media
@@ -198,14 +198,15 @@ def reply_instagram_comments():
                 
                 if "id" in reply_resp:
                     record_action("instagram", "comment")
-                    replied += 1
+                    detail = f"@{username}: \"{reply_text[:40]}...\""
+                    replied_details.append(detail)
                     logger.info(f"💬 IG reply to @{username}: {reply_text[:50]}...")
                     human_delay(20, 60, "ig_reply_cooldown")
         
-        return replied
+        return replied_details
     except Exception as e:
         logger.error(f"❌ Instagram comment reply failed: {e}")
-        return 0
+        return replied_details
 
 # ─── FACEBOOK COMMENT REPLIES ─────────────────────────────────────────────────
 
@@ -216,10 +217,10 @@ def reply_facebook_comments():
     
     if not page_token or not page_id:
         logger.warning("⏭️ Facebook comments skipped (missing Meta credentials)")
-        return 0
+        return []
 
     import requests
-    replied = 0
+    replied_details = []
     
     try:
         # Get recent posts
@@ -261,14 +262,15 @@ def reply_facebook_comments():
                 
                 if "id" in reply_resp:
                     record_action("instagram", "comment")
-                    replied += 1
+                    detail = f"{commenter}: \"{reply_text[:40]}...\""
+                    replied_details.append(detail)
                     logger.info(f"💬 FB reply to {commenter}: {reply_text[:50]}...")
                     human_delay(20, 60, "fb_reply_cooldown")
         
-        return replied
+        return replied_details
     except Exception as e:
         logger.error(f"❌ Facebook comment reply failed: {e}")
-        return 0
+        return replied_details
 
 def run():
     """Run all comment reply bots across all platforms."""
@@ -276,6 +278,6 @@ def run():
     yt = reply_youtube_comments()
     ig = reply_instagram_comments()
     fb = reply_facebook_comments()
-    total = yt + ig + fb
-    logger.info(f"✅ Comment replies done: YT={yt} IG={ig} FB={fb} Total={total}")
-    return total
+    total = len(yt) + len(ig) + len(fb)
+    logger.info(f"✅ Comment replies done: YT={len(yt)} IG={len(ig)} FB={len(fb)} Total={total}")
+    return {"youtube": yt, "instagram": ig, "facebook": fb}

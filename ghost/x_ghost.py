@@ -58,14 +58,14 @@ async def _get_client():
 async def like_niche_posts(max_likes=None):
     """Find and like posts in your niche — looks completely human."""
     if not can_act("x", "like"):
-        return 0
+        return []
     
     client = await _get_client()
     if not client:
-        return 0
+        return []
 
     limit = max_likes or random.randint(5, 10)
-    liked = 0
+    liked_details = []
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
@@ -84,7 +84,9 @@ async def like_niche_posts(max_likes=None):
                 micro_pause()
                 await tweet.favorite()
                 record_action("x", "like")
-                liked += 1
+                tweet_snippet = tweet.text[:30].replace("\n", " ").strip()
+                detail = f"@{tweet.user.screen_name}: \"{tweet_snippet}...\""
+                liked_details.append(detail)
                 logger.info(f"❤️ Liked tweet by @{tweet.user.screen_name}: {tweet.text[:50]}...")
                 human_delay(8, 25, "x_like")
             except Exception as e:
@@ -93,20 +95,20 @@ async def like_niche_posts(max_likes=None):
                     break
                 logger.warning(f"Like failed: {e}")
         
-        logger.info(f"✅ Liked {liked} posts on X")
-        return liked
+        logger.info(f"✅ Liked {len(liked_details)} posts on X")
+        return liked_details
     except Exception as e:
         logger.error(f"❌ X like session failed: {e}")
-        return liked
+        return liked_details
 
 async def reply_to_mentions():
     """Find mentions/replies to your account and respond with AI."""
     if not can_act("x", "reply"):
-        return 0
+        return []
 
     client = await _get_client()
     if not client:
-        return 0
+        return []
 
     # Import Gemini for AI reply generation
     try:
@@ -116,7 +118,7 @@ async def reply_to_mentions():
     except Exception:
         ai_client = None
 
-    replied = 0
+    replied_details = []
     try:
         notifications = await client.get_notifications(type="Mentions")
         
@@ -137,16 +139,17 @@ async def reply_to_mentions():
                 human_delay(15, 45, "x_reply_think")
                 await client.create_tweet(text=reply_text, reply_to=tweet.id)
                 record_action("x", "reply")
-                replied += 1
+                detail = f"@{tweet.user.screen_name} -> \"{reply_text[:40]}...\""
+                replied_details.append(detail)
                 logger.info(f"💬 Replied to @{tweet.user.screen_name}")
                 human_delay(20, 60, "x_reply_cooldown")
             except Exception as e:
                 logger.warning(f"Reply failed: {e}")
         
-        return replied
+        return replied_details
     except Exception as e:
         logger.error(f"❌ X reply session failed: {e}")
-        return replied
+        return replied_details
 
 async def _generate_x_reply(ai_client, original_tweet):
     """Generate a natural Hindi reply using Gemini."""
@@ -173,13 +176,13 @@ Reply:"""
 async def follow_niche_accounts():
     """Follow relevant accounts in your niche — max 10/day."""
     if not can_act("x", "follow"):
-        return 0
+        return []
 
     client = await _get_client()
     if not client:
-        return 0
+        return []
 
-    followed = 0
+    followed_details = []
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
@@ -196,25 +199,25 @@ async def follow_niche_accounts():
                     try:
                         await tweet.user.follow()
                         record_action("x", "follow")
-                        followed += 1
+                        followed_details.append(f"@{tweet.user.screen_name}")
                         logger.info(f"➕ Followed @{tweet.user.screen_name} ({tweet.user.followers_count} followers)")
                         human_delay(20, 60, "x_follow")
                     except Exception as e:
                         logger.warning(f"Follow failed: {e}")
         
-        return followed
+        return followed_details
     except Exception as e:
         logger.error(f"❌ X follow session failed: {e}")
-        return followed
+        return followed_details
 
 async def comment_on_viral_posts():
     """Leave genuine comments on viral posts in your niche."""
     if not can_act("x", "reply"):
-        return 0
+        return []
 
     client = await _get_client()
     if not client:
-        return 0
+        return []
 
     try:
         from google import genai
@@ -223,7 +226,7 @@ async def comment_on_viral_posts():
     except Exception:
         ai_client = None
 
-    commented = 0
+    commented_details = []
     keyword = random.choice(NICHE_KEYWORDS)
     
     try:
@@ -243,16 +246,17 @@ async def comment_on_viral_posts():
                     human_delay(30, 90, "x_comment_think")
                     await client.create_tweet(text=comment, reply_to=tweet.id)
                     record_action("x", "reply")
-                    commented += 1
+                    detail = f"@{tweet.user.screen_name}: \"{comment[:40]}...\""
+                    commented_details.append(detail)
                     logger.info(f"💬 Commented on viral tweet by @{tweet.user.screen_name}")
                     human_delay(45, 120, "x_comment_cooldown")
                 except Exception as e:
                     logger.warning(f"Comment failed: {e}")
         
-        return commented
+        return commented_details
     except Exception as e:
         logger.error(f"❌ X comment session failed: {e}")
-        return commented
+        return commented_details
 
 async def run_x_engagement_session(session="morning"):
     """
@@ -263,7 +267,7 @@ async def run_x_engagement_session(session="morning"):
     evening:  Like posts + reply to mentions
     """
     logger.info(f"🤖 Starting X Ghost Session: {session}")
-    results = {"liked": 0, "replied": 0, "followed": 0, "commented": 0}
+    results = {"liked": [], "replied": [], "followed": [], "commented": []}
     
     if session == "morning":
         results["liked"] = await like_niche_posts(random.randint(5, 8))

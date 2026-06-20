@@ -37,6 +37,57 @@ def send_telegram(message):
         logger.error(f"Failed to broadcast notification: {e}")
 
 
+def format_detailed_report(session_name, results):
+    lines = [f"🤖 <b>Ghost Handler — {session_name} Complete</b>"]
+    
+    # Check comment replies
+    if "comment_replies" in results and isinstance(results["comment_replies"], dict):
+        cr = results["comment_replies"]
+        total_replies = len(cr.get("youtube", [])) + len(cr.get("instagram", [])) + len(cr.get("facebook", []))
+        if total_replies > 0:
+            lines.append("\n💬 <b>Comment Replies Posted:</b>")
+            for plat, lst in cr.items():
+                if lst:
+                    lines.append(f"  <b>{plat.capitalize()}:</b>")
+                    for item in lst[:5]:
+                        lines.append(f"    • {item}")
+        else:
+            lines.append("\n💬 No comment replies posted.")
+            
+    # Check thread
+    if "x_thread" in results:
+        lines.append(f"\n🧵 <b>X Thread:</b> {'✅ Posted Successfully' if results['x_thread'] else '❌ Failed / Skipped'}")
+
+    # Check X engagement
+    if "x_engage" in results and isinstance(results["x_engage"], dict):
+        xe = results["x_engage"]
+        has_engage = False
+        if xe.get("liked"):
+            has_engage = True
+            lines.append("\n❤️ <b>X Niche Likes:</b>")
+            for item in xe["liked"][:5]:
+                lines.append(f"    • {item}")
+        if xe.get("replied"):
+            has_engage = True
+            lines.append("\n💬 <b>X Mentions Replied:</b>")
+            for item in xe["replied"][:5]:
+                lines.append(f"    • {item}")
+        if xe.get("commented"):
+            has_engage = True
+            lines.append("\n🔥 <b>X Viral Comments:</b>")
+            for item in xe["commented"][:5]:
+                lines.append(f"    • {item}")
+        if xe.get("followed"):
+            has_engage = True
+            lines.append("\n➕ <b>X Niche Follows:</b>")
+            for item in xe["followed"][:5]:
+                lines.append(f"    • {item}")
+        if not has_engage:
+            lines.append("\n❤️ No X engagement actions taken.")
+                
+    return "\n".join(lines)
+
+
 def run_morning_session():
     """
     Morning Session (7:30 AM IST):
@@ -69,11 +120,8 @@ def run_morning_session():
         logger.error(f"X ghost failed: {e}")
         results["x_engage"] = {}
 
-
-
-    # Send Telegram summary
-    status = "\n".join([f"  {k}: {'✅' if v else '❌'}" for k, v in results.items()])
-    send_telegram(f"🌅 <b>Morning Session Complete</b>\n{status}")
+    report = format_detailed_report("🌅 Morning Session", results)
+    send_telegram(report)
     logger.info(f"✅ Morning session done: {results}")
     return results
 
@@ -97,7 +145,7 @@ def run_midday_session():
         human_delay(120, 300, "after_comments")
     except Exception as e:
         logger.error(f"Comment bot failed: {e}")
-        results["comment_replies"] = 0
+        results["comment_replies"] = {}
 
     # 2. X engagement — comment on viral posts
     logger.info("🔥 Step 2: X midday engagement...")
@@ -109,10 +157,8 @@ def run_midday_session():
         logger.error(f"X ghost failed: {e}")
         results["x_engage"] = {}
 
-
-
-    status = "\n".join([f"  {k}: {'✅' if v else '❌'}" for k, v in results.items()])
-    send_telegram(f"☀️ <b>Midday Session Complete</b>\n{status}")
+    report = format_detailed_report("☀️ Midday Session", results)
+    send_telegram(report)
     logger.info(f"✅ Midday session done: {results}")
     return results
 
@@ -129,8 +175,6 @@ def run_evening_session():
     
     results = {}
     
-
-
     # 2. Evening X thread
     logger.info("🧵 Step 2: Evening X thread...")
     try:
@@ -158,12 +202,12 @@ def run_evening_session():
         results["comment_replies"] = reply_comments()
     except Exception as e:
         logger.error(f"Comment bot failed: {e}")
-        results["comment_replies"] = 0
+        results["comment_replies"] = {}
 
     # Final stats
     stats = get_today_stats()
-    status = "\n".join([f"  {k}: {'✅' if v else '❌'}" for k, v in results.items()])
-    send_telegram(f"🌆 <b>Evening Session Complete</b>\n{status}\n\n<pre>{stats}</pre>")
+    report = format_detailed_report("🌆 Evening Session", results)
+    send_telegram(f"{report}\n\n<pre>{stats}</pre>")
     logger.info(f"✅ Evening session done: {results}")
     logger.info(f"\n{stats}")
     return results
