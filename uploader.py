@@ -34,7 +34,7 @@ def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"}
     try:
-        requests.post(url, data=payload)
+        requests.post(url, data=payload, timeout=10)
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
@@ -45,7 +45,7 @@ def get_facebook_page_token(user_token, page_id):
     url = f"https://graph.facebook.com/v19.0/{page_id}"
     params = {"fields": "access_token", "access_token": user_token}
     try:
-        res = requests.get(url, params=params).json()
+        res = requests.get(url, params=params, timeout=10).json()
         if "access_token" in res:
             logger.info("Successfully obtained Page Access Token dynamically.")
             return res["access_token"]
@@ -61,7 +61,7 @@ def upload_to_tmpfiles(file_path):
         url = "https://tmpfiles.org/api/v1/upload"
         with open(file_path, "rb") as f:
             files = {"file": f}
-            res = requests.post(url, files=files)
+            res = requests.post(url, files=files, timeout=60)
             if res.status_code == 200:
                 data = res.json()
                 file_url = data["data"]["url"]
@@ -87,7 +87,7 @@ def upload_to_facebook_reels(video_path, description):
     init_payload = {"upload_phase": "start", "access_token": page_token}
     
     try:
-        init_res = requests.post(init_url, data=init_payload).json()
+        init_res = requests.post(init_url, data=init_payload, timeout=30).json()
         if "video_id" not in init_res:
             logger.error(f"Failed to initialize FB upload: {init_res}")
             return False
@@ -97,13 +97,13 @@ def upload_to_facebook_reels(video_path, description):
         
         headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
         with open(video_path, "rb") as f:
-            upload_res = requests.post(upload_url, headers=headers, data=f).json()
+            upload_res = requests.post(upload_url, headers=headers, data=f, timeout=60).json()
             
         publish_payload = {
             "upload_phase": "finish", "access_token": page_token,
             "video_id": video_id, "video_state": "PUBLISHED", "description": description
         }
-        publish_res = requests.post(init_url, data=publish_payload).json()
+        publish_res = requests.post(init_url, data=publish_payload, timeout=30).json()
         if "success" in publish_res and publish_res["success"]:
             logger.info("✅ Successfully published to Facebook Reels!")
             return True
@@ -114,10 +114,18 @@ def upload_to_facebook_reels(video_path, description):
     return False
 
 def upload_to_instagram_reels(video_path, description):
-    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
-        logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
+    # ✅ FIX: Check for required credentials FIRST
+    if not PAGE_ACCESS_TOKEN:
+        logger.warning("⏭️ Skipping Instagram Reels (Missing: FACEBOOK_PAGE_ACCESS_TOKEN)")
         return False
-        
+    if not INSTAGRAM_ACCOUNT_ID:
+        logger.warning("⏭️ Skipping Instagram Reels (Missing: INSTAGRAM_ACCOUNT_ID)")
+        return False
+    if not PAGE_ID:
+        logger.warning("⏭️ Skipping Instagram Reels (Missing: FACEBOOK_PAGE_ID)")
+        return False
+    
+    # ✅ FIX: Use correct PAGE_ID for token exchange (Instagram uses Business Account ID)
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
     
     # Upload video to tmpfiles.org to get a direct public URL
@@ -131,18 +139,20 @@ def upload_to_instagram_reels(video_path, description):
     container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
     
     try:
-        container_res = requests.post(container_url, data=container_payload).json()
+        container_res = requests.post(container_url, data=container_payload, timeout=30).json()
         if "id" not in container_res:
             logger.error(f"Failed to create IG Media Container: {container_res}")
+            send_telegram_alert(f"❌ Instagram upload failed: {container_res}")
             return False
             
         creation_id = container_res["id"]
+        logger.info(f"✅ Created IG container: {creation_id}")
         
         # Poll container status until it is FINISHED or fails
         status_url = f"https://graph.facebook.com/v19.0/{creation_id}"
         status_params = {"fields": "status_code,status", "access_token": page_token}
         
-        max_attempts = 30
+        max_attempts = 20  # ✅ REDUCED: Was 30 (300 sec), now 20 (200 sec) to save time
         seconds_between_attempts = 10
         is_ready = False
         
@@ -150,33 +160,39 @@ def upload_to_instagram_reels(video_path, description):
         for attempt in range(max_attempts):
             time.sleep(seconds_between_attempts)
             try:
-                status_res = requests.get(status_url, params=status_params).json()
+                status_res = requests.get(status_url, params=status_params, timeout=30).json()
                 status_code = status_res.get("status_code", "")
                 logger.info(f"Instagram container status (attempt {attempt+1}/{max_attempts}): {status_code}")
                 if status_code == "FINISHED":
                     is_ready = True
+                    logger.info("✅ Video processing complete!")
                     break
                 elif status_code in ["ERROR", "EXPIRED"]:
                     logger.error(f"Instagram video processing failed: {status_res}")
+                    send_telegram_alert(f"❌ Instagram processing error: {status_code}")
                     break
             except Exception as e:
                 logger.error(f"Error checking Instagram container status: {e}")
                 
         if not is_ready:
             logger.error("Instagram Reels container did not become ready in time. Publishing skipped.")
+            send_telegram_alert(f"❌ Instagram timeout: Container not ready after {max_attempts * seconds_between_attempts}s")
             return False
             
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
         publish_payload = {"creation_id": creation_id, "access_token": page_token}
-        publish_res = requests.post(publish_url, data=publish_payload).json()
+        publish_res = requests.post(publish_url, data=publish_payload, timeout=30).json()
         
         if "id" in publish_res:
             logger.info("✅ Successfully published to Instagram Reels!")
+            send_telegram_alert(f"✅ Instagram upload successful!")
             return True
         else:
             logger.error(f"Failed to publish IG Reel: {publish_res}")
+            send_telegram_alert(f"❌ Instagram publish failed: {publish_res}")
     except Exception as e:
         logger.error(f"IG Upload Exception: {e}")
+        send_telegram_alert(f"❌ Instagram upload exception: {str(e)}")
     return False
 
 def upload_to_youtube_shorts(video_path, description):
@@ -194,7 +210,7 @@ def upload_to_youtube_shorts(video_path, description):
             "refresh_token": YOUTUBE_REFRESH_TOKEN,
             "grant_type": "refresh_token"
         }
-        token_res = requests.post(token_url, data=token_payload).json()
+        token_res = requests.post(token_url, data=token_payload, timeout=30).json()
         access_token = token_res.get("access_token")
         if not access_token:
             logger.error(f"Failed to refresh YouTube access token: {token_res}")
@@ -228,7 +244,7 @@ def upload_to_youtube_shorts(video_path, description):
             }
         }
         
-        init_res = requests.post(upload_init_url, headers=headers, json=metadata)
+        init_res = requests.post(upload_init_url, headers=headers, json=metadata, timeout=30)
         if init_res.status_code != 200:
             logger.error(f"Failed to initialize YouTube upload: {init_res.status_code} - {init_res.text}")
             return False
@@ -246,7 +262,7 @@ def upload_to_youtube_shorts(video_path, description):
         }
         
         with open(video_path, "rb") as f:
-            put_res = requests.put(upload_url, headers=put_headers, data=f)
+            put_res = requests.put(upload_url, headers=put_headers, data=f, timeout=120)
             
         if put_res.status_code in [200, 201]:
             logger.info("✅ Successfully published to YouTube Shorts!")
