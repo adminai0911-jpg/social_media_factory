@@ -115,6 +115,7 @@ jobs:
           CALLMEBOT_API_KEY: ${{ secrets.CALLMEBOT_API_KEY }}
           CALLMEBOT_PHONE: ${{ secrets.CALLMEBOT_PHONE }}
         run: |
+          # Run Ghost Handler as a module (requires __init__.py in ghost/)
           python -m ghost.brain
 
       # ── Report ─────────────────────────────────────────────────────────────
