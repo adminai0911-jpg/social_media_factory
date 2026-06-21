@@ -1,6 +1,6 @@
 name: V35 Ultra HD Autopilot (Minutes-Optimized)
 
-# ─────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # MINUTES BUDGET (Free tier = 2,000 min/month on ubuntu-latest)
 #
 # BEFORE (V34):   ~25-35 min/run  →  max ~57-80 runs/month
@@ -14,8 +14,8 @@ name: V35 Ultra HD Autopilot (Minutes-Optimized)
 #   ✅ --concurrency=2             saves  5-8 min (maxes out GitHub's 2 vCPUs)
 #   ✅ CRF=18 (vs 12)             saves  2-3 min  (still excellent quality)
 #   ✅ Pre-scaled 540p All-Intra   saves  5-10 min (instant frame seeks)
-#   ✅ timeout-minutes: 20         kills hung jobs that waste minutes
-# ─────────────────────────────────────────────────────────────────────────────────
+#   ✅ timeout-minutes: 90         allows full jitter delay + render time
+# ────────────────────────────────────────────────────────────────────────────
 
 on:
   repository_dispatch:
@@ -25,7 +25,7 @@ on:
 jobs:
   run_autopilot:
     runs-on: ubuntu-latest
-    timeout-minutes: 20   # ← HARD KILL at 20 min — saves minutes on hung renders
+    timeout-minutes: 90   # ← INCREASED: Allows max jitter (60 min) + render (20-30 min)
 
     steps:
       # ── STEP 1: Checkout ──────────────────────────────────────────────────
