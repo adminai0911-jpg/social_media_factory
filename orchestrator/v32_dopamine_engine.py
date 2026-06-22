@@ -85,31 +85,28 @@ def generate_dynamic_script():
     cta  = random.choice(ctas)
 
     prompt = f"""You are an elite neuro-marketing viral scriptwriter for Indian social media.
-Generate a short-form video script that triggers dopamine and adrenaline about Wealth Psychology and Mindset.
+Generate a short-form video script about Wealth Psychology.
 Script MUST be in Hindi (Devanagari or Hinglish mix).
 Return ONLY raw JSON — no markdown, no backticks.
 
-Mandatory: phase_1 MUST use this hook exactly: {hook}
-Mandatory: phase_5 MUST use this CTA exactly: {cta}
+Mandatory: hook MUST use this text exactly: {hook}
+Mandatory: save_cta MUST use this text exactly: {cta}
 
-JSON:
+JSON Schema:
 {{
-  "micro_niche": "Psychology of Wealth & Success",
-  "style_seed": 42,
-  "emojis": ["🧠", "💼", "📈"],
-  "red_box_keyword": "TRAP",
-  "subliminal_flash_word": "WAKE UP",
-  "serotonin_payoff_number": 847293,
-  "phase_1": "{hook}",
-  "phase_2": "Build-up. 1 sentence Hindi. Personal relatable emotional stakes.",
-  "phase_3": "Pattern Interrupt. 2-3 sentences. Shocking counter-intuitive truth.",
-  "phase_4": "Payoff. 1-2 actionable numbered rules (e.g. Rule 1: ... Rule 2: ...).",
-  "phase_5": "{cta}",
-  "caption_instagram": "Deep psychological caption. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules",
-  "caption_x": "Punchy Hinglish about wealth psychology. Max 250 chars. No hashtags.",
-  "caption_youtube": "SEO title. Numbers + emotion + benefit. Max 70 chars.",
-  "caption_facebook": "Conversational Hindi about success rules. 2-3 sentences. End with question.",
-  "caption": "Same as caption_instagram."
+  "hook": "{hook}",
+  "split_screen": {{
+    "left": "Poor Mindset - [behavior in 4-5 words]",
+    "right": "Rich Mindset - [behavior in 4-5 words]"
+  }},
+  "authority_claim": "Strong 1-sentence pattern interrupt. (e.g., 'Luck is just a pattern.')",
+  "numbered_list": [
+    "Point 1 (max 6 words)",
+    "Point 2 (max 6 words)",
+    "Point 3 (max 6 words)"
+  ],
+  "save_cta": "{cta}",
+  "caption": "Deep psychological caption. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
 }}"""
     
     for key in valid_keys:
@@ -187,46 +184,34 @@ def generate_offline_script():
     """Bulletproof offline fallback so the video ALWAYS renders with variety."""
     templates = [
         {
-          "micro_niche": "Psychology of Wealth",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["🧠", "🔥", "⚠️"],
-          "red_box_keyword": "FAKE",
-          "subliminal_flash_word": "WAKE UP",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "क्या आपको लगता है कि आप कभी अमीर नहीं बन पाएंगे?",
-          "phase_2": "आप अकेले नहीं हैं, 99% लोग यही सोचते हैं।",
-          "phase_3": "लेकिन सच यह है कि स्कूल हमें पैसे के बारे में सब कुछ गलत सिखाता है।",
-          "phase_4": "असली दौलत तब बनती है जब आपका पैसा आपके लिए काम करता है, न कि आप पैसे के लिए।",
-          "phase_5": "इस मैट्रिक्स से बाहर निकलने का समय आ गया है।",
-          "caption": "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
+          "hook": "90% log paise se darte hain. Tum nahi.",
+          "split_screen": {
+              "left": "Poor Mindset - Saves money",
+              "right": "Rich Mindset - Invests money"
+          },
+          "authority_claim": "Tumhe lagta hai luck hai. Yeh ek pattern hai.",
+          "numbered_list": [
+              "Loss se zyada dar nahi lagta",
+              "Decisions data se, emotion se nahi",
+              "Patience ko skill maante hain"
+          ],
+          "save_cta": "Save and Share with someone who needs to wake up 🚀",
+          "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         },
         {
-          "micro_niche": "Dark Psychology",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["👁️", "🤐", "⚡"],
-          "red_box_keyword": "LIES",
-          "subliminal_flash_word": "TRUST NO ONE",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "क्या आप जानते हैं कि लोग आपको रोज़ाना कैसे मैनिपुलेट करते हैं?",
-          "phase_2": "यह आपके सबसे करीबियों से ही शुरू होता है।",
-          "phase_3": "साइकोलॉजी कहती है कि जो लोग हमेशा 'अच्छा' बनते हैं, वो सबसे बड़े मास्टरमाइंड होते हैं।",
-          "phase_4": "उनके मीठे शब्दों के पीछे छिपे असली इरादे को पहचानना सीखें।",
-          "phase_5": "अब और बेवकूफ मत बनो, खेल के नियम बदलो।",
-          "caption": "सच्चाई कड़वी है। #psychology #facts #mindset #lifehacks #hindi"
-        },
-        {
-          "micro_niche": "Sigma Male Rule",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["🐺", "🤫", "📈"],
-          "red_box_keyword": "SILENCE",
-          "subliminal_flash_word": "GRIND HARD",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "सिग्मा मेल्स कभी भीड़ का हिस्सा नहीं बनते।",
-          "phase_2": "वो अपनी मंज़िल अकेले तय करते हैं।",
-          "phase_3": "जब दुनिया शोर मचा रही होती है, सिग्मा शांत रहकर अपना एम्पायर खड़ा कर रहा होता है।",
-          "phase_4": "उनकी खामोशी में ही उनकी सबसे बड़ी ताकत छुपी है।",
-          "phase_5": "अकेले चलना सीखो, जीत पक्की है।",
-          "caption": "रूल नंबर 1: किसी पर निर्भर मत रहो। #sigma #motivation #rules #hindi #alpha"
+          "hook": "Why you are secretly sabotaging your own success...",
+          "split_screen": {
+              "left": "Poor Mindset - Blames others",
+              "right": "Rich Mindset - Takes responsibility"
+          },
+          "authority_claim": "Success koi accident nahi, ek formula hai.",
+          "numbered_list": [
+              "Stop waiting for the perfect time",
+              "Focus on skills, not salary",
+              "Build networks, not enemies"
+          ],
+          "save_cta": "Save this rule before you forget! 📌",
+          "caption": "सच्चाई कड़वी है। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         }
     ]
     return random.choice(templates)
@@ -622,12 +607,15 @@ def build_v32_payload():
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
     send_telegram_alert(f"✅ <b>Script Ready</b>\nNiche: {script_data.get('micro_niche')}\nCaption: {script_data.get('caption')}")
     
-    # Extract phases safely
+    # Extract phases safely from new Storyboard JSON format
     try:
-        phases = [
-            script_data["phase_1"], script_data["phase_2"], script_data["phase_3"],
-            script_data["phase_4"], script_data["phase_5"]
-        ]
+        phase_1 = script_data["hook"]
+        phase_2 = f"{script_data['split_screen']['left']}. {script_data['split_screen']['right']}."
+        phase_3 = script_data["authority_claim"]
+        phase_4 = ". ".join(script_data["numbered_list"])
+        phase_5 = script_data["save_cta"]
+        
+        phases = [phase_1, phase_2, phase_3, phase_4, phase_5]
     except KeyError as e:
         logger.error(f"Script JSON missing key: {e}. Aborting.")
         return None
