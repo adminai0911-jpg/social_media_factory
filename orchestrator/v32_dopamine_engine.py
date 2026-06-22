@@ -84,9 +84,10 @@ def generate_dynamic_script():
     hook = random.choice(hooks)
     cta  = random.choice(ctas)
 
-    prompt = f"""You are an elite neuro-marketing viral scriptwriter for Indian social media.
-Generate a short-form video script about Wealth Psychology.
-Script MUST be in Hindi (Devanagari or Hinglish mix).
+    prompt = f"""You are an elite neuro-marketing viral scriptwriter and dark psychology expert for Indian social media.
+Your goal is to trigger massive dopamine and a deep psychological 'Aha!' moment about Wealth & Mindset.
+The content MUST be harsh truths, deep psychological insights, and highly valuable actionable rules. Do NOT give generic advice like 'work hard' or 'save money'. Give high-IQ, 1%-level wealth psychology.
+Script MUST be in Hindi (Devanagari or Hinglish mix, extremely natural spoken language).
 Return ONLY raw JSON — no markdown, no backticks.
 
 Mandatory: hook MUST use this text exactly: {hook}
@@ -96,17 +97,17 @@ JSON Schema:
 {{
   "hook": "{hook}",
   "split_screen": {{
-    "left": "Poor Mindset - [behavior in 4-5 words]",
-    "right": "Rich Mindset - [behavior in 4-5 words]"
+    "left": "Poor Mindset - [harsh truth behavior, max 5 words]",
+    "right": "Rich Mindset - [high-IQ behavior, max 5 words]"
   }},
-  "authority_claim": "Strong 1-sentence pattern interrupt. (e.g., 'Luck is just a pattern.')",
+  "authority_claim": "A punchy, dark, harsh truth pattern interrupt. (e.g., 'गरीब रहना एक बीमारी है, और इलाज तुम्हारे पास है।')",
   "numbered_list": [
-    "Point 1 (max 6 words)",
-    "Point 2 (max 6 words)",
-    "Point 3 (max 6 words)"
+    "High-value insight 1 (max 6-7 words)",
+    "High-value insight 2 (max 6-7 words)",
+    "High-value insight 3 (max 6-7 words)"
   ],
   "save_cta": "{cta}",
-  "caption": "Deep psychological caption. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
+  "caption": "Deep psychological caption triggering FOMO. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
 }}"""
     
     for key in valid_keys:
