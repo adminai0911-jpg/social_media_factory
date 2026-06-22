@@ -5,10 +5,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
   staticFile,
-  OffthreadVideo,
   Img,
   random,
-  spring,
   Sequence
 } from "remotion";
 import React from "react";
@@ -38,25 +36,7 @@ const PALETTES = [
 ];
 
 
-const NEURAL_ALERTS = [
-  "⚠️  NEURAL LINK ACTIVE",
-  "🧠  MIND HACK DETECTED",
-  "⚡  DOPAMINE SPIKE NOW",
-  "🔴  BRAIN SIGNAL LOCKED",
-  "🚨  ATTENTION HIJACKED",
-  "💀  REALITY GLITCHING",
-  "🔥  ADRENALINE TRIGGER",
-  "👁️  SUBLIMINAL UPLOAD",
-  "🌀  HYPNOSIS IN PROGRESS",
-  "❌  ESCAPE IMPOSSIBLE",
-  "🎯  FOCUS LOCKED IN",
-  "⚡  SYSTEM OVERRIDE",
-];
-
 const RED_WORDS = ["WAKE","SIMULATION","SHADOWS","TRAP","LYING","FAKE","DREAM","FEAR","PANIC","NOW","LIES","BREAK","SCAM","CHEAT","DANGER"];
-
-// ── Background video pools — the engine downloads up to 4 videos ──
-const BG_VIDEOS = ["gta.mp4","sand.mp4","bg3.mp4","bg4.mp4"];
 
 export const MainVideo: React.FC<{
   script: any;
@@ -71,18 +51,9 @@ export const MainVideo: React.FC<{
   if (!script || !audio_offsets || audio_offsets.length < 5) return null;
 
   const seed       = script.style_seed || 1;
-  const emojis     = script.emojis || ["👀","🔥","💀"];
   const pal        = PALETTES[seed % PALETTES.length];
-  const pal2       = PALETTES[(seed + 7) % PALETTES.length]; // secondary accent
-  const alertText  = NEURAL_ALERTS[seed % NEURAL_ALERTS.length];
   const redKw      = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g,"") : "WARNING";
-  const subliminal = (script.subliminal_flash_word || "WAKE UP").toUpperCase();
-  const serotonin  = Number(script.serotonin_payoff_number || 88319);
   const activeRedWords = [...RED_WORDS, redKw];
-
-  // Choose background videos based on seed
-  const bgVideo1 = BG_VIDEOS[seed % BG_VIDEOS.length];
-  const bgVideo2 = BG_VIDEOS[(seed + 2) % BG_VIDEOS.length];
 
   const [,p2,p3,p4,p5] = audio_offsets;
   let phase = 1;
@@ -96,45 +67,11 @@ export const MainVideo: React.FC<{
   const isRed   = word ? activeRedWords.some(r => word.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r)) : false;
 
   const isVHS         = frame % 50 > 46;
-  const sublimFrame   = Math.round(p3 * fps) + 90;
-  const isSubliminal  = frame === sublimFrame;
   const shatterActive = phase === 4 && frame < Math.round(p4 * fps) + 12;
 
   const shakeAmt = isRed ? 14 : shatterActive ? 35 : (isVHS ? 4 : 0);
   const sx = shakeAmt > 0 ? (random(frame)     - 0.5) * shakeAmt : 0;
   const sy = shakeAmt > 0 ? (random(frame + 1) - 0.5) * shakeAmt : 0;
-
-  // ── Animated orbs — large, vivid, blended ──
-  const o1x = 50 + Math.sin(frame / 40) * 40;
-  const o1y = 30 + Math.cos(frame / 35) * 30;
-  const o2x = 50 + Math.cos(frame / 28) * 45;
-  const o2y = 70 + Math.sin(frame / 50) * 30;
-  const o3x = 50 + Math.sin(frame / 55 + 2) * 35;
-  const o3y = 50 + Math.cos(frame / 45 + 1) * 40;
-  const o4x = 30 + Math.cos(frame / 32) * 25;
-  const o4y = 80 + Math.sin(frame / 38) * 20;
-
-  const alertFlash = frame % 6 < 3;
-
-  const tension = phase < 4
-    ? interpolate(frame, [0, p4 * fps], [0, 100], { extrapolateRight: "clamp" })
-    : 100;
-
-  const panAngle = (frame / fps) * 0.2 * Math.PI * 2;
-  const panLeft  = 0.5 + 0.5 * Math.cos(panAngle);
-
-  const bobY = Math.sin(frame / 20) * 10;
-
-  const counterVal = phase === 2 ? null :
-    Math.floor(interpolate(frame, [p3 * fps, p4 * fps], [0, serotonin], {
-      extrapolateLeft: "clamp", extrapolateRight: "clamp"
-    }));
-
-  // Moving scan line position
-  const scanY = (frame * 3) % 1920;
-
-  // Glitch offset for VHS mode
-  const glitchX = isVHS ? (random(frame + 99) - 0.5) * 30 : 0;
 
   return (
     <AbsoluteFill style={{
