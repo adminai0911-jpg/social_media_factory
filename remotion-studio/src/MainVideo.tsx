@@ -165,70 +165,36 @@ export const MainVideo: React.FC<{
 
       {/* ── LAYER 0: DEEP BACKGROUND GRADIENT BASE ─────────────── */}
       <AbsoluteFill style={{ zIndex: 0 }}>
-        {/* Animated full-screen gradient background */}
+        {/* Simple, clean, dark gradient background to prevent color overlap */}
         <div style={{
           position: "absolute", inset: 0,
-          background: `
-            radial-gradient(ellipse at ${o1x}% ${o1y}%, ${pal.p}88 0%, transparent 50%),
-            radial-gradient(ellipse at ${o2x}% ${o2y}%, ${pal.a}77 0%, transparent 55%),
-            radial-gradient(ellipse at ${o3x}% ${o3y}%, ${pal.g}66 0%, transparent 48%),
-            radial-gradient(ellipse at ${o4x}% ${o4y}%, ${pal2.p}55 0%, transparent 45%),
-            radial-gradient(ellipse at 50% 50%, ${pal.bg2} 0%, ${pal.bg1} 100%)
-          `,
+          background: `linear-gradient(180deg, ${pal.bg1} 0%, ${pal.bg2} 100%)`
         }}/>
 
-        {/* Color-blend overlay for true mix-blend effect */}
+        {/* Subtle top/bottom glow matching the palette, NO muddy overlaps */}
         <div style={{
-          position: "absolute", inset: 0,
-          background: `
-            linear-gradient(135deg, ${pal.p}33 0%, transparent 40%, ${pal.a}33 100%)
-          `,
-          mixBlendMode: "screen" as any,
+          position: "absolute", left: 0, right: 0, top: 0, height: "30%",
+          background: `linear-gradient(180deg, ${pal.p}22 0%, transparent 100%)`,
+          pointerEvents: "none"
         }}/>
-
-        {/* Secondary vibrant orb overlay — screen blend */}
         <div style={{
-          position: "absolute", inset: 0,
-          background: `
-            radial-gradient(circle at ${100-o2x}% ${100-o1y}%, ${pal2.a}60 0%, transparent 50%),
-            radial-gradient(circle at ${o3x}% ${o4y}%, ${pal2.g}50 0%, transparent 45%)
-          `,
-          mixBlendMode: "screen" as any,
-          opacity: 0.85,
+          position: "absolute", left: 0, right: 0, bottom: 0, height: "30%",
+          background: `linear-gradient(0deg, ${pal.a}22 0%, transparent 100%)`,
+          pointerEvents: "none"
         }}/>
 
         {/* Animated scanlines (cinematic texture) */}
         <div style={{
           position: "absolute", inset: 0,
-          backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.025) 3px,rgba(255,255,255,0.025) 4px)",
+          backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.015) 3px,rgba(255,255,255,0.015) 4px)",
           pointerEvents: "none"
-        }}/>
-
-        {/* Moving horizontal scan beam */}
-        <div style={{
-          position: "absolute", left: 0, right: 0,
-          top: scanY, height: 2,
-          background: `linear-gradient(90deg, transparent, ${pal.p}44, ${pal.a}66, ${pal.g}44, transparent)`,
-          opacity: 0.6, pointerEvents: "none"
         }}/>
 
         {/* Vignette */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.65) 100%)",
+          background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.85) 100%)",
           pointerEvents: "none"
-        }}/>
-
-        {/* Grid lines — futuristic HUD */}
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: `
-            linear-gradient(${pal.p}08 1px, transparent 1px),
-            linear-gradient(90deg, ${pal.p}08 1px, transparent 1px)
-          `,
-          backgroundSize: "80px 80px",
-          pointerEvents: "none",
-          opacity: 0.5,
         }}/>
       </AbsoluteFill>
 

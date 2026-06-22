@@ -114,13 +114,48 @@ def post_youtube(video_path, caption):
         return False
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PLATFORM 3 — INSTAGRAM REELS
+# PUBLIC URL HELPER (CATBOX)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def post_instagram(video_path, caption):
-    """Post to Instagram Reels using the Meta Graph API."""
+def upload_to_catbox(file_path):
+    import requests
     try:
-        # We use Meta Graph API for Business/Creator accounts
+        logger.info("Uploading video to temporary public host (catbox.moe)...")
+        with open(file_path, 'rb') as f:
+            files = {'reqtype': (None, 'fileupload'), 'fileToUpload': f}
+            response = requests.post('https://catbox.moe/user/api.php', files=files, timeout=300)
+            if response.status_code == 200 and response.text.startswith("http"):
+                logger.info(f"✅ Video uploaded to public URL: {response.text}")
+                return response.text
+            else:
+                logger.error(f"Catbox upload failed: {response.status_code} {response.text}")
+                return None
+    except Exception as e:
+        logger.error(f"Failed to upload to catbox: {e}")
+        return None
+
+def wait_for_ig_media_ready(creation_id, access_token):
+    import requests
+    import time
+    url = f"https://graph.facebook.com/v19.0/{creation_id}?fields=status_code&access_token={access_token}"
+    for _ in range(12):
+        res = requests.get(url).json()
+        status = res.get("status_code", "ERROR")
+        if status == "FINISHED":
+            return True
+        elif status == "ERROR":
+            return False
+        time.sleep(10)
+    return False
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PLATFORM 3 — INSTAGRAM REELS & STORIES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def post_instagram(video_url, caption):
+    """Post to Instagram Reels using official Meta Graph API."""
+    import requests
+    try:
         access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
         ig_user_id   = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
 
@@ -128,45 +163,96 @@ def post_instagram(video_path, caption):
             logger.error("Missing Instagram Reels secrets!")
             return False
 
-        # Phase 1: Initialize container
-        # Note: Meta Graph API requires public URL for media container.
-        # Fallback to direct local posting using instagrapi since we don't have public URLs on GitHub runners
-        logger.info("Initializing direct Instagram Reels posting via instagrapi...")
-        from instagrapi import Client
-        cl = Client()
+        logger.info("Initializing official Instagram Reels posting via Graph API...")
         
-        # Safe login
-        ig_username = os.environ.get("INSTAGRAM_USERNAME", "")
-        ig_password = os.environ.get("INSTAGRAM_PASSWORD", "")
-        ig_session  = os.environ.get("INSTAGRAM_SESSION_JSON", "")
+        # Step 1: Create media container
+        url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media"
+        payload = {
+            "media_type": "REELS",
+            "video_url": video_url,
+            "caption": caption,
+            "access_token": access_token
+        }
+        res = requests.post(url, data=payload).json()
+        creation_id = res.get("id")
         
-        if not ig_username or not ig_password:
-            logger.error("Missing Instagram credentials!")
+        if not creation_id:
+            logger.error(f"❌ Failed to create IG media container: {res}")
             return False
             
-        if ig_session:
-            try:
-                cl.set_settings(json.loads(ig_session))
-                cl.login(ig_username, ig_password)
-            except Exception:
-                cl.login(ig_username, ig_password)
-        else:
-            cl.login(ig_username, ig_password)
+        logger.info(f"Container created ({creation_id}). Waiting for Meta to process video...")
+        
+        # Step 2: Wait for processing
+        if not wait_for_ig_media_ready(creation_id, access_token):
+            logger.error("❌ Instagram video processing failed or timed out.")
+            return False
             
-        cl.clip_upload(video_path, caption)
-        logger.info("✅ Instagram Reels: Video posted!")
-        return True
+        # Step 3: Publish
+        pub_url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media_publish"
+        pub_payload = {"creation_id": creation_id, "access_token": access_token}
+        pub_res = requests.post(pub_url, data=pub_payload).json()
+        
+        if "id" in pub_res:
+            logger.info(f"✅ Instagram Reels: Video posted! ID: {pub_res['id']}")
+            return True
+        else:
+            logger.error(f"❌ Failed to publish IG Reel: {pub_res}")
+            return False
 
     except Exception as e:
         logger.error(f"❌ Instagram failed: {e}")
         return False
 
+def post_instagram_story(video_url):
+    """Post to Instagram Stories using official Meta Graph API."""
+    import requests
+    try:
+        access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
+        ig_user_id   = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
+
+        if not access_token or not ig_user_id: return False
+
+        logger.info("Posting Instagram Story via Graph API...")
+        
+        url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media"
+        payload = {
+            "media_type": "STORIES",
+            "video_url": video_url,
+            "access_token": access_token
+        }
+        res = requests.post(url, data=payload).json()
+        creation_id = res.get("id")
+        
+        if not creation_id:
+            logger.error(f"❌ Failed to create IG story container: {res}")
+            return False
+            
+        if not wait_for_ig_media_ready(creation_id, access_token):
+            logger.error("❌ Instagram story processing failed or timed out.")
+            return False
+            
+        pub_url = f"https://graph.facebook.com/v19.0/{ig_user_id}/media_publish"
+        pub_payload = {"creation_id": creation_id, "access_token": access_token}
+        pub_res = requests.post(pub_url, data=pub_payload).json()
+        
+        if "id" in pub_res:
+            logger.info(f"✅ Instagram Story: Video posted! ID: {pub_res['id']}")
+            return True
+        else:
+            logger.error(f"❌ Failed to publish IG Story: {pub_res}")
+            return False
+
+    except Exception as e:
+        logger.error(f"❌ Instagram Story failed: {e}")
+        return False
+
 # ══════════════════════════════════════════════════════════════════════════════
-# PLATFORM 4 — FACEBOOK PAGE VIDEO
+# PLATFORM 4 — FACEBOOK PAGE VIDEO & STORY
 # ══════════════════════════════════════════════════════════════════════════════
 
 def post_facebook(video_path, caption):
     """Post video to Facebook Page using Facebook Graph API."""
+    import requests
     try:
         page_id      = os.environ.get("FACEBOOK_PAGE_ID", "")
         access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
@@ -200,6 +286,35 @@ def post_facebook(video_path, caption):
         logger.error(f"❌ Facebook failed: {e}")
         return False
 
+def post_facebook_story(video_url):
+    """Post to Facebook Stories using Graph API."""
+    import requests
+    try:
+        page_id      = os.environ.get("FACEBOOK_PAGE_ID", "")
+        access_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
+
+        if not page_id or not access_token: return False
+
+        url = f"https://graph.facebook.com/v19.0/{page_id}/video_stories"
+        payload = {
+            "video_url": video_url,
+            "access_token": access_token
+        }
+
+        logger.info("Posting Facebook Story...")
+        response = requests.post(url, data=payload, timeout=300)
+        result = response.json()
+
+        if "id" in result or "video_id" in result or "post_id" in result:
+            logger.info(f"✅ Facebook Story: Video posted!")
+            return True
+        else:
+            logger.error(f"❌ Facebook Story API error: {result}")
+            return False
+
+    except Exception as e:
+        logger.error(f"❌ Facebook Story failed: {e}")
+        return False
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN
@@ -244,23 +359,36 @@ def main():
         except Exception as e:
             logger.error(f"Failed to read caption from JSON: {e}")
 
+    # Generate Public URL for Meta API
+    public_video_url = upload_to_catbox(video_path)
+
     # Post to all platforms
     results = {}
-    logger.info("🐦 Posting to X/Twitter...")
-    results["Twitter"] = post_twitter(video_path, caption)
-    time.sleep(random.randint(5, 15))
-
+    
     logger.info("📺 Posting to YouTube Shorts...")
     results["YouTube"] = post_youtube(video_path, caption)
     time.sleep(random.randint(5, 15))
 
-    logger.info("📸 Posting to Instagram Reels...")
-    results["Instagram"] = post_instagram(video_path, caption)
+    logger.info("📘 Posting to Facebook Page...")
+    results["Facebook"] = post_facebook(video_path, caption)
     time.sleep(random.randint(5, 15))
 
-    logger.info("📘 Posting to Facebook Page...")
-    import requests # Ensure requests import for Facebook API
-    results["Facebook"] = post_facebook(video_path, caption)
+    if public_video_url:
+        logger.info("📸 Posting to Instagram Reels...")
+        results["Instagram"] = post_instagram(public_video_url, caption)
+        time.sleep(random.randint(5, 15))
+
+        logger.info("📸 Posting to Instagram Story...")
+        results["IG Story"] = post_instagram_story(public_video_url)
+        time.sleep(random.randint(5, 15))
+
+        logger.info("📘 Posting to Facebook Story...")
+        results["FB Story"] = post_facebook_story(public_video_url)
+    else:
+        logger.error("❌ Skipping IG/FB Story and IG Reel because Catbox upload failed.")
+        results["Instagram"] = False
+        results["IG Story"] = False
+        results["FB Story"] = False
 
     # ── Report results ────────────────────────────────────────────────────────
     success_list = [p for p, ok in results.items() if ok]
@@ -282,7 +410,6 @@ def main():
         logger.error("❌ ALL platforms failed.")
         send_telegram("❌ <b>All Platforms Failed!</b>\nVideo posting failed for all accounts.")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

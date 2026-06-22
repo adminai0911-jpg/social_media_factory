@@ -1,0 +1,68 @@
+﻿2026-06-20T07:40:48.8372685Z ##[group]Run python -m ghost.brain
+2026-06-20T07:40:48.8373349Z [36;1mpython -m ghost.brain[0m
+2026-06-20T07:40:48.8409232Z shell: /usr/bin/bash -e {0}
+2026-06-20T07:40:48.8409591Z env:
+2026-06-20T07:40:48.8409961Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-06-20T07:40:48.8410497Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+2026-06-20T07:40:48.8411009Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-06-20T07:40:48.8411474Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-06-20T07:40:48.8411942Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+2026-06-20T07:40:48.8412407Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+2026-06-20T07:40:48.8412829Z   GHOST_SESSION: midday
+2026-06-20T07:40:48.8413381Z   GEMINI_API_KEY: ***
+2026-06-20T07:40:48.8413793Z   GEMINI_API_KEY_1: 
+2026-06-20T07:40:48.8414258Z   GEMINI_API_KEY_2: 
+2026-06-20T07:40:48.8414853Z   X_AUTH_TOKEN: ***
+2026-06-20T07:40:48.8415982Z   X_CT0: ***
+2026-06-20T07:40:48.8416768Z   ELEVENLABS_API_KEY: ***
+2026-06-20T07:40:48.8417476Z   PEXELS_API_KEY: ***
+2026-06-20T07:40:48.8417995Z   PIXABAY_API_KEY: 
+2026-06-20T07:40:48.8419880Z   FACEBOOK_PAGE_ACCESS_TOKEN: ***
+2026-06-20T07:40:48.8420526Z   FACEBOOK_PAGE_ID: ***
+2026-06-20T07:40:48.8421085Z   INSTAGRAM_ACCOUNT_ID: ***
+2026-06-20T07:40:48.8421610Z   YOUTUBE_API_KEY: 
+2026-06-20T07:40:48.8436681Z   YOUTUBE_CHANNEL_ID: 
+2026-06-20T07:40:48.8437531Z   YOUTUBE_CLIENT_ID: ***
+2026-06-20T07:40:48.8438089Z   YOUTUBE_CLIENT_SECRET: ***
+2026-06-20T07:40:48.8439034Z   YOUTUBE_REFRESH_TOKEN: ***
+2026-06-20T07:40:48.8439644Z   TELEGRAM_BOT_TOKEN: ***
+2026-06-20T07:40:48.8440462Z   TELEGRAM_CHAT_ID: ***
+2026-06-20T07:40:48.8441555Z   DISCORD_WEBHOOK_URL: ***
+2026-06-20T07:40:48.8442033Z   CALLMEBOT_API_KEY: 
+2026-06-20T07:40:48.8442479Z   CALLMEBOT_PHONE: 
+2026-06-20T07:40:48.8442927Z ##[endgroup]
+2026-06-20T07:40:49.1265535Z 2026-06-20 07:40:49,126 - GHOST - INFO - 🤖 Ghost Handler Brain starting — Session: midday
+2026-06-20T07:40:49.1267198Z 2026-06-20 07:40:49,126 - GHOST - INFO - ☀️ === MIDDAY SESSION STARTING ===
+2026-06-20T07:40:49.6328652Z 2026-06-20 07:40:49,632 - GHOST - INFO - Notification sent to Telegram.
+2026-06-20T07:40:49.8790542Z 2026-06-20 07:40:49,878 - GHOST - INFO - Notification sent to Discord.
+2026-06-20T07:40:49.8791635Z 2026-06-20 07:40:49,878 - GHOST - INFO - 💬 Step 1: Replying to all comments...
+2026-06-20T07:40:49.8814916Z 2026-06-20 07:40:49,881 - GHOST - INFO - 🤖 Starting Comment Reply Bot — All Platforms
+2026-06-20T07:40:49.8816528Z 2026-06-20 07:40:49,881 - GHOST - WARNING - ⏭️ YouTube comments skipped (missing YOUTUBE_API_KEY or YOUTUBE_CHANNEL_ID)
+2026-06-20T07:40:49.8818145Z 2026-06-20 07:40:49,881 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:40:51.1474306Z 2026-06-20 07:40:51,146 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:40:51.8393826Z 2026-06-20 07:40:51,838 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:40:51.8394943Z 2026-06-20 07:40:51,839 - GHOST - INFO - ⏳ [ig_reply_think] Waiting 21.0s (human pause)...
+2026-06-20T07:41:14.0559704Z 2026-06-20 07:41:14,055 - GHOST - INFO - AFC is enabled with max remote calls: 10.
+2026-06-20T07:41:22.4549866Z 2026-06-20 07:41:22,454 - GHOST - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent "HTTP/1.1 200 OK"
+2026-06-20T07:41:25.2605583Z 2026-06-20 07:41:25,260 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:41:25.9960970Z 2026-06-20 07:41:25,995 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:41:25.9962359Z 2026-06-20 07:41:25,995 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:41:25.9963925Z 2026-06-20 07:41:25,995 - GHOST - INFO - ✅ [instagram:comment] Allowed. Used 0/10 today (10 remaining)
+2026-06-20T07:41:26.3512508Z 2026-06-20 07:41:26,350 - GHOST - INFO - ✅ Comment replies done: YT=0 IG=0 FB=0 Total=0
+2026-06-20T07:41:26.3513455Z 2026-06-20 07:41:26,351 - GHOST - INFO - ⏳ [after_comments] Waiting 196.9s (human pause)...
+2026-06-20T07:44:43.2252902Z 2026-06-20 07:44:43,224 - GHOST - INFO - 🔥 Step 2: X midday engagement...
+2026-06-20T07:44:43.2279830Z 2026-06-20 07:44:43,227 - GHOST - INFO - 🤖 Starting X Ghost Session: midday
+2026-06-20T07:44:43.2281152Z 2026-06-20 07:44:43,227 - GHOST - INFO - ✅ [x:reply] Allowed. Used 0/20 today (20 remaining)
+2026-06-20T07:44:43.5789941Z 2026-06-20 07:44:43,578 - GHOST - INFO - ✅ X client authenticated via cookies
+2026-06-20T07:44:43.8807859Z 2026-06-20 07:44:43,880 - GHOST - INFO - HTTP Request: GET https://x.com "HTTP/1.1 200 OK"
+2026-06-20T07:44:43.9460896Z 2026-06-20 07:44:43,945 - GHOST - ERROR - ❌ X reply session failed: Couldn't get KEY_BYTE indices
+2026-06-20T07:44:43.9461902Z 2026-06-20 07:44:43,945 - GHOST - INFO - ⏳ [between_x_actions] Waiting 245.0s (human pause)...
+2026-06-20T07:48:48.9777851Z 2026-06-20 07:48:48,977 - GHOST - INFO - ✅ [x:reply] Allowed. Used 0/20 today (20 remaining)
+2026-06-20T07:48:49.0098883Z 2026-06-20 07:48:49,009 - GHOST - INFO - ✅ X client authenticated via cookies
+2026-06-20T07:48:49.3200927Z 2026-06-20 07:48:49,319 - GHOST - INFO - HTTP Request: GET https://x.com "HTTP/1.1 200 OK"
+2026-06-20T07:48:49.3778995Z 2026-06-20 07:48:49,377 - GHOST - ERROR - ❌ X comment session failed: Couldn't get KEY_BYTE indices
+2026-06-20T07:48:49.3781204Z 2026-06-20 07:48:49,377 - GHOST - INFO - ✅ X Session complete: {'liked': [], 'replied': [], 'followed': [], 'commented': []}
+2026-06-20T07:48:49.3812005Z 2026-06-20 07:48:49,381 - GHOST - INFO - ⏳ [after_x_midday] Waiting 203.3s (human pause)...
+2026-06-20T07:52:13.3787077Z 2026-06-20 07:52:13,378 - GHOST - INFO - Notification sent to Telegram.
+2026-06-20T07:52:13.6014500Z 2026-06-20 07:52:13,601 - GHOST - INFO - Notification sent to Discord.
+2026-06-20T07:52:13.6016131Z 2026-06-20 07:52:13,601 - GHOST - INFO - ✅ Midday session done: {'comment_replies': {'youtube': [], 'instagram': [], 'facebook': []}, 'x_engage': {'liked': [], 'replied': [], 'followed': [], 'commented': []}}
