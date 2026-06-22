@@ -21,6 +21,10 @@ on:
   repository_dispatch:
     types: [factory-wakeup]
   workflow_dispatch:     # Manual trigger — zero jitter, instant run
+  schedule:
+    - cron: '30 13 * * *' # 7:00 PM IST
+    - cron: '30 14 * * *' # 8:00 PM IST
+    - cron: '30 15 * * *' # 9:00 PM IST
 
 jobs:
   run_autopilot:

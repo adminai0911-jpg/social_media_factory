@@ -63,31 +63,29 @@ def generate_dynamic_script():
         
     random.shuffle(valid_keys)
 
-    # ── Viral Hook & CTA rotation — never same pattern twice ─────────────────
+    # ── Viral Hook & CTA rotation — deeper psychology and wealth ─────────────────
     hooks = [
-        "यह देखने के बाद आपकी सोच बदल जाएगी...",
-        "99% लोग यह नहीं जानते — और यही उनकी सबसे बड़ी गलती है।",
-        "अगर आपने यह नहीं समझा तो पैसे कभी नहीं बनेंगे।",
-        "क्या आप भी वही गलती कर रहे हैं जो बाकी सब करते हैं?",
-        "आज मैं वो secret share करूँगा जो अमीर लोग कभी नहीं बताते।",
-        "School ने यह कभी नहीं सिखाया — पर आज जान लो।",
-        "1 minute में आपकी life की सबसे important lesson...",
-        "यह video देखकर आप खुद से पूछोगे: मैंने पहले क्यों नहीं सोचा?"
+        "आप जिंदगी भर गरीब रह जाओगे अगर आपने यह नहीं समझा...",
+        "Why you are secretly sabotaging your own success...",
+        "The silent habit keeping 90% of people broke.",
+        "अगर आप यह गलती कर रहे हैं, तो आप खुद को धोखा दे रहे हैं।",
+        "अमीर लोग यह psychology rule कभी किसी को नहीं बताते।",
+        "आपके दिमाग का यह trap आपको कभी आगे नहीं बढ़ने देगा।",
+        "यह एक कड़वा सच है जिसे आपको आज ही मानना होगा।",
+        "School ने आपको पैसे के बारे में हमेशा झूठ बोला..."
     ]
     ctas = [
-        "Comment में लिखो READY अगर तुम यह change करना चाहते हो 👇",
-        "इसे Save करो — 6 महीने बाद तुम खुद को thanks कहोगे 📌",
-        "उस दोस्त को Tag करो जिसे यह सुनना जरूरी है 🔖",
-        "Part 2 चाहिए? Comment में YES लिखो 🔥",
-        "Share करो उन लोगों के साथ जिनकी life बदलनी चाहिए 🚀",
-        "Like करो अगर यह आपके साथ भी हुआ है ❤️",
-        "Save करो + Share करो — किसी की life बदल सकती है 🙏"
+        "Save this rule before you forget! 📌",
+        "अगर आप भी बदलना चाहते हो तो READY लिखो 👇",
+        "Save and Share with someone who needs to wake up 🚀",
+        "इसे Save करो — 6 महीने बाद तुम खुद को thanks कहोगे 🔖",
+        "Like करो अगर तुम इस trap से बाहर निकलना चाहते हो ❤️"
     ]
     hook = random.choice(hooks)
     cta  = random.choice(ctas)
 
     prompt = f"""You are an elite neuro-marketing viral scriptwriter for Indian social media.
-Generate a short-form video script that triggers dopamine and adrenaline.
+Generate a short-form video script that triggers dopamine and adrenaline about Wealth Psychology and Mindset.
 Script MUST be in Hindi (Devanagari or Hinglish mix).
 Return ONLY raw JSON — no markdown, no backticks.
 
@@ -96,21 +94,21 @@ Mandatory: phase_5 MUST use this CTA exactly: {cta}
 
 JSON:
 {{
-  "micro_niche": "Highly specific unique niche topic",
+  "micro_niche": "Psychology of Wealth & Success",
   "style_seed": 42,
-  "emojis": ["🧠", "🔥", "💡"],
+  "emojis": ["🧠", "💼", "📈"],
   "red_box_keyword": "TRAP",
   "subliminal_flash_word": "WAKE UP",
   "serotonin_payoff_number": 847293,
   "phase_1": "{hook}",
   "phase_2": "Build-up. 1 sentence Hindi. Personal relatable emotional stakes.",
   "phase_3": "Pattern Interrupt. 2-3 sentences. Shocking counter-intuitive truth.",
-  "phase_4": "Payoff. 1-2 sentences. Actionable insight that feels like revelation.",
+  "phase_4": "Payoff. 1-2 actionable numbered rules (e.g. Rule 1: ... Rule 2: ...).",
   "phase_5": "{cta}",
-  "caption_instagram": "Emotional Hindi caption. 1-2 sentences + EXACTLY 5 hashtags.",
-  "caption_x": "Punchy Hinglish. Max 250 chars. No hashtags. End with question.",
+  "caption_instagram": "Deep psychological caption. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules",
+  "caption_x": "Punchy Hinglish about wealth psychology. Max 250 chars. No hashtags.",
   "caption_youtube": "SEO title. Numbers + emotion + benefit. Max 70 chars.",
-  "caption_facebook": "Conversational Hindi. 2-3 sentences. End with question.",
+  "caption_facebook": "Conversational Hindi about success rules. 2-3 sentences. End with question.",
   "caption": "Same as caption_instagram."
 }}"""
     
