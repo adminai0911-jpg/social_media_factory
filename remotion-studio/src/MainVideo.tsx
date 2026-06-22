@@ -6,6 +6,7 @@ import {
   useVideoConfig,
   staticFile,
   OffthreadVideo,
+  Img,
   random,
   spring,
   Sequence
@@ -203,17 +204,24 @@ export const MainVideo: React.FC<{
 
       {/* ── PHASE 3: AUTHORITY CLAIM (p3 - p4) ──────────────────── */}
       <Sequence from={Math.round(p3*fps)} durationInFrames={Math.round((p4-p3)*fps)}>
-        <AbsoluteFill style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 60 }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60 }}>
+          {/* Premium circular photo frame */}
           <div style={{
-            width: 300, height: 300, borderRadius: "50%",
-            border: `6px solid ${pal.p}`, display: "flex", justifyContent: "center", alignItems: "center",
-            marginBottom: 80, boxShadow: `0 0 60px ${pal.p}44`
+            width: 420, height: 420, borderRadius: "50%",
+            overflow: "hidden",
+            border: `6px solid ${pal.p}`,
+            boxShadow: `0 0 0 3px ${pal.bg1}, 0 0 0 9px ${pal.p}55, 0 0 80px ${pal.p}44`,
+            flexShrink: 0
           }}>
-            <div style={{ fontSize: 150, color: pal.p }}>👤</div>
+            <Img
+              src={staticFile("host_photo.png")}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+            />
           </div>
+          {/* Authority statement */}
           <div style={{
-            fontFamily: HINDI_FONT, fontSize: 80, fontWeight: 700, color: "#FFFFFF",
-            textAlign: "center", lineHeight: 1.3
+            fontFamily: HINDI_FONT, fontSize: 75, fontWeight: 700, color: "#FFFFFF",
+            textAlign: "center", lineHeight: 1.3, maxWidth: "90%"
           }}>
             {script.authority_claim}
           </div>
