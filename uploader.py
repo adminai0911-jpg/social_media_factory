@@ -20,10 +20,6 @@ YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID", "")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET", "")
 YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
 
-# Twitter/X credentials (cookie-based — no API key needed)
-X_AUTH_TOKEN = os.environ.get("X_AUTH_TOKEN", "")
-X_CT0        = os.environ.get("X_CT0", "")
-
 # Telegram credentials
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -41,7 +37,6 @@ def send_telegram_alert(message):
 def get_facebook_page_token(user_token, page_id):
     if not user_token or not page_id:
         return user_token
-    # Try to exchange User Access Token for Page Access Token dynamically
     url = f"https://graph.facebook.com/v19.0/{page_id}"
     params = {"fields": "access_token", "access_token": user_token}
     try:
@@ -55,25 +50,34 @@ def get_facebook_page_token(user_token, page_id):
         logger.error(f"Error exchanging token: {e}. Using original token.")
     return user_token
 
-def upload_to_tmpfiles(file_path):
-    logger.info("Uploading video to tmpfiles.org to get a public URL for Instagram...")
+def upload_to_catbox(file_path):
+    logger.info("Uploading video to temporary public host (catbox.moe)...")
     try:
-        url = "https://tmpfiles.org/api/v1/upload"
-        with open(file_path, "rb") as f:
-            files = {"file": f}
-            res = requests.post(url, files=files, timeout=60)
-            if res.status_code == 200:
-                data = res.json()
-                file_url = data["data"]["url"]
-                # Convert the view URL to direct download URL
-                direct_url = file_url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
-                logger.info(f"Public URL generated for Instagram: {direct_url}")
-                return direct_url
+        with open(file_path, 'rb') as f:
+            files = {'reqtype': (None, 'fileupload'), 'fileToUpload': f}
+            response = requests.post('https://catbox.moe/user/api.php', files=files, timeout=300)
+            if response.status_code == 200 and response.text.startswith("http"):
+                logger.info(f"✅ Video uploaded to public URL: {response.text}")
+                return response.text
             else:
-                logger.error(f"Failed to upload to tmpfiles.org: {res.status_code} - {res.text}")
+                logger.error(f"Catbox upload failed: {response.status_code} {response.text}")
+                return None
     except Exception as e:
-        logger.error(f"Error uploading to tmpfiles.org: {e}")
-    return None
+        logger.error(f"Failed to upload to catbox: {e}")
+        return None
+
+def wait_for_ig_media_ready(creation_id, access_token):
+    url = f"https://graph.facebook.com/v19.0/{creation_id}?fields=status_code&access_token={access_token}"
+    for _ in range(12):
+        res = requests.get(url).json()
+        status = res.get("status_code", "ERROR")
+        if status == "FINISHED":
+            return True
+        elif status == "ERROR" or status == "EXPIRED":
+            logger.error(f"IG container failed: {status}")
+            return False
+        time.sleep(10)
+    return False
 
 def upload_to_facebook_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID:
@@ -97,7 +101,7 @@ def upload_to_facebook_reels(video_path, description):
         
         headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
         with open(video_path, "rb") as f:
-            upload_res = requests.post(upload_url, headers=headers, data=f, timeout=60).json()
+            requests.post(upload_url, headers=headers, data=f, timeout=60).json()
             
         publish_payload = {
             "upload_phase": "finish", "access_token": page_token,
@@ -113,28 +117,31 @@ def upload_to_facebook_reels(video_path, description):
         logger.error(f"FB Upload Exception: {e}")
     return False
 
-def upload_to_instagram_reels(video_path, description):
-    # ✅ FIX: Check for required credentials FIRST
-    if not PAGE_ACCESS_TOKEN:
-        logger.warning("⏭️ Skipping Instagram Reels (Missing: FACEBOOK_PAGE_ACCESS_TOKEN)")
-        return False
-    if not INSTAGRAM_ACCOUNT_ID:
-        logger.warning("⏭️ Skipping Instagram Reels (Missing: INSTAGRAM_ACCOUNT_ID)")
-        return False
-    if not PAGE_ID:
-        logger.warning("⏭️ Skipping Instagram Reels (Missing: FACEBOOK_PAGE_ID)")
-        return False
-    
-    # ✅ FIX: Use correct PAGE_ID for token exchange (Instagram uses Business Account ID)
+def upload_to_facebook_story(video_url):
+    if not PAGE_ACCESS_TOKEN or not PAGE_ID: return False
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
-    
-    # Upload video to tmpfiles.org to get a direct public URL
-    video_url = upload_to_tmpfiles(video_path)
-    if not video_url:
-        logger.error("❌ Failed to get a public URL for Instagram Reel. Skipping IG upload.")
-        return False
+    url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_stories"
+    payload = {"video_url": video_url, "access_token": page_token}
+    try:
+        logger.info("Posting Facebook Story...")
+        result = requests.post(url, data=payload, timeout=300).json()
+        if "id" in result or "video_id" in result or "post_id" in result:
+            logger.info(f"✅ Facebook Story posted!")
+            return True
+        else:
+            logger.error(f"❌ Facebook Story API error: {result}")
+    except Exception as e:
+        logger.error(f"❌ Facebook Story failed: {e}")
+    return False
 
-    logger.info(f"📤 Starting Instagram Reel upload with URL: {video_url}")
+def upload_to_instagram_reels(video_url, description):
+    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID:
+        logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
+        return False
+    
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    logger.info(f"📤 Starting Instagram Reel upload with URL")
+    
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
     container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
     
@@ -142,41 +149,12 @@ def upload_to_instagram_reels(video_path, description):
         container_res = requests.post(container_url, data=container_payload, timeout=30).json()
         if "id" not in container_res:
             logger.error(f"Failed to create IG Media Container: {container_res}")
-            send_telegram_alert(f"❌ Instagram upload failed: {container_res}")
             return False
             
         creation_id = container_res["id"]
         logger.info(f"✅ Created IG container: {creation_id}")
         
-        # Poll container status until it is FINISHED or fails
-        status_url = f"https://graph.facebook.com/v19.0/{creation_id}"
-        status_params = {"fields": "status_code,status", "access_token": page_token}
-        
-        max_attempts = 20  # ✅ REDUCED: Was 30 (300 sec), now 20 (200 sec) to save time
-        seconds_between_attempts = 10
-        is_ready = False
-        
-        logger.info("Waiting for Instagram to process the video...")
-        for attempt in range(max_attempts):
-            time.sleep(seconds_between_attempts)
-            try:
-                status_res = requests.get(status_url, params=status_params, timeout=30).json()
-                status_code = status_res.get("status_code", "")
-                logger.info(f"Instagram container status (attempt {attempt+1}/{max_attempts}): {status_code}")
-                if status_code == "FINISHED":
-                    is_ready = True
-                    logger.info("✅ Video processing complete!")
-                    break
-                elif status_code in ["ERROR", "EXPIRED"]:
-                    logger.error(f"Instagram video processing failed: {status_res}")
-                    send_telegram_alert(f"❌ Instagram processing error: {status_code}")
-                    break
-            except Exception as e:
-                logger.error(f"Error checking Instagram container status: {e}")
-                
-        if not is_ready:
-            logger.error("Instagram Reels container did not become ready in time. Publishing skipped.")
-            send_telegram_alert(f"❌ Instagram timeout: Container not ready after {max_attempts * seconds_between_attempts}s")
+        if not wait_for_ig_media_ready(creation_id, page_token):
             return False
             
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
@@ -185,14 +163,36 @@ def upload_to_instagram_reels(video_path, description):
         
         if "id" in publish_res:
             logger.info("✅ Successfully published to Instagram Reels!")
-            send_telegram_alert(f"✅ Instagram upload successful!")
             return True
         else:
             logger.error(f"Failed to publish IG Reel: {publish_res}")
-            send_telegram_alert(f"❌ Instagram publish failed: {publish_res}")
     except Exception as e:
         logger.error(f"IG Upload Exception: {e}")
-        send_telegram_alert(f"❌ Instagram upload exception: {str(e)}")
+    return False
+
+def upload_to_instagram_story(video_url):
+    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID: return False
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    logger.info("Posting Instagram Story...")
+    url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
+    payload = {"media_type": "STORIES", "video_url": video_url, "access_token": page_token}
+    try:
+        res = requests.post(url, data=payload).json()
+        creation_id = res.get("id")
+        if not creation_id:
+            logger.error(f"❌ Failed to create IG story container: {res}")
+            return False
+        if not wait_for_ig_media_ready(creation_id, page_token):
+            return False
+        pub_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
+        pub_res = requests.post(pub_url, data={"creation_id": creation_id, "access_token": page_token}).json()
+        if "id" in pub_res:
+            logger.info("✅ Instagram Story posted!")
+            return True
+        else:
+            logger.error(f"❌ Failed to publish IG Story: {pub_res}")
+    except Exception as e:
+        logger.error(f"❌ Instagram Story failed: {e}")
     return False
 
 def upload_to_youtube_shorts(video_path, description):
@@ -273,24 +273,30 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x_via_playwright(video_path, description):
-    """Post to X/Twitter (Permanently Disabled by User Request)"""
-    logger.info("⏭️ Skipping X/Twitter Reels/Videos (Permanently Disabled)")
-    return False
-
-
 def distribute_to_all_platforms(video_path, description):
-    logger.info("🌐 Initiating 4-Platform Distribution Pipeline...")
+    logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
     logger.info(f"📝 Final Caption: {description}")
     
     send_telegram_alert("🚀 <b>V32 Factory Wakeup</b>\nStarting generation and distribution process...")
     
     # Run the uploads
-    fb = upload_to_facebook_reels(video_path, description)
-    ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x_via_playwright(video_path, description)
+    time.sleep(5)
+    fb = upload_to_facebook_reels(video_path, description)
+    time.sleep(5)
     
+    video_url = upload_to_catbox(video_path)
+    ig, ig_story, fb_story = False, False, False
+    
+    if video_url:
+        ig = upload_to_instagram_reels(video_url, description)
+        time.sleep(5)
+        ig_story = upload_to_instagram_story(video_url)
+        time.sleep(5)
+        fb_story = upload_to_facebook_story(video_url)
+    else:
+        logger.error("❌ Skipping Instagram Reels/Stories because public video URL generation failed.")
+        
     logger.info("🚀 Distribution Complete!")
     
     status_msg = f"""
@@ -298,10 +304,11 @@ def distribute_to_all_platforms(video_path, description):
 <i>Successfully distributed payload.</i>
 
 <b>Platforms:</b>
-🟦 Facebook: {'✅' if fb else '❌'}
-🟪 Instagram: {'✅' if ig else '❌'}
-🟥 YouTube: {'✅' if yt else '❌'}
-⬛ X/Twitter: {'✅' if x else '❌'}
+🟥 YouTube Shorts: {'✅' if yt else '❌'}
+🟦 Facebook Reels: {'✅' if fb else '❌'}
+🟪 Instagram Reels: {'✅' if ig else '❌'}
+📘 Facebook Story: {'✅' if fb_story else '❌'}
+📸 Instagram Story: {'✅' if ig_story else '❌'}
 
 <b>Caption Used:</b>
 {description}
@@ -312,7 +319,8 @@ def distribute_to_all_platforms(video_path, description):
         "facebook": fb,
         "instagram": ig,
         "youtube": yt,
-        "x": x
+        "fb_story": fb_story,
+        "ig_story": ig_story
     }
 
 if __name__ == "__main__":
@@ -321,7 +329,6 @@ if __name__ == "__main__":
     
     if not os.path.exists(video_path):
         logger.error(f"Rendered video not found at {video_path}")
-        # Stop execution so we don't upload a dummy file that breaks IG/X and silently fails on FB/YT
         raise FileNotFoundError(f"Video file missing: {video_path}")
         
     caption = "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
