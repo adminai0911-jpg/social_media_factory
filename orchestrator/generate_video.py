@@ -528,12 +528,7 @@ def build_v32_payload():
     ensure_sfx(studio_dir)
         
     logger.info("ðŸŽ¬ Triggering V35 1080p Remotion Render (JPEG, CRF=18, Concurrency=4)...")
-    timestamp_id = int(time.time())
-    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", f"video_{timestamp_id}.mp4"))
-    txt_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", f"video_{timestamp_id}.txt"))
-    
-    with open(txt_file, "w", encoding="utf-8") as f:
-        f.write(script_data.get('caption', 'Daily motivation #shorts'))
+    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "FINAL_V35_HD.mp4"))
 
     # â”€â”€ V35 Render Flags â€” HD Quality + Maximum Speed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # --scale=1              â†’ Native resolution (1080x1920 vertical HD)
@@ -558,21 +553,6 @@ def build_v32_payload():
     ]
     subprocess.run(cmd, cwd=studio_dir, check=True)
     logger.info(f"âœ… V34 4K render complete: {out_file}")
-
-    logger.info("ðŸš€ Uploading to GitHub Release Buffer Queue...")
-    # Ensure the release exists
-    subprocess.run(["gh", "release", "create", "buffer_queue", "-t", "Video Buffer Queue", "-n", "Holds generated videos"], check=False)
-    
-    # Upload assets
-    upload_cmd = ["gh", "release", "upload", "buffer_queue", out_file, txt_file, "--clobber"]
-    subprocess.run(upload_cmd, check=True)
-    logger.info("âœ… Uploaded successfully to buffer_queue.")
-
-    # Clean up local files after upload to save space
-    if os.path.exists(out_file):
-        os.remove(out_file)
-    if os.path.exists(txt_file):
-        os.remove(txt_file)
 
     logger.info("Video rendering complete. Script execution finished.")
 
