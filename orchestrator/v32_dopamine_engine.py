@@ -52,32 +52,64 @@ def generate_dynamic_script():
         
     random.shuffle(valid_keys)
 
-    # ── Viral Hook & CTA rotation — deeper psychology and wealth ─────────────────
+    # ── MAXIMUM POWER: Viral Hook & CTA rotation — Psychological Weapon Grade ───
     hooks = [
-        "99% of people will stay broke this year because they ignore this one brutal truth...",
-        "Your dopamine addiction is secretly keeping you poor. Here is the proof.",
-        "The 'Work Hard' lie is designed to keep you in the middle class. Do this instead.",
-        "गरीब रहना एक बीमारी है, और 90% लोग इसके शिकार हैं।",
-        "The 1% know this psychological trick, and they hope you never find out.",
-        "Stop scrolling. This one uncomfortable truth will change your financial life.",
-        "अगर आप 9 to 5 में फंसे हैं, तो यह वीडियो आपकी आंखें खोल देगा।",
-        "School never taught you this dark psychology rule of wealth."
+        # CURIOSITY GAP — brain cannot stop itself from finishing the thought
+        "मैंने 5 साल बर्बाद किए यह गलती करके। आप मत करना।",
+        "The one word that separates the rich from the poor. Most people never learn it.",
+        "जो आपको school ने नहीं सिखाया, वो आज मैं बता रहा हूँ। ध्यान से सुनो।",
+        "I studied 100 billionaires. They all did THIS one thing differently.",
+        # FEAR OF LOSS — triggers survival instinct
+        "हर रोज़ आप 500 रुपये खो रहे हो। और आपको पता भी नहीं।",
+        "If you are still doing this in 2025, you are guaranteed to stay poor.",
+        "आपकी एक आदत आपकी पूरी ज़िंदगी बर्बाद कर रही है। अभी रोको।",
+        "The silent tax stealing your wealth every single day. No one talks about this.",
+        # IDENTITY THREAT — makes viewer feel personally called out
+        "अगर आपने यह वीडियो बीच में छोड़ा, तो आप इसी mentality में फंसे रहोगे।",
+        "People with THIS mindset never become rich. Check if you have it.",
+        "तुम्हारे parents ने तुम्हें पैसे के बारे में झूठ सिखाया। यह सच है।",
+        "Rich people HATE this video. Share it before it gets removed.",
+        # SOCIAL PROOF + DOPAMINE LOOP — creates FOMO and binge-watching
+        "मेरे 1 लाख followers ने यह rule follow किया। 6 महीने में results देखो।",
+        "This psychological trick made 1,000 people financially free. Here it is.",
+        "Save this. Watch it again. Your future self will thank you.",
+        "Part 1 of 3: The dark psychology of money that schools NEVER teach."
     ]
     ctas = [
-        "Save this rule before you forget! 📌",
-        "अगर आप भी बदलना चाहते हो तो READY लिखो 👇",
-        "Save and Share with someone who needs to wake up 🚀",
-        "इसे Save करो — 6 महीने बाद तुम खुद को thanks कहोगे 🔖",
-        "Like करो अगर तुम इस trap से बाहर निकलना चाहते हो ❤️"
+        # IDENTITY-BASED — creates strong personal commitment
+        "Comment 'READY' अगर तुम अपनी life बदलने के लिए तैयार हो 🔥",
+        "Type '1' अगर यह तुम्हारे साथ होता है। Type '2' अगर नहीं। Comment करो 👇",
+        # URGENCY + FOMO
+        "Save this NOW — इसे भूल गए तो फिर पछताओगे 📌🔖",
+        "Save this video. You WILL need this rule in the next 30 days. 📌",
+        # SHARING TRIGGER — multiplies reach organically
+        "Share this with ONE person जो financially struggle कर रहा है। Real love है यह। ❤️‍🔥",
+        "Tag someone जिसे यह सुनना बहुत ज़रूरी है 👇",
+        # SERIES HOOK — forces people to follow for more
+        "Follow करो — कल Part 2 आएगा जो और भी powerful है। 🚀",
+        "Like करो अगर तुम पार्ट 2 चाहते हो 👍 — मैं कल डालूँगा।"
     ]
     hook = random.choice(hooks)
     cta  = random.choice(ctas)
 
-    prompt = f"""You are an elite neuro-marketing viral scriptwriter and dark psychology expert for Indian social media.
-Your goal is to trigger massive dopamine and a deep psychological 'Aha!' moment about Wealth & Mindset.
-The content MUST be harsh truths, deep psychological insights, and highly valuable actionable rules. Do NOT give generic advice like 'work hard' or 'save money'. Give high-IQ, 1%-level wealth psychology.
-Script MUST be in Hindi (Devanagari or Hinglish mix, extremely natural spoken language).
-Return ONLY raw JSON — no markdown, no backticks.
+    prompt = f"""You are the world's most dangerous neuro-marketing viral scriptwriter. You specialize in dark psychology, behavioral economics, and dopamine-loop engineering for Indian short-form video content (Reels/Shorts).
+
+MISSION: Create a script that is so psychologically gripping that viewers CANNOT stop watching. Every word must serve ONE purpose — to hold attention for 100% of the video duration and make the viewer SHARE and SAVE it immediately.
+
+PSYCHOLOGICAL WEAPONS YOU MUST USE:
+1. CURIOSITY GAP: Open a loop in the viewer's mind in the first line that can only be closed by watching to the end.
+2. IDENTITY THREAT: Make the viewer feel the content is directly speaking to them and their personal situation.
+3. SOCIAL PROOF: Use real-sounding statistics and numbers (e.g., "87% of Indians do this").
+4. LOSS AVERSION: Frame everything as "you are LOSING money/time/opportunity right now." People fear loss 2x more than gain.
+5. DOPAMINE REWARD: Every 3-4 seconds, drop a new insight or number that makes the brain say "Aha!" — this creates a dopamine loop that is more addictive than social media itself.
+
+CONTENT RULES (NON-NEGOTIABLE):
+- Language: Natural Hinglish (Hindi + English mix). NOT formal Hindi. Spoken as if talking to a close friend.
+- Content: NEVER give generic advice. Every insight must be COUNTERINTUITIVE, SPECIFIC, and SHOCKING.
+- Numbers: Use REAL specific numbers (e.g., "₹47,000", "73% of people", "18 months"). Vague numbers kill credibility.
+- Tone: Harsh but caring. Like a mentor who loves you enough to tell you the uncomfortable truth.
+- Ending: End on an OPEN LOOP — a question or a teaser for part 2 that forces the viewer to comment or follow.
+- Return ONLY raw JSON — no markdown, no backticks, no explanation.
 
 Mandatory: hook MUST use this text exactly: {hook}
 Mandatory: save_cta MUST use this text exactly: {cta}
@@ -86,18 +118,18 @@ JSON Schema:
 {{
   "hook": "{hook}",
   "split_screen": {{
-    "left": "Poor Mindset - [harsh truth behavior, max 5 words]",
-    "right": "Rich Mindset - [high-IQ behavior, max 5 words]"
+    "left": "BROKE mindset: [1 specific SHOCKING behavior that keeps people poor, max 5 words]",
+    "right": "RICH mindset: [1 counterintuitive behavior of the top 1%, max 5 words]"
   }},
-  "authority_claim": "A punchy, dark, harsh truth pattern interrupt. (e.g., 'गरीब रहना एक बीमारी है, और इलाज तुम्हारे पास है。')",
+  "authority_claim": "A single BRUTAL, SPECIFIC truth bomb. Must contain a real number or statistic. (e.g., '₹43,000 — यही है average Indian की monthly savings जो वो कभी invest नहीं करता।') MAX 15 words.",
   "numbered_list": [
-    "High-value insight 1 (max 6-7 words)",
-    "High-value insight 2 (max 6-7 words)",
-    "[MUST BE A COUNTERINTUITIVE SPECIFIC STAT OR REAL RUPEE FIGURE, e.g. 99% people lose 5 lakh rupees doing this.] (max 8-10 words)"
+    "COUNTERINTUITIVE insight with a specific number or name (max 8 words)",
+    "A dark psychological truth about money most people are too scared to accept (max 8 words)",
+    "A SHOCKING statistic with a real Rupee figure that makes the jaw drop (max 10 words)"
   ],
-  "proof_demo": "Here is the proof: [insert 1 concrete real-life example or stat proving the above points. Max 10 words.]",
-  "save_cta": "{cta} Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
-  "caption": "Deep psychological caption triggering FOMO. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
+  "proof_demo": "ONE real-world proof point: Name a real company, person, or study. (e.g., 'Warren Buffett earns ₹1.2 crore per minute while sleeping.') MAX 12 words.",
+  "save_cta": "{cta}",
+  "caption": "An irresistible 2-sentence caption. Sentence 1: A controversial or shocking statement that stops thumbs mid-scroll. Sentence 2: A question that DEMANDS an answer in the comments. End with EXACTLY these hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
 }}"""
     
     for key in valid_keys:
