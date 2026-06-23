@@ -9,6 +9,7 @@ import time
 import wave
 import math
 import struct
+from datetime import datetime
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -16,6 +17,72 @@ from mutagen.mp3 import MP3
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - V32_ENGINE - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔥 DYNAMIC HASHTAG ROTATION ENGINE — 40+ hashtags, fresh mix every run
+# ══════════════════════════════════════════════════════════════════════════════
+HASHTAG_POOL = {
+    # MEGA tags (100M+ posts) — maximum reach
+    "mega": [
+        "#motivation", "#success", "#mindset", "#money", "#rich",
+        "#financialfreedom", "#investment", "#wealth", "#entrepreneur", "#lifestyle"
+    ],
+    # NICHE wealth/psychology (1M–10M posts) — highly targeted audience
+    "niche_wealth": [
+        "#WealthMindset", "#MoneyMindset", "#RichMindset", "#FinancialLiteracy",
+        "#PassiveIncome", "#InvestSmart", "#WealthBuilding", "#MoneyTips",
+        "#FinancialFreedom", "#MoneyManagement"
+    ],
+    # HINDI / INDIA-SPECIFIC (high relevance for your niche audience)
+    "hindi": [
+        "#HindiMotivation", "#SuccessRules", "#PsychologyFacts", "#MotivationHindi",
+        "#IndianEntrepreneur", "#SelfMadeIndia", "#DesiMillionaire", "#IndiaGrowth",
+        "#HindiShorts", "#IndianYouth"
+    ],
+    # PSYCHOLOGY / DARK PSYCHOLOGY (trending micro-niche)
+    "psychology": [
+        "#DarkPsychology", "#BrainHack", "#MindHacks", "#PsychologyOfMoney",
+        "#BehavioralEconomics", "#CognitiveBias", "#MindsetShift", "#GrowthMindset",
+        "#PsychologyTips", "#HumanBehavior"
+    ],
+    # REELS/SHORTS ALGO TAGS (boost distribution on platform)
+    "platform": [
+        "#Reels", "#Shorts", "#ViralReels", "#TrendingShorts", "#ExploreReels",
+        "#ReelItFeelIt", "#InstagramReels", "#YoutubeShorts", "#ViralVideo", "#ForYou"
+    ]
+}
+
+def get_dynamic_hashtags():
+    """Pick a fresh, optimized hashtag combo every run — never the same set twice."""
+    selected = []
+    selected += random.sample(HASHTAG_POOL["mega"], 2)          # 2 mega tags
+    selected += random.sample(HASHTAG_POOL["niche_wealth"], 3)  # 3 niche wealth
+    selected += random.sample(HASHTAG_POOL["hindi"], 3)         # 3 Hindi/India
+    selected += random.sample(HASHTAG_POOL["psychology"], 2)    # 2 psychology
+    selected += random.sample(HASHTAG_POOL["platform"], 2)      # 2 platform algo
+    random.shuffle(selected)
+    return " ".join(selected)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📅 SERIES PART TRACKER — Ensures Part 1 → 2 → 3 hooks are always accurate
+# ══════════════════════════════════════════════════════════════════════════════
+SERIES_TRACKER_FILE = os.path.join(os.path.dirname(__file__), "series_tracker.json")
+
+def get_series_part():
+    """Returns the current series part (1, 2, or 3) and advances the counter."""
+    try:
+        if os.path.exists(SERIES_TRACKER_FILE):
+            with open(SERIES_TRACKER_FILE, "r") as f:
+                data = json.load(f)
+            part = data.get("current_part", 1)
+        else:
+            part = 1
+        next_part = (part % 3) + 1  # cycles 1 → 2 → 3 → 1 → ...
+        with open(SERIES_TRACKER_FILE, "w") as f:
+            json.dump({"current_part": next_part, "last_run": datetime.now().isoformat()}, f)
+        return part
+    except Exception:
+        return random.randint(1, 3)
 
 load_dotenv()
 
@@ -115,6 +182,11 @@ def generate_dynamic_script():
     hook = random.choice(hooks)
     cta  = random.choice(ctas)
 
+    hashtags = get_dynamic_hashtags()
+    series_part = get_series_part()
+    logger.info(f"📅 Series Part: {series_part}/3")
+    logger.info(f"#️⃣  Hashtags this run: {hashtags}")
+
     prompt = f"""You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
 
 ═══════════════════════════════════════════════
@@ -143,6 +215,7 @@ CONTENT QUALITY RULES (NON-NEGOTIABLE):
 - Every insight MUST be counterintuitive — something that surprises even a financially aware person.
 - The numbered list must teach a COMPLETE, ACTIONABLE mini-framework — not just disconnected tips.
 - proof_demo MUST name a real person (Indian preferred: Ambani, Premji, Bajaj, Rakesh Jhunjhunwala) or a credible study.
+- This is Part {series_part} of 3 in a series. If hook mentions a series part number, use {series_part}.
 - End with an OPEN LOOP: tease something even bigger in the next video to force follows.
 - Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
@@ -164,7 +237,7 @@ JSON Schema:
   ],
   "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ने ₹5,000 से शुरू किया था — ₹40,000 crore बनाए। यही rule use किया।' MAX 15 words.",
   "save_cta": "{cta}",
-  "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India that makes someone stop mid-scroll and think 'wait, is this about ME?' Sentence 2 (THE COMMENT MAGNET): A direct, personal question that the viewer MUST answer — something that makes them reflect on their own life right now. End with EXACTLY: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
+  "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India. Sentence 2 (THE COMMENT MAGNET): A direct, personal question the viewer MUST answer right now. End with EXACTLY these hashtags on a new line: {hashtags}"
 }}"""
     
     for key in valid_keys:

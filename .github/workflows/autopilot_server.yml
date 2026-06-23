@@ -22,9 +22,9 @@ on:
     types: [factory-wakeup]
   workflow_dispatch:     # Manual trigger — zero jitter, instant run
   schedule:
-    - cron: '30 13 * * *' # 7:00 PM IST
-    - cron: '30 14 * * *' # 8:00 PM IST
-    - cron: '30 15 * * *' # 9:00 PM IST
+    - cron: '30 2 * * *'  # 8:00 AM IST  — Morning commute peak
+    - cron: '30 7 * * *'  # 1:00 PM IST  — Lunch break peak
+    - cron: '0  16 * * *' # 9:30 PM IST  — Prime night scroll peak
 
 jobs:
   run_autopilot:
