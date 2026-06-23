@@ -50,20 +50,21 @@ def get_facebook_page_token(user_token, page_id):
         logger.error(f"Error exchanging token: {e}. Using original token.")
     return user_token
 
-def upload_to_catbox(file_path):
-    logger.info("Uploading video to temporary public host (catbox.moe)...")
+def upload_to_temp_host(file_path):
+    logger.info("Uploading video to temporary public host (0x0.st)...")
     try:
         with open(file_path, 'rb') as f:
-            files = {'reqtype': (None, 'fileupload'), 'fileToUpload': f}
-            response = requests.post('https://catbox.moe/user/api.php', files=files, timeout=300)
+            files = {'file': f}
+            response = requests.post('https://0x0.st', files=files, timeout=300)
             if response.status_code == 200 and response.text.startswith("http"):
-                logger.info(f"✅ Video uploaded to public URL: {response.text}")
-                return response.text
+                url = response.text.strip()
+                logger.info(f"✅ Video uploaded to public URL: {url}")
+                return url
             else:
-                logger.error(f"Catbox upload failed: {response.status_code} {response.text}")
+                logger.error(f"0x0.st upload failed: {response.status_code} {response.text}")
                 return None
     except Exception as e:
-        logger.error(f"Failed to upload to catbox: {e}")
+        logger.error(f"Failed to upload to temp host: {e}")
         return None
 
 def wait_for_ig_media_ready(creation_id, access_token):
@@ -285,7 +286,7 @@ def distribute_to_all_platforms(video_path, description):
     fb = upload_to_facebook_reels(video_path, description)
     time.sleep(5)
     
-    video_url = upload_to_catbox(video_path)
+    video_url = upload_to_temp_host(video_path)
     ig, ig_story, fb_story = False, False, False
     
     if video_url:
