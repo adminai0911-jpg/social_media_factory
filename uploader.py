@@ -287,20 +287,41 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
+def trigger_make_webhook(video_url, caption):
+    webhook_url = os.environ.get("MAKE_WEBHOOK_URL")
+    if not webhook_url:
+        logger.warning("MAKE_WEBHOOK_URL not found in .env. Skipping Buffer Bridge distribution (X/Pinterest/LinkedIn).")
+        return False
+        
+    logger.info("🌐 Triggering Make.com Webhook for Buffer Bridge (X, Pinterest, LinkedIn)...")
+    try:
+        payload = {
+            "video_url": video_url,
+            "caption": caption
+        }
+        res = requests.post(webhook_url, json=payload, timeout=60)
+        if res.status_code in [200, 201, 202]:
+            logger.info("✅ Successfully triggered Make.com Webhook!")
+            return True
+        else:
+            logger.error(f"❌ Make.com Webhook failed with status {res.status_code}: {res.text}")
+            return False
+    except Exception as e:
+        logger.error(f"❌ Make.com Webhook exception: {e}")
+        return False
+
 def distribute_to_all_platforms(video_path, description):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
     logger.info(f"📝 Final Caption: {description}")
     
-    send_telegram_alert("🚀 <b>V32 Factory Wakeup</b>\nStarting generation and distribution process...")
-    
-    # Run the uploads
     yt = upload_to_youtube_shorts(video_path, description)
     time.sleep(5)
+    
     fb = upload_to_facebook_reels(video_path, description)
     time.sleep(5)
     
     video_url = upload_to_temp_host(video_path)
-    ig, ig_story, fb_story = False, False, False
+    ig, ig_story, fb_story, buffer_bridge = False, False, False, False
     
     if video_url:
         ig = upload_to_instagram_reels(video_url, description)
@@ -308,21 +329,28 @@ def distribute_to_all_platforms(video_path, description):
         ig_story = upload_to_instagram_story(video_url)
         time.sleep(5)
         fb_story = upload_to_facebook_story(video_url)
+        time.sleep(5)
+        buffer_bridge = trigger_make_webhook(video_url, description)
     else:
-        logger.error("❌ Skipping Instagram Reels/Stories because public video URL generation failed.")
+        logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
         
     logger.info("🚀 Distribution Complete!")
     
     status_msg = f"""
-✅ <b>V32 Factory Complete</b>
+✅ <b>V35 Factory Complete</b>
 <i>Successfully distributed payload.</i>
 
-<b>Platforms:</b>
+<b>Primary Triad:</b>
 🟥 YouTube Shorts: {'✅' if yt else '❌'}
 🟦 Facebook Reels: {'✅' if fb else '❌'}
 🟪 Instagram Reels: {'✅' if ig else '❌'}
+
+<b>Stories:</b>
 📘 Facebook Story: {'✅' if fb_story else '❌'}
 📸 Instagram Story: {'✅' if ig_story else '❌'}
+
+<b>Buffer Bridge (X / Pinterest / LinkedIn):</b>
+🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
 <b>Caption Used:</b>
 {description}
@@ -334,7 +362,8 @@ def distribute_to_all_platforms(video_path, description):
         "instagram": ig,
         "youtube": yt,
         "fb_story": fb_story,
-        "ig_story": ig_story
+        "ig_story": ig_story,
+        "buffer_bridge": buffer_bridge
     }
 
 if __name__ == "__main__":
