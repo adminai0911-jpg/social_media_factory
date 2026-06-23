@@ -42,17 +42,6 @@ VOICES = [
     "hi-IN-SwaraNeural",  # Female
 ]
 
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-
-def send_telegram_alert(message):
-    try:
-        from ghost.notifications import broadcast_alert
-        broadcast_alert(message)
-    except Exception as e:
-        logger.error(f"Failed to broadcast notification: {e}")
-
-
 
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
@@ -376,7 +365,7 @@ def download_dynamic_backgrounds(public_dir):
     Setup: Add PEXELS_API_KEY to GitHub Secrets (free key from pexels.com/api)
     """
     logger.info("🎬 Initializing Pexels HD Video Engine (Permanent Fix)...")
-    send_telegram_alert("🎬 <b>Pexels HD Engine</b>\nFetching 4 unique HD satisfying videos from Pexels API...")
+
 
     pexels_key = os.getenv("PEXELS_API_KEY", "")
     if not pexels_key:
@@ -596,17 +585,17 @@ def download_dynamic_backgrounds(public_dir):
 
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
-    send_telegram_alert("⚡ <b>V32 Engine Starting</b>\nGenerating new unique script from Gemini...")
+
     
     script_data = generate_dynamic_script()
     if not script_data:
-        send_telegram_alert("❌ <b>V32 FAILED</b>\nGemini could not generate script. Aborting run.")
+        logger.error("❌ V32 FAILED - Gemini could not generate script. Aborting run.")
         logger.error("Failed to generate dynamic script. Aborting.")
         return None
         
     logger.info(f"✅ Generated Niche: {script_data.get('micro_niche')}")
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
-    send_telegram_alert(f"✅ <b>Script Ready</b>\nNiche: {script_data.get('micro_niche')}\nCaption: {script_data.get('caption')}")
+
     
     # Extract phases safely from new Storyboard JSON format
     try:
