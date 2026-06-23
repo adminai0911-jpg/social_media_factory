@@ -52,64 +52,99 @@ def generate_dynamic_script():
         
     random.shuffle(valid_keys)
 
-    # ── MAXIMUM POWER: Viral Hook & CTA rotation — Psychological Weapon Grade ───
+    # ── ULTIMATE V3: Psychological Weapon Hooks — 6 Categories, 24 Triggers ─────
     hooks = [
-        # CURIOSITY GAP — brain cannot stop itself from finishing the thought
+        # 🧠 CATEGORY 1: CURIOSITY GAP — Brain MUST finish the thought
         "मैंने 5 साल बर्बाद किए यह गलती करके। आप मत करना।",
-        "The one word that separates the rich from the poor. Most people never learn it.",
-        "जो आपको school ने नहीं सिखाया, वो आज मैं बता रहा हूँ। ध्यान से सुनो।",
-        "I studied 100 billionaires. They all did THIS one thing differently.",
-        # FEAR OF LOSS — triggers survival instinct
-        "हर रोज़ आप 500 रुपये खो रहे हो। और आपको पता भी नहीं।",
-        "If you are still doing this in 2025, you are guaranteed to stay poor.",
-        "आपकी एक आदत आपकी पूरी ज़िंदगी बर्बाद कर रही है। अभी रोको।",
-        "The silent tax stealing your wealth every single day. No one talks about this.",
-        # IDENTITY THREAT — makes viewer feel personally called out
-        "अगर आपने यह वीडियो बीच में छोड़ा, तो आप इसी mentality में फंसे रहोगे।",
-        "People with THIS mindset never become rich. Check if you have it.",
-        "तुम्हारे parents ने तुम्हें पैसे के बारे में झूठ सिखाया। यह सच है।",
-        "Rich people HATE this video. Share it before it gets removed.",
-        # SOCIAL PROOF + DOPAMINE LOOP — creates FOMO and binge-watching
-        "मेरे 1 लाख followers ने यह rule follow किया। 6 महीने में results देखो।",
-        "This psychological trick made 1,000 people financially free. Here it is.",
-        "Save this. Watch it again. Your future self will thank you.",
-        "Part 1 of 3: The dark psychology of money that schools NEVER teach."
+        "The one word that separates the rich from the poor. Most people die never learning it.",
+        "I studied 500 crore worth of wealth decisions. The pattern will shock you.",
+        "जो आपको school ने कभी नहीं सिखाया — वो 10 seconds में बता देता हूँ।",
+
+        # 😨 CATEGORY 2: FEAR OF LOSS — Survival brain activates instantly
+        "हर रोज़ आप ₹847 खो रहे हो। यह calculation देखो।",
+        "If you earn under ₹1 lakh/month and do THIS — you will never escape.",
+        "आपकी एक आदत आपकी पूरी ज़िंदगी की savings खा रही है। अभी रुको।",
+        "The invisible financial mistake that is costing you ₹12 lakh every decade.",
+
+        # 🎯 CATEGORY 3: IDENTITY THREAT — Personally called out, cannot look away
+        "अगर आप यह वीडियो skip करते हो — तो आप exactly वही करते हो जो poor लोग करते हैं।",
+        "This mindset is the ONLY reason you are not rich yet. Be honest with yourself.",
+        "तुम्हारे parents ने पैसे के बारे में 3 झूठ सिखाए। आज तोड़ते हैं।",
+        "The financially free version of you is watching this. Will you listen?",
+
+        # 🏆 CATEGORY 4: AUTHORITY + PROOF — Builds instant credibility and trust
+        "Dhirubhai Ambani, Rakesh Jhunjhunwala — दोनों ने यह एक rule follow किया।",
+        "Harvard Business Study says: 92% of middle class makes THIS mistake before 35.",
+        "Warren Buffett ने यह rule 14 साल की उम्र में सीखा। आप आज सीखोगे।",
+        "The wealth rule that took me 7 years to learn — in 60 seconds.",
+
+        # 🔁 CATEGORY 5: SERIES / OPEN LOOP — Forces follow for Part 2
+        "Part 1/3: पैसे की वो psychology जो 1% लोग जानते हैं।",
+        "This is the most important financial video I have ever made. Here is why.",
+        "यह 3-part series तुम्हारी financial life बदल देगी। Part 1 शुरू करते हैं।",
+        "Billionaires use these 3 rules. Today: Rule #1. Follow for Rule #2 tomorrow.",
+
+        # 💡 CATEGORY 6: GENUINE VALUE PROMISE — Builds trust AND drives watch-time
+        "मैं तुम्हें वो 3 rules बताने वाला हूँ जो rich dads अपने बच्चों को सिखाते हैं।",
+        "The exact step-by-step formula to go from ₹0 savings to financial freedom.",
+        "अगर तुम्हारी age 18-35 है — यह वीडियो तुम्हारी ज़िंदगी का सबसे important investment है।",
+        "The 60-second wealth education your school stole from you."
     ]
+
     ctas = [
-        # IDENTITY-BASED — creates strong personal commitment
-        "Comment 'READY' अगर तुम अपनी life बदलने के लिए तैयार हो 🔥",
-        "Type '1' अगर यह तुम्हारे साथ होता है। Type '2' अगर नहीं। Comment करो 👇",
-        # URGENCY + FOMO
-        "Save this NOW — इसे भूल गए तो फिर पछताओगे 📌🔖",
-        "Save this video. You WILL need this rule in the next 30 days. 📌",
-        # SHARING TRIGGER — multiplies reach organically
-        "Share this with ONE person जो financially struggle कर रहा है। Real love है यह। ❤️‍🔥",
-        "Tag someone जिसे यह सुनना बहुत ज़रूरी है 👇",
-        # SERIES HOOK — forces people to follow for more
-        "Follow करो — कल Part 2 आएगा जो और भी powerful है। 🚀",
-        "Like करो अगर तुम पार्ट 2 चाहते हो 👍 — मैं कल डालूँगा।"
+        # 🔥 IDENTITY COMMITMENT — strongest engagement trigger
+        "Comment 'FIRE 🔥' अगर यह तुम्हारी आंखें खोल गया।",
+        "Type '1' अगर तुम यह जानते थे। Type '2' अगर नहीं। Comment करो — I read every one 👇",
+        "Comment करो — तुम्हारी सबसे बड़ी financial mistake क्या है? मैं personally reply करूँगा 💬",
+
+        # 📌 URGENCY + FOMO — high save rate = algorithm boost
+        "Save this NOW before the algorithm buries it. You WILL need this. 📌",
+        "इसे Save करो। 6 महीने बाद इसे फिर देखना — तुम चौंक जाओगे। 🔖",
+
+        # ❤️ SHARING TRIGGER — organic reach multiplier
+        "Share this with ONE person जो financially struggle कर रहा है। यही असली friendship है। ❤️‍🔥",
+        "Tag वो दोस्त जिसे यह सुनना ज़रूरी है — तुम उसकी ज़िंदगी बदल दोगे 👇",
+
+        # 🚀 SERIES HOOK — forces account follow
+        "Follow करो — कल Part 2 आएगा जो आज से भी ज़्यादा powerful है। 🚀",
+        "Like करो अगर तुम Part 2 चाहते हो — देखते हैं कितने लोग seriously लेते हैं 👍",
+
+        # 🎯 CHALLENGE CTA — creates viral comment threads
+        "यह rule अगले 7 दिन try करो और comment करो — result क्या आया? 💪"
     ]
     hook = random.choice(hooks)
     cta  = random.choice(ctas)
 
-    prompt = f"""You are the world's most dangerous neuro-marketing viral scriptwriter. You specialize in dark psychology, behavioral economics, and dopamine-loop engineering for Indian short-form video content (Reels/Shorts).
+    prompt = f"""You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
 
-MISSION: Create a script that is so psychologically gripping that viewers CANNOT stop watching. Every word must serve ONE purpose — to hold attention for 100% of the video duration and make the viewer SHARE and SAVE it immediately.
+═══════════════════════════════════════════════
+DUAL MISSION (BOTH are non-negotiable):
+═══════════════════════════════════════════════
+1. PSYCHOLOGICAL AGGRESSION: Every second of the video must be so gripping the viewer physically cannot scroll away.
+2. GENUINE DEEP VALUE: Every insight must be so real, specific, and actionable that the viewer feels they just learned something worth ₹10,000. This is what builds loyal followers who keep coming back.
 
-PSYCHOLOGICAL WEAPONS YOU MUST USE:
-1. CURIOSITY GAP: Open a loop in the viewer's mind in the first line that can only be closed by watching to the end.
-2. IDENTITY THREAT: Make the viewer feel the content is directly speaking to them and their personal situation.
-3. SOCIAL PROOF: Use real-sounding statistics and numbers (e.g., "87% of Indians do this").
-4. LOSS AVERSION: Frame everything as "you are LOSING money/time/opportunity right now." People fear loss 2x more than gain.
-5. DOPAMINE REWARD: Every 3-4 seconds, drop a new insight or number that makes the brain say "Aha!" — this creates a dopamine loop that is more addictive than social media itself.
+The SECRET formula of the most viral Indian finance accounts (FinancewithSharan, Ankur Warikoo, CA Rachana): They are AGGRESSIVE enough to stop the scroll AND VALUABLE enough to earn the save and share. Your script must do BOTH.
 
-CONTENT RULES (NON-NEGOTIABLE):
-- Language: Natural Hinglish (Hindi + English mix). NOT formal Hindi. Spoken as if talking to a close friend.
-- Content: NEVER give generic advice. Every insight must be COUNTERINTUITIVE, SPECIFIC, and SHOCKING.
-- Numbers: Use REAL specific numbers (e.g., "₹47,000", "73% of people", "18 months"). Vague numbers kill credibility.
-- Tone: Harsh but caring. Like a mentor who loves you enough to tell you the uncomfortable truth.
-- Ending: End on an OPEN LOOP — a question or a teaser for part 2 that forces the viewer to comment or follow.
-- Return ONLY raw JSON — no markdown, no backticks, no explanation.
+═══════════════════════════════════════════════
+6 PSYCHOLOGICAL WEAPONS (USE ALL 6):
+═══════════════════════════════════════════════
+1. CURIOSITY GAP: The hook opens a mental loop. The only way to close it is to watch to the end. Never answer the hook's question before the final 5 seconds.
+2. IDENTITY MIRROR: Every line should make the viewer feel "This is talking directly to ME." Use "tum", "tumhara", "tum log" — never generic "log" or "people."
+3. SPECIFIC NUMBERS: Vague claims are ignored. Specific numbers are believed. Use exact figures: "₹43,847", "73% of Indians under 35", "18 months", "Mukesh Ambani was 24 when he did this."
+4. LOSS AVERSION (2X POWER): The human brain reacts to loss 2.5x more strongly than gain. Frame every insight as something the viewer is CURRENTLY LOSING if they don't know this.
+5. SOCIAL PROOF ESCALATION: Reference real people, real studies, real companies. "Warren Buffett", "IIM study", "Zerodha data shows" — these phrases make viewers trust and share immediately.
+6. DOPAMINE MICRO-REWARDS: Every 3-4 seconds must deliver a NEW surprising fact, number, or insight. This creates a chemical dopamine loop that makes the video literally addictive to watch.
+
+═══════════════════════════════════════════════
+CONTENT QUALITY RULES (NON-NEGOTIABLE):
+═══════════════════════════════════════════════
+- Language: Natural Hinglish — the way a brilliant, wealthy friend speaks over chai. NOT formal textbook Hindi.
+- ZERO generic advice: Never say "work hard", "save money", "be disciplined." These are content killers.
+- Every insight MUST be counterintuitive — something that surprises even a financially aware person.
+- The numbered list must teach a COMPLETE, ACTIONABLE mini-framework — not just disconnected tips.
+- proof_demo MUST name a real person (Indian preferred: Ambani, Premji, Bajaj, Rakesh Jhunjhunwala) or a credible study.
+- End with an OPEN LOOP: tease something even bigger in the next video to force follows.
+- Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
 Mandatory: hook MUST use this text exactly: {hook}
 Mandatory: save_cta MUST use this text exactly: {cta}
@@ -118,18 +153,18 @@ JSON Schema:
 {{
   "hook": "{hook}",
   "split_screen": {{
-    "left": "BROKE mindset: [1 specific SHOCKING behavior that keeps people poor, max 5 words]",
-    "right": "RICH mindset: [1 counterintuitive behavior of the top 1%, max 5 words]"
+    "left": "BROKE trap: [The single most PAINFUL and SPECIFIC behavior keeping 90% of Indians poor — max 6 words. Must sting.]",
+    "right": "WEALTH move: [The counterintuitive, surprising behavior of top 1% Indians — max 6 words. Must inspire.]"
   }},
-  "authority_claim": "A single BRUTAL, SPECIFIC truth bomb. Must contain a real number or statistic. (e.g., '₹43,000 — यही है average Indian की monthly savings जो वो कभी invest नहीं करता।') MAX 15 words.",
+  "authority_claim": "ONE brutal, specific, stat-backed truth bomb that makes the viewer's jaw drop. Must include a real Rupee amount OR a real percentage OR a real Indian name. Sound like a professor who has seen behind the curtain. MAX 18 words.",
   "numbered_list": [
-    "COUNTERINTUITIVE insight with a specific number or name (max 8 words)",
-    "A dark psychological truth about money most people are too scared to accept (max 8 words)",
-    "A SHOCKING statistic with a real Rupee figure that makes the jaw drop (max 10 words)"
+    "Rule 1: [A counterintuitive, specific, actionable wealth rule with a number. Something a rich dad teaches his son. Max 10 words.]",
+    "Rule 2: [A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
+    "Rule 3: [A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words. This is the 'Aha!' moment.]"
   ],
-  "proof_demo": "ONE real-world proof point: Name a real company, person, or study. (e.g., 'Warren Buffett earns ₹1.2 crore per minute while sleeping.') MAX 12 words.",
+  "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ने ₹5,000 से शुरू किया था — ₹40,000 crore बनाए। यही rule use किया।' MAX 15 words.",
   "save_cta": "{cta}",
-  "caption": "An irresistible 2-sentence caption. Sentence 1: A controversial or shocking statement that stops thumbs mid-scroll. Sentence 2: A question that DEMANDS an answer in the comments. End with EXACTLY these hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
+  "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India that makes someone stop mid-scroll and think 'wait, is this about ME?' Sentence 2 (THE COMMENT MAGNET): A direct, personal question that the viewer MUST answer — something that makes them reflect on their own life right now. End with EXACTLY: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
 }}"""
     
     for key in valid_keys:
