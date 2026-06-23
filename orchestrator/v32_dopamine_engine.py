@@ -89,13 +89,14 @@ JSON Schema:
     "left": "Poor Mindset - [harsh truth behavior, max 5 words]",
     "right": "Rich Mindset - [high-IQ behavior, max 5 words]"
   }},
-  "authority_claim": "A punchy, dark, harsh truth pattern interrupt. (e.g., 'गरीब रहना एक बीमारी है, और इलाज तुम्हारे पास है।')",
+  "authority_claim": "A punchy, dark, harsh truth pattern interrupt. (e.g., 'गरीब रहना एक बीमारी है, और इलाज तुम्हारे पास है。')",
   "numbered_list": [
     "High-value insight 1 (max 6-7 words)",
     "High-value insight 2 (max 6-7 words)",
-    "High-value insight 3 (max 6-7 words)"
+    "[MUST BE A COUNTERINTUITIVE SPECIFIC STAT OR REAL RUPEE FIGURE, e.g. 99% people lose 5 lakh rupees doing this.] (max 8-10 words)"
   ],
-  "save_cta": "{cta}",
+  "proof_demo": "Here is the proof: [insert 1 concrete real-life example or stat proving the above points. Max 10 words.]",
+  "save_cta": "{cta} Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
   "caption": "Deep psychological caption triggering FOMO. 1-2 sentences + EXACTLY these 4 hashtags: #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
 }}"""
     
@@ -183,9 +184,10 @@ def generate_offline_script():
           "numbered_list": [
               "Loss se zyada dar nahi lagta",
               "Decisions data se, emotion se nahi",
-              "Patience ko skill maante hain"
+              "99% log EMI trap mein har saal 5 lakh khote hain"
           ],
-          "save_cta": "Save and Share with someone who needs to wake up 🚀",
+          "proof_demo": "Proof: Mutual funds mein ₹10k/mo se tum 15 saal mein crorepati ho.",
+          "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         },
         {
@@ -198,9 +200,10 @@ def generate_offline_script():
           "numbered_list": [
               "Stop waiting for the perfect time",
               "Focus on skills, not salary",
-              "Build networks, not enemies"
+              "Average insaan scroll karta hai, top 1% create karta hai"
           ],
-          "save_cta": "Save this rule before you forget! 📌",
+          "proof_demo": "Fact: Content creators make 5x more than average 9-to-5 workers in India.",
+          "save_cta": "Save this rule before you forget! 📌 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "सच्चाई कड़वी है। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         }
     ]
@@ -340,7 +343,7 @@ def ensure_sfx(studio_dir):
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
-    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--write-media", output_path]
+    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--rate", "-10%", "--write-media", output_path]
     subprocess.run(cmd, check=True)
 
 def get_audio_duration(file_path):
@@ -602,10 +605,13 @@ def build_v32_payload():
         phase_1 = script_data["hook"]
         phase_2 = f"{script_data['split_screen']['left']}. {script_data['split_screen']['right']}."
         phase_3 = script_data["authority_claim"]
-        phase_4 = ". ".join(script_data["numbered_list"])
-        phase_5 = script_data["save_cta"]
+        phase_l1 = script_data["numbered_list"][0]
+        phase_l2 = script_data["numbered_list"][1]
+        phase_l3 = script_data["numbered_list"][2]
+        phase_proof = script_data.get("proof_demo", "Proof: 99% fail without action.")
+        phase_cta = script_data["save_cta"]
         
-        phases = [phase_1, phase_2, phase_3, phase_4, phase_5]
+        phases = [phase_1, phase_2, phase_3, phase_l1, phase_l2, phase_l3, phase_proof, phase_cta]
     except KeyError as e:
         logger.error(f"Script JSON missing key: {e}. Aborting.")
         return None
