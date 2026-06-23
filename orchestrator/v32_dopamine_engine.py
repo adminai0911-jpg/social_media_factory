@@ -54,14 +54,14 @@ def generate_dynamic_script():
 
     # ── Viral Hook & CTA rotation — deeper psychology and wealth ─────────────────
     hooks = [
-        "आप जिंदगी भर गरीब रह जाओगे अगर आपने यह नहीं समझा...",
-        "Why you are secretly sabotaging your own success...",
-        "The silent habit keeping 90% of people broke.",
-        "अगर आप यह गलती कर रहे हैं, तो आप खुद को धोखा दे रहे हैं।",
-        "अमीर लोग यह psychology rule कभी किसी को नहीं बताते।",
-        "आपके दिमाग का यह trap आपको कभी आगे नहीं बढ़ने देगा।",
-        "यह एक कड़वा सच है जिसे आपको आज ही मानना होगा।",
-        "School ने आपको पैसे के बारे में हमेशा झूठ बोला..."
+        "99% of people will stay broke this year because they ignore this one brutal truth...",
+        "Your dopamine addiction is secretly keeping you poor. Here is the proof.",
+        "The 'Work Hard' lie is designed to keep you in the middle class. Do this instead.",
+        "गरीब रहना एक बीमारी है, और 90% लोग इसके शिकार हैं।",
+        "The 1% know this psychological trick, and they hope you never find out.",
+        "Stop scrolling. This one uncomfortable truth will change your financial life.",
+        "अगर आप 9 to 5 में फंसे हैं, तो यह वीडियो आपकी आंखें खोल देगा।",
+        "School never taught you this dark psychology rule of wealth."
     ]
     ctas = [
         "Save this rule before you forget! 📌",
