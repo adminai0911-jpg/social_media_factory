@@ -65,19 +65,18 @@ def upload_to_temp_host(file_path):
     except Exception as e:
         logger.error(f"tmpfiles.org failed: {e}")
 
-    logger.info("Fallback: Uploading to transfer.sh...")
+    logger.info("Fallback: Uploading to uguu.se...")
     try:
-        import os
-        filename = os.path.basename(file_path)
         with open(file_path, 'rb') as f:
-            res = requests.put(f"https://transfer.sh/{filename}", data=f, timeout=300)
+            res = requests.post("https://uguu.se/upload", files={'files[]': f}, timeout=120)
             if res.status_code == 200:
-                url = res.text.strip()
-                direct_url = url.replace("transfer.sh/", "transfer.sh/get/")
-                logger.info(f"✅ Video uploaded to public URL: {direct_url}")
-                return direct_url
+                data = res.json()
+                if data.get('success'):
+                    url = data['files'][0]['url']
+                    logger.info(f"✅ Video uploaded to public URL: {url}")
+                    return url
     except Exception as e:
-        logger.error(f"transfer.sh upload failed: {e}")
+        logger.error(f"uguu.se upload failed: {e}")
         
     return None
 
