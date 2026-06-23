@@ -343,7 +343,7 @@ def ensure_sfx(studio_dir):
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
-    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--rate", "-10%", "--write-media", output_path]
+    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--rate", "+10%", "--write-media", output_path]
     subprocess.run(cmd, check=True)
 
 def get_audio_duration(file_path):
