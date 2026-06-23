@@ -25,11 +25,45 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 💰 MONETIZATION: Affiliate Link — auto-injected into every caption
+# 💰 MONETIZATION: 3-Stream Passive Income Rotation
 # ══════════════════════════════════════════════════════════════════════════════
-# IMPORTANT: Replace this URL with your real Groww/Zerodha affiliate link!
-AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "https://groww.in")
-AFFILIATE_CTA = f"📈 Free Demat Account — Zero Commission Invest karo: {AFFILIATE_LINK}"
+AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "")
+AMAZON_AFFILIATE_LINK = os.environ.get("AMAZON_AFFILIATE_LINK", "")
+OUTLIER_LINK = os.environ.get("OUTLIER_LINK", "")
+
+def get_random_cta():
+    import random as _rand
+    options = []
+    
+    if AFFILIATE_LINK:
+        options.append({
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{AFFILIATE_LINK}\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {AFFILIATE_LINK}"
+        })
+        
+    if AMAZON_AFFILIATE_LINK:
+        options.append({
+            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\n{AMAZON_AFFILIATE_LINK}\nHar ameer insaan ne yeh book padhi hai.",
+            "caption": f"📚 Yeh book padho — Wealth Psychology: {AMAZON_AFFILIATE_LINK}"
+        })
+        
+    if OUTLIER_LINK:
+        options.append({
+            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\n{OUTLIER_LINK}\nAI ko train karo aur dollars mein earn karo.",
+            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour: {OUTLIER_LINK}"
+        })
+        
+    if not options:
+        # Fallback if secrets are missing
+        return {
+            "text": "📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\nhttps://groww.in\nZero commission. Aaj hi shuru karo.",
+            "caption": "📈 Free Demat Account — Zero Commission Invest karo: https://groww.in"
+        }
+        
+    return _rand.choice(options)
+
+# Generate one unified CTA for this entire factory run
+CURRENT_CTA = get_random_cta()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 🔍 SEO ENGINE: Keyword-rich YouTube title rotation
@@ -279,9 +313,7 @@ def upload_to_youtube_shorts(video_path, description):
         full_description = f"""{clean_body}
 
 ══════════════════════════════
-📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:
-{AFFILIATE_LINK}
-Zero commission. Aaj hi shuru karo.
+{CURRENT_CTA['text']}
 ══════════════════════════════
 🔔 SUBSCRIBE karo aur bell icon dabao — har roz ek naya wealth secret!
 
@@ -388,10 +420,14 @@ def trigger_make_webhook(video_url, caption):
 def distribute_to_all_platforms(video_path, description):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
 
-    # 💰 MONETIZATION: Inject affiliate link into every caption
-    if AFFILIATE_LINK and "groww.in" not in description and "zerodha" not in description.lower():
-        description = f"{description}\n\n{AFFILIATE_CTA}"
-        logger.info(f"💰 Affiliate link injected into caption.")
+    # 💰 MONETIZATION: Inject affiliate link into every caption BEFORE hashtags
+    if "#" in description:
+        parts = description.split("#", 1)
+        description = f"{parts[0].strip()}\n\n{CURRENT_CTA['caption']}\n\n#{parts[1]}"
+    else:
+        description = f"{description}\n\n{CURRENT_CTA['caption']}"
+        
+    logger.info(f"💰 Monetization CTA injected into caption: {CURRENT_CTA['caption'][:40]}...")
 
     logger.info(f"📝 Final Caption: {description}")
     
