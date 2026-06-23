@@ -416,30 +416,41 @@ def create_8d_hypnotic_music(filename, duration=42.0):
                 rot_speed = 0.16 + 0.09 * math.sin(2 * math.pi * 0.04 * t)
                 angle    += (2 * math.pi * rot_speed) / sample_rate
 
-                # ── Power-preserving panning (never fully silent) ──
-                # Values stay in [0.15 .. 1.0] so sound always present
                 pan_l = 0.15 + 0.85 * ((1 + math.cos(angle)) / 2)
                 pan_r = 0.15 + 0.85 * ((1 + math.sin(angle)) / 2)
 
-                # ── Distance attenuation (sound feels near/far) ──
                 dist_mod = 0.75 + 0.25 * math.sin(2 * math.pi * 0.11 * t)
 
-                # ── Source signal ──
-                # 432 Hz healing carrier (left ear) + harmonics
-                sig_l  = math.sin(2 * math.pi * 432.0 * t)
-                sig_l += 0.32 * math.sin(2 * math.pi * 216.0 * t)   # sub-octave
-                sig_l += 0.20 * math.sin(2 * math.pi * 864.0 * t)   # 2nd harmonic
-                sig_l += 0.12 * math.sin(2 * math.pi * 1296.0 * t)  # 3rd harmonic
-                # 436 Hz binaural beat carrier (right ear) — 4 Hz diff = theta waves
-                sig_r  = math.sin(2 * math.pi * 436.0 * t)
-                sig_r += 0.32 * math.sin(2 * math.pi * 218.0 * t)
-                sig_r += 0.20 * math.sin(2 * math.pi * 872.0 * t)
-                sig_r += 0.12 * math.sin(2 * math.pi * 1308.0 * t)
-                # Sub-bass pulse shared (for headphone vibration)
-                sub = 0.45 * math.sin(2 * math.pi * 60.0 * t) * \
-                      (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
-                sig_l += sub
-                sig_r += sub
+                # ── SIGMA TRAP BEAT GENERATOR ──
+                import random as _rand
+                bpm = 105.0
+                beat_len = 60.0 / bpm
+                bar_t = t % (beat_len * 4)
+
+                # 1. 808 Sub Kick (Beats 1 & 3)
+                is_kick = (bar_t < beat_len) or (bar_t >= beat_len * 2 and bar_t < beat_len * 2.5)
+                kick = 0.0
+                if is_kick:
+                    k_phase = bar_t if bar_t < beat_len else (bar_t - beat_len * 2)
+                    kick_freq = 120.0 * math.exp(-25.0 * k_phase) + 40.0
+                    kick_env = math.exp(-5.0 * k_phase)
+                    kick = math.sin(2 * math.pi * kick_freq * k_phase) * kick_env * 0.8
+
+                # 2. Trap Hi-Hat (Every 1/4 beat, faster bursts)
+                hh_phase = t % (beat_len / 4.0)
+                hh_env = math.exp(-40.0 * hh_phase)
+                hihat = ((i % 17) / 17.0 - 0.5) * hh_env * 0.3 # Pseudo-noise
+
+                # 3. Dark Phonk Drone (A1 + Harmonics)
+                drone_freq = 55.0
+                drone = math.sin(2 * math.pi * drone_freq * t)
+                drone += 0.5 * math.sin(2 * math.pi * drone_freq * 2.01 * t)
+                drone += 0.25 * math.sin(2 * math.pi * drone_freq * 3.0 * t)
+                drone *= 0.15 * (0.8 + 0.2 * math.sin(2 * math.pi * 0.5 * t)) # Wobble
+
+                # Mix: Kick is centered (mono), Hihat/Drone are 8D panned
+                sig_l = kick + (hihat + drone) * pan_l
+                sig_r = kick + (hihat + drone) * pan_r
 
                 # ── Room reverb (3 taps) ──
                 reverb_l = 0.0
@@ -456,10 +467,10 @@ def create_8d_hypnotic_music(filename, duration=42.0):
                 delay_buf[buf_idx] = (sig_l + sig_r) * 0.5
                 buf_idx = (buf_idx + 1) % (max_tap + 1)
 
-                # ── Final mix with 8D panning applied ──
-                vol = 0.26
-                left_val  = int(vol * pan_l * dist_mod * env * wet_l * 32767)
-                right_val = int(vol * pan_r * dist_mod * env * wet_r * 32767)
+                # ── Final mix with distance attenuation ──
+                vol = 0.35 # Slightly louder for the beat
+                left_val  = int(vol * dist_mod * env * wet_l * 32767)
+                right_val = int(vol * dist_mod * env * wet_r * 32767)
                 left_val  = max(-32767, min(32767, left_val))
                 right_val = max(-32767, min(32767, right_val))
                 f.writeframes(struct.pack('<hh', left_val, right_val))
