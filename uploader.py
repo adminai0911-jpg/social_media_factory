@@ -51,21 +51,35 @@ def get_facebook_page_token(user_token, page_id):
     return user_token
 
 def upload_to_temp_host(file_path):
-    logger.info("Uploading video to temporary public host (0x0.st)...")
+    logger.info("Uploading video to temporary public host (tmpfiles.org)...")
     try:
         with open(file_path, 'rb') as f:
-            files = {'file': f}
-            response = requests.post('https://0x0.st', files=files, timeout=300)
-            if response.status_code == 200 and response.text.startswith("http"):
-                url = response.text.strip()
-                logger.info(f"✅ Video uploaded to public URL: {url}")
-                return url
-            else:
-                logger.error(f"0x0.st upload failed: {response.status_code} {response.text}")
-                return None
+            res = requests.post('https://tmpfiles.org/api/v1/upload', files={'file': f}, timeout=120)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('status') == 'success':
+                    url = data['data']['url']
+                    direct_url = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+                    logger.info(f"✅ Video uploaded to public URL: {direct_url}")
+                    return direct_url
     except Exception as e:
-        logger.error(f"Failed to upload to temp host: {e}")
-        return None
+        logger.error(f"tmpfiles.org failed: {e}")
+
+    logger.info("Fallback: Uploading to transfer.sh...")
+    try:
+        import os
+        filename = os.path.basename(file_path)
+        with open(file_path, 'rb') as f:
+            res = requests.put(f"https://transfer.sh/{filename}", data=f, timeout=300)
+            if res.status_code == 200:
+                url = res.text.strip()
+                direct_url = url.replace("transfer.sh/", "transfer.sh/get/")
+                logger.info(f"✅ Video uploaded to public URL: {direct_url}")
+                return direct_url
+    except Exception as e:
+        logger.error(f"transfer.sh upload failed: {e}")
+        
+    return None
 
 def wait_for_ig_media_ready(creation_id, access_token):
     url = f"https://graph.facebook.com/v19.0/{creation_id}?fields=status_code&access_token={access_token}"
