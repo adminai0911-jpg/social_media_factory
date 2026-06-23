@@ -24,6 +24,37 @@ YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 💰 MONETIZATION: Affiliate Link — auto-injected into every caption
+# ══════════════════════════════════════════════════════════════════════════════
+# IMPORTANT: Replace this URL with your real Groww/Zerodha affiliate link!
+AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "https://groww.in")
+AFFILIATE_CTA = f"📈 Free Demat Account — Zero Commission Invest karo: {AFFILIATE_LINK}"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔍 SEO ENGINE: Keyword-rich YouTube title rotation
+# ══════════════════════════════════════════════════════════════════════════════
+SEO_TITLE_TEMPLATES = [
+    "पैसे का सबसे बड़ा राज़ जो School ने नहीं बताया | Wealth Psychology Hindi #Shorts",
+    "99% लोग यह गलती करते हैं | Dark Psychology of Money Hindi #Shorts",
+    "Ameer Kaise Bane | अमीर लोगों का सबसे बड़ा राज़ #Shorts",
+    "Rich vs Poor Mindset | अमीर और गरीब में फर्क #Shorts",
+    "Paise Ki Psychology | पैसे की मनोविज्ञान Hindi #Shorts",
+    "Financial Freedom Kaise Milegi | आर्थिक आज़ादी का राज़ #Shorts",
+    "Investment Rules जो आपको कोई नहीं बताता | Wealth Rules Hindi #Shorts",
+    "Zerodha Groww से Paise Kaise Kamaye | Stock Market Hindi #Shorts",
+    "Success Ki Psychology | सफलता का राज़ Hindi Motivation #Shorts",
+    "Middle Class Trap | मिडल क्लास से निकलने का तरीका #Shorts",
+]
+
+PINNED_COMMENTS = [
+    "🔥 Part 2 kal aayega — Follow karo taaki miss na ho! Tum kaunse number pe ho? 1, 2, ya 3? Comment karo 👇",
+    "❤️ Agar yeh video ne tumhari aankhen khol di — SAVE karo aur ek dost ko Share karo jise yeh sunna zaroori hai! 🔖",
+    "🚀 Follow karo — har roz ek naya wealth secret post karta hoon jo 1% log jaante hain. Next video aur bhi powerful hai!",
+    "📌 Save this. 6 mahine baad ise dobara dekho — tum khud ko thanks kahoge. Ready ho? READY likho neeche 👇",
+    "💡 Comment karo: Tumhari sabse badi financial mistake kya hai? Main personally padhta hoon sabke comments 👇",
+]
+
 def send_telegram_alert(message):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
@@ -239,18 +270,28 @@ def upload_to_youtube_shorts(video_path, description):
             "X-Upload-Content-Type": "video/mp4"
         }
         
-        # Clean up title (limit to 70 chars, remove hashtags)
-        clean_title = description.split("#")[0].strip()
-        if not clean_title:
-            clean_title = "Viral Short"
-        if len(clean_title) > 70:
-            clean_title = clean_title[:67] + "..."
-            
+        # 🔍 SEO-OPTIMIZED TITLE: rotate through keyword-rich templates
+        import random as _rand
+        seo_title = _rand.choice(SEO_TITLE_TEMPLATES)
+
+        # Build rich YouTube description for SEO + monetization
+        clean_body = description.split("#")[0].strip()
+        full_description = f"""{clean_body}
+
+══════════════════════════════
+📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:
+{AFFILIATE_LINK}
+Zero commission. Aaj hi shuru karo.
+══════════════════════════════
+🔔 SUBSCRIBE karo aur bell icon dabao — har roz ek naya wealth secret!
+
+#WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules #Shorts #Money #Rich"""
+
         metadata = {
             "snippet": {
-                "title": clean_title,
-                "description": description,
-                "categoryId": "22"  # People & Blogs
+                "title": seo_title,
+                "description": full_description,
+                "categoryId": "27"  # Education (better for finance content than People & Blogs)
             },
             "status": {
                 "privacyStatus": "public",
@@ -279,13 +320,47 @@ def upload_to_youtube_shorts(video_path, description):
             put_res = requests.put(upload_url, headers=put_headers, data=f, timeout=120)
             
         if put_res.status_code in [200, 201]:
+            video_data = put_res.json() if put_res.text else {}
+            video_id = video_data.get("id", "")
             logger.info("✅ Successfully published to YouTube Shorts!")
+            # 📌 AUTO-PIN CTA COMMENT
+            if video_id:
+                youtube_pin_comment(video_id, access_token)
             return True
         else:
             logger.error(f"YouTube file upload failed: {put_res.status_code} - {put_res.text}")
     except Exception as e:
         logger.error(f"YouTube Upload Exception: {e}")
     return False
+
+def youtube_pin_comment(video_id, access_token):
+    """Automatically posts and pins a CTA comment on every YouTube upload."""
+    import random as _rand
+    pinned_text = _rand.choice(PINNED_COMMENTS)
+    try:
+        # Step 1: Post the comment
+        comment_url = "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet"
+        comment_headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        comment_body = {
+            "snippet": {
+                "videoId": video_id,
+                "topLevelComment": {
+                    "snippet": {"textOriginal": pinned_text}
+                }
+            }
+        }
+        comment_res = requests.post(comment_url, headers=comment_headers, json=comment_body, timeout=30).json()
+        comment_id = comment_res.get("id", "")
+        if not comment_id:
+            logger.warning(f"Could not post pinned comment: {comment_res}")
+            return
+        # Step 2: Pin it
+        pin_url = f"https://www.googleapis.com/youtube/v3/comments?part=snippet"
+        pin_body = {"id": comment_id, "snippet": {"moderationStatus": "published"}}
+        requests.put(pin_url, headers=comment_headers, json=pin_body, timeout=30)
+        logger.info(f"📌 Auto-pinned comment on video {video_id}: {pinned_text[:60]}...")
+    except Exception as e:
+        logger.warning(f"Auto-pin comment failed (non-critical): {e}")
 
 def trigger_make_webhook(video_url, caption):
     webhook_url = os.environ.get("MAKE_WEBHOOK_URL")
@@ -312,6 +387,12 @@ def trigger_make_webhook(video_url, caption):
 
 def distribute_to_all_platforms(video_path, description):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
+
+    # 💰 MONETIZATION: Inject affiliate link into every caption
+    if AFFILIATE_LINK and "groww.in" not in description and "zerodha" not in description.lower():
+        description = f"{description}\n\n{AFFILIATE_CTA}"
+        logger.info(f"💰 Affiliate link injected into caption.")
+
     logger.info(f"📝 Final Caption: {description}")
     
     yt = upload_to_youtube_shorts(video_path, description)
