@@ -518,19 +518,19 @@ def download_dynamic_backgrounds(public_dir):
     output_names = ["gta", "sand", "bg3", "bg4"]
 
     satisfying_queries = [
-        "nature waterfall aerial",
-        "ocean waves close up",
-        "forest rain bokeh",
-        "aurora borealis night",
-        "slow motion water splash",
-        "glacier ice aerial",
-        "underwater ocean rays",
-        "misty green forest stream",
-        "crystal geode blue",
-        "snow falling close up",
-        "abstract fluid art blue teal",
-        "winter mountain timelapse",
-        "raindrops on window slow motion"
+        "luxury car moving",
+        "dubai skyline night",
+        "rolex watch luxury",
+        "private jet flying",
+        "stock market trading screen",
+        "supercar slow motion",
+        "mansion luxury estate",
+        "miami beach penthouse",
+        "crypto trading chart",
+        "business man walking suit",
+        "money falling slow motion",
+        "gold bars wealth",
+        "yacht ocean aerial"
     ]
 
 

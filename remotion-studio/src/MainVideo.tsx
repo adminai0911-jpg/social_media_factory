@@ -307,6 +307,34 @@ export const MainVideo: React.FC<{
         </AbsoluteFill>
       )}
 
+      {/* ── VISUAL RETENTION OVERLAYS (THE WATCH TIME HACK) ────────── */}
+      {/* 1. Progress Bar at bottom */}
+      <AbsoluteFill style={{ zIndex: 9999, justifyContent: "flex-end" }}>
+        <div style={{
+          height: 12,
+          width: `${(frame / (total_duration * fps)) * 100}%`,
+          backgroundColor: "#FF0000",
+          boxShadow: "0 0 20px #FF0000"
+        }} />
+      </AbsoluteFill>
+
+      {/* 2. "Wait for it" Sticky Banner for the first 8 seconds */}
+      {t > 1.5 && t < 8.5 && (
+        <AbsoluteFill style={{ zIndex: 9999, justifyContent: "flex-start", alignItems: "center", paddingTop: 100 }}>
+          <div style={{
+            background: "rgba(255, 0, 0, 0.9)",
+            padding: "15px 40px",
+            borderRadius: 15,
+            boxShadow: "0 10px 40px rgba(255,0,0,0.8)",
+            border: "3px solid #FFFFFF",
+          }}>
+            <span style={{ fontFamily: TITLE_FONT, fontSize: 45, fontWeight: 900, color: "#FFFFFF", letterSpacing: 2 }}>
+              WAIT FOR RULE #3 🚨
+            </span>
+          </div>
+        </AbsoluteFill>
+      )}
+
       {/* ── FADE OUT ────────────────────────────────────────────── */}
       {phase === 6 && (
         <AbsoluteFill style={{
