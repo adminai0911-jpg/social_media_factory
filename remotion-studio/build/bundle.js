@@ -937,6 +937,63 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         }, children: w }, i)) })
       ] })
     ] }) }),
+    t >= 2 && t < p_l1 && script.curiosity_teaser && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: {
+      zIndex: 9990,
+      justifyContent: "flex-end",
+      alignItems: "center",
+      paddingBottom: 220
+    }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+      background: "rgba(12,20,32,0.97)",
+      border: `2px solid ${pal.p}66`,
+      borderRadius: 16,
+      padding: "14px 36px",
+      boxShadow: `0 0 30px ${pal.p}22`,
+      opacity: (0,esm.interpolate)(
+        frame,
+        [Math.round(2 * fps), Math.round(2.5 * fps)],
+        [0, 1],
+        { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+      ),
+      display: "flex",
+      alignItems: "center",
+      gap: 16
+    }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+        color: pal.p,
+        fontSize: 32,
+        fontFamily: TITLE_FONT,
+        fontWeight: 900
+      }, children: "\u2753" }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+        fontFamily: HINDI_FONT,
+        fontSize: 42,
+        color: "#FFFFFF",
+        fontWeight: 700
+      }, children: script.curiosity_teaser })
+    ] }) }),
+    t >= p_proof && t < p_proof + 2.5 && script.curiosity_payoff && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: {
+      zIndex: 9990,
+      justifyContent: "flex-start",
+      alignItems: "center",
+      paddingTop: 80
+    }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      background: `${pal.p}18`,
+      border: `2px solid ${pal.p}`,
+      borderRadius: 16,
+      padding: "14px 40px",
+      boxShadow: `0 0 40px ${pal.p}44`,
+      opacity: (0,esm.interpolate)(
+        frame,
+        [Math.round(p_proof * fps), Math.round(p_proof * fps) + 8],
+        [0, 1],
+        { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+      )
+    }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+      fontFamily: HINDI_FONT,
+      fontSize: 44,
+      color: pal.p,
+      fontWeight: 700
+    }, children: script.curiosity_payoff }) }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p2 * fps), durationInFrames: Math.round((p3 - p2) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "row", transform: `scale(${kenBurns(p2)})` }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [0, 1]) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [20, 0])}px)` }, children: "POOR MINDSET" }),
@@ -999,26 +1056,28 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         transform: `translateX(${(0,esm.interpolate)(slideProgress, [0, 1], [-80, 0])}px)`
       }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-          width: 80,
-          height: 80,
+          width: i === 2 ? 100 : 84,
+          height: i === 2 ? 100 : 84,
           borderRadius: "50%",
-          background: i === 2 ? pal.p : "rgba(255,255,255,0.15)",
+          background: i === 2 ? pal.p : `${pal.p}20`,
+          border: i === 2 ? "none" : `2px solid ${pal.p}55`,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           fontFamily: TITLE_FONT,
-          fontSize: 46,
+          fontSize: i === 2 ? 56 : 46,
           fontWeight: 900,
           color: i === 2 ? pal.bg1 : pal.p,
-          marginRight: 35,
+          marginRight: 28,
           flexShrink: 0,
-          boxShadow: i === 2 ? `0 0 20px ${pal.p}88` : "none"
+          boxShadow: i === 2 ? `0 0 30px ${pal.p}aa` : `0 0 8px ${pal.p}33`
         }, children: i + 1 }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1 }, children: [
           /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
             fontFamily: HINDI_FONT,
-            fontSize: 62,
-            fontWeight: 700,
+            fontSize: i === 2 ? 62 : 56,
+            fontWeight: i === 2 ? 700 : 600,
+            color: i === 2 ? "#FFFFFF" : "rgba(255,255,255,0.88)",
             color: "#FFFFFF",
             lineHeight: 1.2
           }, children: item }),

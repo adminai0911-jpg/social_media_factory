@@ -217,6 +217,7 @@ CONTENT QUALITY RULES (NON-NEGOTIABLE):
 - proof_demo MUST name a real person (Indian preferred: Ambani, Premji, Bajaj, Rakesh Jhunjhunwala) or a credible study.
 - This is Part {series_part} of 3 in a series. If hook mentions a series part number, use {series_part}.
 - End with an OPEN LOOP: tease something even bigger in the next video to force follows.
+- Length constraint: Total spoken words must map to a 35-45 second video. Be punchy. Trim anything that repeats information.
 - Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
 Mandatory: hook MUST use this text exactly: {hook}
@@ -225,6 +226,8 @@ Mandatory: save_cta MUST use this text exactly: {cta}
 JSON Schema:
 {{
   "hook": "{hook}",
+  "curiosity_teaser": "An open loop question or incomplete thought related to the hook. Max 6 words. Example: '₹847 ka asli sach?' or 'Sirf 1% log jaante hain...'",
+  "curiosity_payoff": "The explicit resolution to the curiosity_teaser, revealed during the proof section to close the loop. Max 8 words. Example: 'Yahi ₹847 tumhara loss hai.'",
   "split_screen": {{
     "left": "BROKE trap: [The single most PAINFUL and SPECIFIC behavior keeping 90% of Indians poor — max 6 words. Must sting.]",
     "right": "WEALTH move: [The counterintuitive, surprising behavior of top 1% Indians — max 6 words. Must inspire.]"
