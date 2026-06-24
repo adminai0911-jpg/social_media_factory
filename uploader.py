@@ -196,19 +196,37 @@ def upload_to_facebook_reels(video_path, description):
         logger.error(f"FB Upload Exception: {e}")
     return False
 
-def upload_to_facebook_story(video_url):
+def upload_to_facebook_story(video_path):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID: return False
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
-    url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_stories"
-    payload = {"video_url": video_url, "access_token": page_token}
+    
+    logger.info("Posting Facebook Story...")
+    init_url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_stories"
+    init_payload = {"upload_phase": "start", "access_token": page_token}
+    
     try:
-        logger.info("Posting Facebook Story...")
-        result = requests.post(url, data=payload, timeout=300).json()
-        if "id" in result or "video_id" in result or "post_id" in result:
-            logger.info(f"✅ Facebook Story posted!")
+        init_res = requests.post(init_url, data=init_payload, timeout=30).json()
+        if "video_id" not in init_res:
+            logger.error(f"Failed to initialize FB Story upload: {init_res}")
+            return False
+            
+        video_id = init_res["video_id"]
+        upload_url = init_res["upload_url"]
+        
+        headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
+        with open(video_path, "rb") as f:
+            requests.post(upload_url, headers=headers, data=f, timeout=120).json()
+            
+        publish_payload = {
+            "upload_phase": "finish", "access_token": page_token,
+            "video_id": video_id
+        }
+        publish_res = requests.post(init_url, data=publish_payload, timeout=30).json()
+        if "success" in publish_res and publish_res["success"]:
+            logger.info("✅ Facebook Story posted!")
             return True
         else:
-            logger.error(f"❌ Facebook Story API error: {result}")
+            logger.error(f"❌ Facebook Story API error: {publish_res}")
     except Exception as e:
         logger.error(f"❌ Facebook Story failed: {e}")
     return False
@@ -445,7 +463,7 @@ def distribute_to_all_platforms(video_path, description):
         time.sleep(5)
         ig_story = upload_to_instagram_story(video_url)
         time.sleep(5)
-        fb_story = upload_to_facebook_story(video_url)
+        fb_story = upload_to_facebook_story(video_path)
         time.sleep(5)
         buffer_bridge = trigger_make_webhook(video_url, description)
     else:
