@@ -419,10 +419,18 @@ def trigger_make_webhook(video_url, caption):
         return False
         
     logger.info("🌐 Triggering Make.com Webhook for Buffer Bridge (X, Pinterest, LinkedIn)...")
+    
+    # Generate a Twitter-safe caption (< 280 characters)
+    # This strips all hashtags and truncates to 250 chars safely
+    twitter_cap = caption.split("#")[0].strip()
+    if len(twitter_cap) > 250:
+        twitter_cap = twitter_cap[:247] + "..."
+        
     try:
         payload = {
             "video_url": video_url,
-            "caption": caption
+            "caption": caption,
+            "twitter_caption": twitter_cap
         }
         res = requests.post(webhook_url, json=payload, timeout=60)
         if res.status_code in [200, 201, 202]:
