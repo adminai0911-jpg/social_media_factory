@@ -235,7 +235,7 @@ JSON Schema:
     "right": "WEALTH move: [The counterintuitive, surprising behavior of top 1% Indians — max 6 words. Must inspire.]"
   }},
   "authority_claim": "ONE brutal, specific, stat-backed truth bomb that makes the viewer's jaw drop. Must include a real Rupee amount OR a real percentage OR a real Indian name. Sound like a professor who has seen behind the curtain. MAX 18 words.",
-  "numbered_list": [
+  "numbered_list": [ // MUST BE EXACTLY 3 ITEMS. NO MORE. NO LESS.
     "Rule 1: [A counterintuitive, specific, actionable wealth rule with a number. Something a rich dad teaches his son. Max 10 words.]",
     "Rule 2: [A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
     "Rule 3: [A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words. This is the 'Aha!' moment.]"

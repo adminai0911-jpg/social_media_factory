@@ -1004,7 +1004,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         maxWidth: "90%"
       }, children: script.authority_claim })
     ] }) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }, children: (script.numbered_list || []).map((item, i) => {
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }, children: (script.numbered_list || []).slice(0, 3).map((item, i) => {
       const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
       if (t < itemTime) return null;
       const slideProgress = (0,esm.interpolate)(frame, [Math.round(itemTime * fps), Math.round(itemTime * fps) + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -1120,7 +1120,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         alignItems: "flex-start",
         marginBottom: 40,
         opacity: (0,esm.interpolate)(t - p_cta, [1.5, 2.5], [1, 0.4], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
-      }, children: (script.numbered_list || []).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+      }, children: (script.numbered_list || []).slice(0, 3).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
         fontFamily: HINDI_FONT,
         fontSize: 42,
         color: "rgba(255,255,255,0.75)",

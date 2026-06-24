@@ -450,8 +450,10 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 
     # 💰 MONETIZATION: Inject affiliate link into every caption BEFORE hashtags
     if "#" in description:
-        parts = description.split("#", 1)
-        description = f"{parts[0].strip()}\n\n{CURRENT_CTA['caption']}\n\n#{parts[1]}"
+        idx = description.find("#")
+        base_text = description[:idx].strip()
+        tags_text = description[idx:].strip()
+        description = f"{base_text}\n\n{CURRENT_CTA['caption']}\n\n{tags_text}"
     else:
         description = f"{description}\n\n{CURRENT_CTA['caption']}"
         
@@ -499,7 +501,7 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
 <b>Caption Used:</b>
-{description}
+{__import__('html').escape(description)}
 """
     send_telegram_alert(status_msg)
     
