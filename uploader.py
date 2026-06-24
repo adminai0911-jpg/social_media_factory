@@ -20,15 +20,74 @@ YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID", "")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET", "")
 YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN", "")
 
-# Twitter/X credentials
-TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "")
-TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "")
-TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", "")
-TWITTER_ACCESS_SECRET = os.environ.get("TWITTER_ACCESS_SECRET", "")
-
 # Telegram credentials
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 💰 MONETIZATION: 3-Stream Passive Income Rotation
+# ══════════════════════════════════════════════════════════════════════════════
+AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "")
+AMAZON_AFFILIATE_LINK = os.environ.get("AMAZON_AFFILIATE_LINK", "")
+OUTLIER_LINK = os.environ.get("OUTLIER_LINK", "")
+
+def get_random_cta():
+    import random as _rand
+    options = []
+    
+    if AFFILIATE_LINK:
+        options.append({
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{AFFILIATE_LINK}\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {AFFILIATE_LINK}"
+        })
+        
+    if AMAZON_AFFILIATE_LINK:
+        options.append({
+            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\n{AMAZON_AFFILIATE_LINK}\nHar ameer insaan ne yeh book padhi hai.",
+            "caption": f"📚 Yeh book padho — Wealth Psychology: {AMAZON_AFFILIATE_LINK}"
+        })
+        
+    if OUTLIER_LINK:
+        options.append({
+            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\n{OUTLIER_LINK}\nAI ko train karo aur dollars mein earn karo.",
+            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour: {OUTLIER_LINK}"
+        })
+        
+    if not options:
+        # Fallback if secrets are missing
+        return {
+            "text": "📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\nhttps://groww.in\nZero commission. Aaj hi shuru karo.",
+            "caption": "📈 Free Demat Account — Zero Commission Invest karo: https://groww.in"
+        }
+        
+    return _rand.choice(options)
+
+# Generate one unified CTA for this entire factory run
+CURRENT_CTA = get_random_cta()
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔍 SEO ENGINE: Keyword-rich YouTube title rotation
+# ══════════════════════════════════════════════════════════════════════════════
+SEO_TITLE_TEMPLATES = [
+    "पैसे का सबसे बड़ा राज़ जो School ने नहीं बताया | Wealth Psychology Hindi #Shorts",
+    "99% लोग यह गलती करते हैं | Dark Psychology of Money Hindi #Shorts",
+    "Ameer Kaise Bane | अमीर लोगों का सबसे बड़ा राज़ #Shorts",
+    "Rich vs Poor Mindset | अमीर और गरीब में फर्क #Shorts",
+    "Paise Ki Psychology | पैसे की मनोविज्ञान Hindi #Shorts",
+    "Financial Freedom Kaise Milegi | आर्थिक आज़ादी का राज़ #Shorts",
+    "Investment Rules जो आपको कोई नहीं बताता | Wealth Rules Hindi #Shorts",
+    "Zerodha Groww से Paise Kaise Kamaye | Stock Market Hindi #Shorts",
+    "Success Ki Psychology | सफलता का राज़ Hindi Motivation #Shorts",
+    "Middle Class Trap | मिडल क्लास से निकलने का तरीका #Shorts",
+]
+
+PINNED_COMMENTS = [
+    "🔥 Part 2 kal aayega — Follow karo taaki miss na ho! Tum kaunse number pe ho? 1, 2, ya 3? Comment karo 👇",
+    "❤️ Agar yeh video ne tumhari aankhen khol di — SAVE karo aur ek dost ko Share karo jise yeh sunna zaroori hai! 🔖",
+    "🚀 Follow karo — har roz ek naya wealth secret post karta hoon jo 1% log jaante hain. Next video aur bhi powerful hai!",
+    "📌 Save this. 6 mahine baad ise dobara dekho — tum khud ko thanks kahoge. Ready ho? READY likho neeche 👇",
+    "💡 Comment karo: Tumhari sabse badi financial mistake kya hai? Main personally padhta hoon sabke comments 👇",
+]
 
 def send_telegram_alert(message):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -36,18 +95,17 @@ def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"}
     try:
-        requests.post(url, data=payload)
+        requests.post(url, data=payload, timeout=10)
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
 def get_facebook_page_token(user_token, page_id):
     if not user_token or not page_id:
         return user_token
-    # Try to exchange User Access Token for Page Access Token dynamically
     url = f"https://graph.facebook.com/v19.0/{page_id}"
     params = {"fields": "access_token", "access_token": user_token}
     try:
-        res = requests.get(url, params=params).json()
+        res = requests.get(url, params=params, timeout=10).json()
         if "access_token" in res:
             logger.info("Successfully obtained Page Access Token dynamically.")
             return res["access_token"]
@@ -57,25 +115,48 @@ def get_facebook_page_token(user_token, page_id):
         logger.error(f"Error exchanging token: {e}. Using original token.")
     return user_token
 
-def upload_to_tmpfiles(file_path):
-    logger.info("Uploading video to tmpfiles.org to get a public URL for Instagram...")
+def upload_to_temp_host(file_path):
+    logger.info("Uploading video to temporary public host (tmpfiles.org)...")
     try:
-        url = "https://tmpfiles.org/api/v1/upload"
-        with open(file_path, "rb") as f:
-            files = {"file": f}
-            res = requests.post(url, files=files)
+        with open(file_path, 'rb') as f:
+            res = requests.post('https://tmpfiles.org/api/v1/upload', files={'file': f}, timeout=120)
             if res.status_code == 200:
                 data = res.json()
-                file_url = data["data"]["url"]
-                # Convert the view URL to direct download URL
-                direct_url = file_url.replace("https://tmpfiles.org/", "https://tmpfiles.org/dl/")
-                logger.info(f"Public URL generated for Instagram: {direct_url}")
-                return direct_url
-            else:
-                logger.error(f"Failed to upload to tmpfiles.org: {res.status_code} - {res.text}")
+                if data.get('status') == 'success':
+                    url = data['data']['url']
+                    direct_url = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+                    logger.info(f"✅ Video uploaded to public URL: {direct_url}")
+                    return direct_url
     except Exception as e:
-        logger.error(f"Error uploading to tmpfiles.org: {e}")
+        logger.error(f"tmpfiles.org failed: {e}")
+
+    logger.info("Fallback: Uploading to uguu.se...")
+    try:
+        with open(file_path, 'rb') as f:
+            res = requests.post("https://uguu.se/upload", files={'files[]': f}, timeout=120)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('success'):
+                    url = data['files'][0]['url']
+                    logger.info(f"✅ Video uploaded to public URL: {url}")
+                    return url
+    except Exception as e:
+        logger.error(f"uguu.se upload failed: {e}")
+        
     return None
+
+def wait_for_ig_media_ready(creation_id, access_token):
+    url = f"https://graph.facebook.com/v19.0/{creation_id}?fields=status_code&access_token={access_token}"
+    for _ in range(12):
+        res = requests.get(url).json()
+        status = res.get("status_code", "ERROR")
+        if status == "FINISHED":
+            return True
+        elif status == "ERROR" or status == "EXPIRED":
+            logger.error(f"IG container failed: {status}")
+            return False
+        time.sleep(10)
+    return False
 
 def upload_to_facebook_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID:
@@ -89,7 +170,7 @@ def upload_to_facebook_reels(video_path, description):
     init_payload = {"upload_phase": "start", "access_token": page_token}
     
     try:
-        init_res = requests.post(init_url, data=init_payload).json()
+        init_res = requests.post(init_url, data=init_payload, timeout=30).json()
         if "video_id" not in init_res:
             logger.error(f"Failed to initialize FB upload: {init_res}")
             return False
@@ -99,13 +180,13 @@ def upload_to_facebook_reels(video_path, description):
         
         headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
         with open(video_path, "rb") as f:
-            upload_res = requests.post(upload_url, headers=headers, data=f).json()
+            requests.post(upload_url, headers=headers, data=f, timeout=60).json()
             
         publish_payload = {
             "upload_phase": "finish", "access_token": page_token,
             "video_id": video_id, "video_state": "PUBLISHED", "description": description
         }
-        publish_res = requests.post(init_url, data=publish_payload).json()
+        publish_res = requests.post(init_url, data=publish_payload, timeout=30).json()
         if "success" in publish_res and publish_res["success"]:
             logger.info("✅ Successfully published to Facebook Reels!")
             return True
@@ -115,62 +196,67 @@ def upload_to_facebook_reels(video_path, description):
         logger.error(f"FB Upload Exception: {e}")
     return False
 
-def upload_to_instagram_reels(video_path, description):
-    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
-        logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
-        return False
-        
+def upload_to_facebook_story(video_path):
+    if not PAGE_ACCESS_TOKEN or not PAGE_ID: return False
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
     
-    # Upload video to tmpfiles.org to get a direct public URL
-    video_url = upload_to_tmpfiles(video_path)
-    if not video_url:
-        logger.error("❌ Failed to get a public URL for Instagram Reel. Skipping IG upload.")
-        return False
+    logger.info("Posting Facebook Story...")
+    init_url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/video_stories"
+    init_payload = {"upload_phase": "start", "access_token": page_token}
+    
+    try:
+        init_res = requests.post(init_url, data=init_payload, timeout=30).json()
+        if "video_id" not in init_res:
+            logger.error(f"Failed to initialize FB Story upload: {init_res}")
+            return False
+            
+        video_id = init_res["video_id"]
+        upload_url = init_res["upload_url"]
+        
+        headers = {"Authorization": f"OAuth {page_token}", "offset": "0", "file_size": str(os.path.getsize(video_path))}
+        with open(video_path, "rb") as f:
+            requests.post(upload_url, headers=headers, data=f, timeout=120).json()
+            
+        publish_payload = {
+            "upload_phase": "finish", "access_token": page_token,
+            "video_id": video_id
+        }
+        publish_res = requests.post(init_url, data=publish_payload, timeout=30).json()
+        if "success" in publish_res and publish_res["success"]:
+            logger.info("✅ Facebook Story posted!")
+            return True
+        else:
+            logger.error(f"❌ Facebook Story API error: {publish_res}")
+    except Exception as e:
+        logger.error(f"❌ Facebook Story failed: {e}")
+    return False
 
-    logger.info(f"📤 Starting Instagram Reel upload with URL: {video_url}")
+def upload_to_instagram_reels(video_url, description):
+    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID:
+        logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
+        return False
+    
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    logger.info(f"📤 Starting Instagram Reel upload with URL")
+    
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
     container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
     
     try:
-        container_res = requests.post(container_url, data=container_payload).json()
+        container_res = requests.post(container_url, data=container_payload, timeout=30).json()
         if "id" not in container_res:
             logger.error(f"Failed to create IG Media Container: {container_res}")
             return False
             
         creation_id = container_res["id"]
+        logger.info(f"✅ Created IG container: {creation_id}")
         
-        # Poll container status until it is FINISHED or fails
-        status_url = f"https://graph.facebook.com/v19.0/{creation_id}"
-        status_params = {"fields": "status_code,status", "access_token": page_token}
-        
-        max_attempts = 30
-        seconds_between_attempts = 10
-        is_ready = False
-        
-        logger.info("Waiting for Instagram to process the video...")
-        for attempt in range(max_attempts):
-            time.sleep(seconds_between_attempts)
-            try:
-                status_res = requests.get(status_url, params=status_params).json()
-                status_code = status_res.get("status_code", "")
-                logger.info(f"Instagram container status (attempt {attempt+1}/{max_attempts}): {status_code}")
-                if status_code == "FINISHED":
-                    is_ready = True
-                    break
-                elif status_code in ["ERROR", "EXPIRED"]:
-                    logger.error(f"Instagram video processing failed: {status_res}")
-                    break
-            except Exception as e:
-                logger.error(f"Error checking Instagram container status: {e}")
-                
-        if not is_ready:
-            logger.error("Instagram Reels container did not become ready in time. Publishing skipped.")
+        if not wait_for_ig_media_ready(creation_id, page_token):
             return False
             
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
         publish_payload = {"creation_id": creation_id, "access_token": page_token}
-        publish_res = requests.post(publish_url, data=publish_payload).json()
+        publish_res = requests.post(publish_url, data=publish_payload, timeout=30).json()
         
         if "id" in publish_res:
             logger.info("✅ Successfully published to Instagram Reels!")
@@ -179,6 +265,31 @@ def upload_to_instagram_reels(video_path, description):
             logger.error(f"Failed to publish IG Reel: {publish_res}")
     except Exception as e:
         logger.error(f"IG Upload Exception: {e}")
+    return False
+
+def upload_to_instagram_story(video_url):
+    if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID: return False
+    page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
+    logger.info("Posting Instagram Story...")
+    url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
+    payload = {"media_type": "STORIES", "video_url": video_url, "access_token": page_token}
+    try:
+        res = requests.post(url, data=payload).json()
+        creation_id = res.get("id")
+        if not creation_id:
+            logger.error(f"❌ Failed to create IG story container: {res}")
+            return False
+        if not wait_for_ig_media_ready(creation_id, page_token):
+            return False
+        pub_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media_publish"
+        pub_res = requests.post(pub_url, data={"creation_id": creation_id, "access_token": page_token}).json()
+        if "id" in pub_res:
+            logger.info("✅ Instagram Story posted!")
+            return True
+        else:
+            logger.error(f"❌ Failed to publish IG Story: {pub_res}")
+    except Exception as e:
+        logger.error(f"❌ Instagram Story failed: {e}")
     return False
 
 def upload_to_youtube_shorts(video_path, description):
@@ -196,7 +307,7 @@ def upload_to_youtube_shorts(video_path, description):
             "refresh_token": YOUTUBE_REFRESH_TOKEN,
             "grant_type": "refresh_token"
         }
-        token_res = requests.post(token_url, data=token_payload).json()
+        token_res = requests.post(token_url, data=token_payload, timeout=30).json()
         access_token = token_res.get("access_token")
         if not access_token:
             logger.error(f"Failed to refresh YouTube access token: {token_res}")
@@ -211,18 +322,26 @@ def upload_to_youtube_shorts(video_path, description):
             "X-Upload-Content-Type": "video/mp4"
         }
         
-        # Clean up title (limit to 70 chars, remove hashtags)
-        clean_title = description.split("#")[0].strip()
-        if not clean_title:
-            clean_title = "Viral Short"
-        if len(clean_title) > 70:
-            clean_title = clean_title[:67] + "..."
-            
+        # 🔍 SEO-OPTIMIZED TITLE: rotate through keyword-rich templates
+        import random as _rand
+        seo_title = _rand.choice(SEO_TITLE_TEMPLATES)
+
+        # Build rich YouTube description for SEO + monetization
+        clean_body = description.split("#")[0].strip()
+        full_description = f"""{clean_body}
+
+══════════════════════════════
+{CURRENT_CTA['text']}
+══════════════════════════════
+🔔 SUBSCRIBE karo aur bell icon dabao — har roz ek naya wealth secret!
+
+#WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules #Shorts #Money #Rich"""
+
         metadata = {
             "snippet": {
-                "title": clean_title,
-                "description": description,
-                "categoryId": "22"  # People & Blogs
+                "title": seo_title,
+                "description": full_description,
+                "categoryId": "27"  # Education (better for finance content than People & Blogs)
             },
             "status": {
                 "privacyStatus": "public",
@@ -230,7 +349,7 @@ def upload_to_youtube_shorts(video_path, description):
             }
         }
         
-        init_res = requests.post(upload_init_url, headers=headers, json=metadata)
+        init_res = requests.post(upload_init_url, headers=headers, json=metadata, timeout=30)
         if init_res.status_code != 200:
             logger.error(f"Failed to initialize YouTube upload: {init_res.status_code} - {init_res.text}")
             return False
@@ -248,10 +367,15 @@ def upload_to_youtube_shorts(video_path, description):
         }
         
         with open(video_path, "rb") as f:
-            put_res = requests.put(upload_url, headers=put_headers, data=f)
+            put_res = requests.put(upload_url, headers=put_headers, data=f, timeout=120)
             
         if put_res.status_code in [200, 201]:
+            video_data = put_res.json() if put_res.text else {}
+            video_id = video_data.get("id", "")
             logger.info("✅ Successfully published to YouTube Shorts!")
+            # 📌 AUTO-PIN CTA COMMENT
+            if video_id:
+                youtube_pin_comment(video_id, access_token)
             return True
         else:
             logger.error(f"YouTube file upload failed: {put_res.status_code} - {put_res.text}")
@@ -259,67 +383,117 @@ def upload_to_youtube_shorts(video_path, description):
         logger.error(f"YouTube Upload Exception: {e}")
     return False
 
-def upload_to_x_via_playwright(video_path, description):
-    """Post to X/Twitter using internal API automation (twikit).
-    ✅ 100% FREE — no API key, no webhook service, no paid subscription.
-    Requires X_USERNAME and X_PASSWORD in GitHub Secrets.
-    """
-    import subprocess, sys
-
-    x_user = os.environ.get("X_USERNAME", "")
-    x_pass = os.environ.get("X_PASSWORD", "")
-
-    if not x_user or not x_pass:
-        logger.warning("⏭️ Skipping X/Twitter (Missing X_USERNAME or X_PASSWORD secret)")
-        logger.warning("👉 Fix: Add X_USERNAME and X_PASSWORD to GitHub Secrets — that's it, no API key needed!")
-        return False
-
-    logger.info("📤 Starting X/Twitter post via Internal API (twikit)...")
+def youtube_pin_comment(video_id, access_token):
+    """Automatically posts and pins a CTA comment on every YouTube upload."""
+    import random as _rand
+    pinned_text = _rand.choice(PINNED_COMMENTS)
     try:
-        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "post_x_twikit.py")
-        result = subprocess.run(
-            [sys.executable, script_path, description, video_path],
-            timeout=300,
-            capture_output=True,
-            text=True,
-            env={**os.environ}
-        )
-        logger.info(result.stdout)
-        if result.returncode == 0:
-            logger.info("✅ Successfully posted to X (Twitter)!")
+        # Step 1: Post the comment
+        comment_url = "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet"
+        comment_headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+        comment_body = {
+            "snippet": {
+                "videoId": video_id,
+                "topLevelComment": {
+                    "snippet": {"textOriginal": pinned_text}
+                }
+            }
+        }
+        comment_res = requests.post(comment_url, headers=comment_headers, json=comment_body, timeout=30).json()
+        comment_id = comment_res.get("id", "")
+        if not comment_id:
+            logger.warning(f"Could not post pinned comment: {comment_res}")
+            return
+        # Step 2: Pin it
+        pin_url = f"https://www.googleapis.com/youtube/v3/comments?part=snippet"
+        pin_body = {"id": comment_id, "snippet": {"moderationStatus": "published"}}
+        requests.put(pin_url, headers=comment_headers, json=pin_body, timeout=30)
+        logger.info(f"📌 Auto-pinned comment on video {video_id}: {pinned_text[:60]}...")
+    except Exception as e:
+        logger.warning(f"Auto-pin comment failed (non-critical): {e}")
+
+def trigger_make_webhook(video_url, caption):
+    webhook_url = os.environ.get("MAKE_WEBHOOK_URL")
+    if not webhook_url:
+        logger.warning("MAKE_WEBHOOK_URL not found in .env. Skipping Buffer Bridge distribution (X/Pinterest/LinkedIn).")
+        return False
+        
+    logger.info("🌐 Triggering Make.com Webhook for Buffer Bridge (X, Pinterest, LinkedIn)...")
+    
+    # Generate a Twitter-safe caption (< 280 characters)
+    # This strips all hashtags and truncates to 250 chars safely
+    twitter_cap = caption.split("#")[0].strip()
+    if len(twitter_cap) > 250:
+        twitter_cap = twitter_cap[:247] + "..."
+        
+    try:
+        payload = {
+            "video_url": video_url,
+            "caption": caption,
+            "twitter_caption": twitter_cap
+        }
+        res = requests.post(webhook_url, json=payload, timeout=60)
+        if res.status_code in [200, 201, 202]:
+            logger.info("✅ Successfully triggered Make.com Webhook!")
             return True
         else:
-            logger.error(f"❌ X API posting failed:\n{result.stderr}")
+            logger.error(f"❌ Make.com Webhook failed with status {res.status_code}: {res.text}")
             return False
-    except subprocess.TimeoutExpired:
-        logger.error("❌ X posting timed out after 5 minutes")
     except Exception as e:
-        logger.error(f"❌ X Upload Exception: {e}")
-    return False
+        logger.error(f"❌ Make.com Webhook exception: {e}")
+        return False
 
 def distribute_to_all_platforms(video_path, description):
-    logger.info("🌐 Initiating 4-Platform Distribution Pipeline...")
+    logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
+
+    # 💰 MONETIZATION: Inject affiliate link into every caption BEFORE hashtags
+    if "#" in description:
+        parts = description.split("#", 1)
+        description = f"{parts[0].strip()}\n\n{CURRENT_CTA['caption']}\n\n#{parts[1]}"
+    else:
+        description = f"{description}\n\n{CURRENT_CTA['caption']}"
+        
+    logger.info(f"💰 Monetization CTA injected into caption: {CURRENT_CTA['caption'][:40]}...")
+
     logger.info(f"📝 Final Caption: {description}")
     
-    send_telegram_alert("🚀 <b>V32 Factory Wakeup</b>\nStarting generation and distribution process...")
-    
-    # Run the uploads
-    fb = upload_to_facebook_reels(video_path, description)
-    ig = upload_to_instagram_reels(video_path, description)
     yt = upload_to_youtube_shorts(video_path, description)
-    x = upload_to_x_via_playwright(video_path, description)
+    time.sleep(5)
     
+    fb = upload_to_facebook_reels(video_path, description)
+    time.sleep(5)
+    
+    video_url = upload_to_temp_host(video_path)
+    ig, ig_story, fb_story, buffer_bridge = False, False, False, False
+    
+    if video_url:
+        ig = upload_to_instagram_reels(video_url, description)
+        time.sleep(5)
+        ig_story = upload_to_instagram_story(video_url)
+        time.sleep(5)
+        fb_story = upload_to_facebook_story(video_path)
+        time.sleep(5)
+        buffer_bridge = trigger_make_webhook(video_url, description)
+    else:
+        logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
+        
     logger.info("🚀 Distribution Complete!")
     
     status_msg = f"""
-✅ <b>V32 Factory Complete</b>
+✅ <b>V35 Factory Complete</b>
 <i>Successfully distributed payload.</i>
 
-<b>Platforms:</b>
-🟦 Facebook: {'✅' if fb else '❌'}
-🟪 Instagram: {'✅' if ig else '❌'}
-🟥 YouTube: {'✅' if yt else '❌'}
-⬛ X/Twitter: {'✅' if x else '❌'}
+<b>Primary Triad:</b>
+🟥 YouTube Shorts: {'✅' if yt else '❌'}
+🟦 Facebook Reels: {'✅' if fb else '❌'}
+🟪 Instagram Reels: {'✅' if ig else '❌'}
+
+<b>Stories:</b>
+📘 Facebook Story: {'✅' if fb_story else '❌'}
+📸 Instagram Story: {'✅' if ig_story else '❌'}
+
+<b>Buffer Bridge (X / Pinterest / LinkedIn):</b>
+🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
 <b>Caption Used:</b>
 {description}
@@ -330,7 +504,9 @@ def distribute_to_all_platforms(video_path, description):
         "facebook": fb,
         "instagram": ig,
         "youtube": yt,
-        "x": x
+        "fb_story": fb_story,
+        "ig_story": ig_story,
+        "buffer_bridge": buffer_bridge
     }
 
 if __name__ == "__main__":
@@ -339,7 +515,6 @@ if __name__ == "__main__":
     
     if not os.path.exists(video_path):
         logger.error(f"Rendered video not found at {video_path}")
-        # Stop execution so we don't upload a dummy file that breaks IG/X and silently fails on FB/YT
         raise FileNotFoundError(f"Video file missing: {video_path}")
         
     caption = "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"

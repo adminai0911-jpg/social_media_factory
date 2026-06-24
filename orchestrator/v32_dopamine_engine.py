@@ -9,12 +9,80 @@ import time
 import wave
 import math
 import struct
-import google.generativeai as genai
+from datetime import datetime
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from mutagen.mp3 import MP3
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - V32_ENGINE - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔥 DYNAMIC HASHTAG ROTATION ENGINE — 40+ hashtags, fresh mix every run
+# ══════════════════════════════════════════════════════════════════════════════
+HASHTAG_POOL = {
+    # MEGA tags (100M+ posts) — maximum reach
+    "mega": [
+        "#motivation", "#success", "#mindset", "#money", "#rich",
+        "#financialfreedom", "#investment", "#wealth", "#entrepreneur", "#lifestyle"
+    ],
+    # NICHE wealth/psychology (1M–10M posts) — highly targeted audience
+    "niche_wealth": [
+        "#WealthMindset", "#MoneyMindset", "#RichMindset", "#FinancialLiteracy",
+        "#PassiveIncome", "#InvestSmart", "#WealthBuilding", "#MoneyTips",
+        "#FinancialFreedom", "#MoneyManagement"
+    ],
+    # HINDI / INDIA-SPECIFIC (high relevance for your niche audience)
+    "hindi": [
+        "#HindiMotivation", "#SuccessRules", "#PsychologyFacts", "#MotivationHindi",
+        "#IndianEntrepreneur", "#SelfMadeIndia", "#DesiMillionaire", "#IndiaGrowth",
+        "#HindiShorts", "#IndianYouth"
+    ],
+    # PSYCHOLOGY / DARK PSYCHOLOGY (trending micro-niche)
+    "psychology": [
+        "#DarkPsychology", "#BrainHack", "#MindHacks", "#PsychologyOfMoney",
+        "#BehavioralEconomics", "#CognitiveBias", "#MindsetShift", "#GrowthMindset",
+        "#PsychologyTips", "#HumanBehavior"
+    ],
+    # REELS/SHORTS ALGO TAGS (boost distribution on platform)
+    "platform": [
+        "#Reels", "#Shorts", "#ViralReels", "#TrendingShorts", "#ExploreReels",
+        "#ReelItFeelIt", "#InstagramReels", "#YoutubeShorts", "#ViralVideo", "#ForYou"
+    ]
+}
+
+def get_dynamic_hashtags():
+    """Pick a fresh, optimized hashtag combo every run — never the same set twice."""
+    selected = []
+    selected += random.sample(HASHTAG_POOL["mega"], 1)          # 1 mega tag
+    selected += random.sample(HASHTAG_POOL["niche_wealth"], 1)  # 1 niche wealth
+    selected += random.sample(HASHTAG_POOL["hindi"], 1)         # 1 Hindi/India
+    selected += random.sample(HASHTAG_POOL["psychology"], 1)    # 1 psychology
+    selected += random.sample(HASHTAG_POOL["platform"], 1)      # 1 platform algo
+    random.shuffle(selected)
+    return " ".join(selected)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📅 SERIES PART TRACKER — Ensures Part 1 → 2 → 3 hooks are always accurate
+# ══════════════════════════════════════════════════════════════════════════════
+SERIES_TRACKER_FILE = os.path.join(os.path.dirname(__file__), "series_tracker.json")
+
+def get_series_part():
+    """Returns the current series part (1, 2, or 3) and advances the counter."""
+    try:
+        if os.path.exists(SERIES_TRACKER_FILE):
+            with open(SERIES_TRACKER_FILE, "r") as f:
+                data = json.load(f)
+            part = data.get("current_part", 1)
+        else:
+            part = 1
+        next_part = (part % 3) + 1  # cycles 1 → 2 → 3 → 1 → ...
+        with open(SERIES_TRACKER_FILE, "w") as f:
+            json.dump({"current_part": next_part, "last_run": datetime.now().isoformat()}, f)
+        return part
+    except Exception:
+        return random.randint(1, 3)
 
 load_dotenv()
 
@@ -41,19 +109,6 @@ VOICES = [
     "hi-IN-SwaraNeural",  # Female
 ]
 
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-
-def send_telegram_alert(message):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        return
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"}
-    try:
-        requests.post(url, data=payload)
-    except Exception as e:
-        logger.error(f"Failed to send Telegram alert: {e}")
-
 
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
@@ -64,45 +119,153 @@ def generate_dynamic_script():
         
     random.shuffle(valid_keys)
 
-    prompt = """
-    You are an elite, neuro-marketing viral scriptwriter.
-    Generate a highly engaging short-form video script specifically designed to trigger dopamine and adrenaline in the viewer.
-    The script MUST be in Hindi (Devanagari or Roman Hindi).
-    You must return ONLY a raw JSON object (no markdown, no backticks, no explanation).
-    
-    Structure:
-    {
-      "micro_niche": "A highly specific, unique niche (e.g., 'Quantum Gardening for City Dwellers', 'Psychology of Getting Rich')",
-      "style_seed": <integer 1-100>,
-      "emojis": ["<emoji1>", "<emoji2>", "<emoji3>"],
-      "red_box_keyword": "A single intense 4-6 letter English word (e.g., FAKE, LIES, TRAP, SCAM)",
-      "subliminal_flash_word": "A short English phrase (e.g., WAKE UP, LOOK CLOSER)",
-      "serotonin_payoff_number": <random large integer between 10000 and 999999>,
-      "phase_1": "The Hook. 1 sentence in Hindi. Create a curiosity gap.",
-      "phase_2": "The Build-up. 1 sentence in Hindi. Personal/relatable stakes.",
-      "phase_3": "The Pattern Interrupt. 2-3 sentences in Hindi. A shocking realization or weird fact.",
-      "phase_4": "The Payoff. 1-2 sentences in Hindi. The resolution to the hook.",
-      "phase_5": "The Loop/CTA. 1 sentence in Hindi. A valuable takeaway that mirrors the opening.",
-      "caption": "A single engaging Hindi caption sentence followed by EXACTLY 5 English hashtags (NO MORE, NO LESS)."
-    }
-    """
+    # ── ULTIMATE V3: Psychological Weapon Hooks — 6 Categories, 24 Triggers ─────
+    hooks = [
+        # 🧠 CATEGORY 1: CURIOSITY GAP — Brain MUST finish the thought
+        "मैंने 5 साल बर्बाद किए यह गलती करके। आप मत करना।",
+        "The one word that separates the rich from the poor. Most people die never learning it.",
+        "I studied 500 crore worth of wealth decisions. The pattern will shock you.",
+        "जो आपको school ने कभी नहीं सिखाया — वो 10 seconds में बता देता हूँ।",
+
+        # 😨 CATEGORY 2: FEAR OF LOSS — Survival brain activates instantly
+        "हर रोज़ आप ₹847 खो रहे हो। यह calculation देखो।",
+        "If you earn under ₹1 lakh/month and do THIS — you will never escape.",
+        "आपकी एक आदत आपकी पूरी ज़िंदगी की savings खा रही है। अभी रुको।",
+        "The invisible financial mistake that is costing you ₹12 lakh every decade.",
+
+        # 🎯 CATEGORY 3: IDENTITY THREAT — Personally called out, cannot look away
+        "अगर आप यह वीडियो skip करते हो — तो आप exactly वही करते हो जो poor लोग करते हैं।",
+        "This mindset is the ONLY reason you are not rich yet. Be honest with yourself.",
+        "तुम्हारे parents ने पैसे के बारे में 3 झूठ सिखाए। आज तोड़ते हैं।",
+        "The financially free version of you is watching this. Will you listen?",
+
+        # 🏆 CATEGORY 4: AUTHORITY + PROOF — Builds instant credibility and trust
+        "Dhirubhai Ambani, Rakesh Jhunjhunwala — दोनों ने यह एक rule follow किया।",
+        "Harvard Business Study says: 92% of middle class makes THIS mistake before 35.",
+        "Warren Buffett ने यह rule 14 साल की उम्र में सीखा। आप आज सीखोगे।",
+        "The wealth rule that took me 7 years to learn — in 60 seconds.",
+
+        # 🔁 CATEGORY 5: SERIES / OPEN LOOP — Forces follow for Part 2
+        "Part 1/3: पैसे की वो psychology जो 1% लोग जानते हैं।",
+        "This is the most important financial video I have ever made. Here is why.",
+        "यह 3-part series तुम्हारी financial life बदल देगी। Part 1 शुरू करते हैं।",
+        "Billionaires use these 3 rules. Today: Rule #1. Follow for Rule #2 tomorrow.",
+
+        # 💡 CATEGORY 6: GENUINE VALUE PROMISE — Builds trust AND drives watch-time
+        "मैं तुम्हें वो 3 rules बताने वाला हूँ जो rich dads अपने बच्चों को सिखाते हैं।",
+        "The exact step-by-step formula to go from ₹0 savings to financial freedom.",
+        "अगर तुम्हारी age 18-35 है — यह वीडियो तुम्हारी ज़िंदगी का सबसे important investment है।",
+        "The 60-second wealth education your school stole from you."
+    ]
+
+    ctas = [
+        # 🔥 IDENTITY COMMITMENT — strongest engagement trigger
+        "Comment 'FIRE 🔥' अगर यह तुम्हारी आंखें खोल गया।",
+        "Type '1' अगर तुम यह जानते थे। Type '2' अगर नहीं। Comment करो — I read every one 👇",
+        "Comment करो — तुम्हारी सबसे बड़ी financial mistake क्या है? मैं personally reply करूँगा 💬",
+
+        # 📌 URGENCY + FOMO — high save rate = algorithm boost
+        "Save this NOW before the algorithm buries it. You WILL need this. 📌",
+        "इसे Save करो। 6 महीने बाद इसे फिर देखना — तुम चौंक जाओगे। 🔖",
+
+        # ❤️ SHARING TRIGGER — organic reach multiplier
+        "Share this with ONE person जो financially struggle कर रहा है। यही असली friendship है। ❤️‍🔥",
+        "Tag वो दोस्त जिसे यह सुनना ज़रूरी है — तुम उसकी ज़िंदगी बदल दोगे 👇",
+
+        # 🚀 SERIES HOOK — forces account follow
+        "Follow करो — कल Part 2 आएगा जो आज से भी ज़्यादा powerful है। 🚀",
+        "Like करो अगर तुम Part 2 चाहते हो — देखते हैं कितने लोग seriously लेते हैं 👍",
+
+        # 🎯 CHALLENGE CTA — creates viral comment threads
+        "यह rule अगले 7 दिन try करो और comment करो — result क्या आया? 💪"
+    ]
+    hook = random.choice(hooks)
+    cta  = random.choice(ctas)
+
+    hashtags = get_dynamic_hashtags()
+    series_part = get_series_part()
+    logger.info(f"📅 Series Part: {series_part}/3")
+    logger.info(f"#️⃣  Hashtags this run: {hashtags}")
+
+    prompt = f"""You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
+
+═══════════════════════════════════════════════
+DUAL MISSION (BOTH are non-negotiable):
+═══════════════════════════════════════════════
+1. PSYCHOLOGICAL AGGRESSION: Every second of the video must be so gripping the viewer physically cannot scroll away.
+2. GENUINE DEEP VALUE: Every insight must be so real, specific, and actionable that the viewer feels they just learned something worth ₹10,000. This is what builds loyal followers who keep coming back.
+
+The SECRET formula of the most viral Indian finance accounts (FinancewithSharan, Ankur Warikoo, CA Rachana): They are AGGRESSIVE enough to stop the scroll AND VALUABLE enough to earn the save and share. Your script must do BOTH.
+
+═══════════════════════════════════════════════
+6 PSYCHOLOGICAL WEAPONS (USE ALL 6):
+═══════════════════════════════════════════════
+1. CURIOSITY GAP: The hook opens a mental loop. The only way to close it is to watch to the end. Never answer the hook's question before the final 5 seconds.
+2. IDENTITY MIRROR: Every line should make the viewer feel "This is talking directly to ME." Use "tum", "tumhara", "tum log" — never generic "log" or "people."
+3. SPECIFIC NUMBERS: Vague claims are ignored. Specific numbers are believed. Use exact figures: "₹43,847", "73% of Indians under 35", "18 months", "Mukesh Ambani was 24 when he did this."
+4. LOSS AVERSION (2X POWER): The human brain reacts to loss 2.5x more strongly than gain. Frame every insight as something the viewer is CURRENTLY LOSING if they don't know this.
+5. SOCIAL PROOF ESCALATION: Reference real people, real studies, real companies. "Warren Buffett", "IIM study", "Zerodha data shows" — these phrases make viewers trust and share immediately.
+6. DOPAMINE MICRO-REWARDS: Every 3-4 seconds must deliver a NEW surprising fact, number, or insight. This creates a chemical dopamine loop that makes the video literally addictive to watch.
+
+═══════════════════════════════════════════════
+CONTENT QUALITY RULES (NON-NEGOTIABLE):
+═══════════════════════════════════════════════
+- Language: Natural Hinglish — the way a brilliant, wealthy friend speaks over chai. NOT formal textbook Hindi.
+- ZERO generic advice: Never say "work hard", "save money", "be disciplined." These are content killers.
+- Every insight MUST be counterintuitive — something that surprises even a financially aware person.
+- The numbered list must teach a COMPLETE, ACTIONABLE mini-framework — not just disconnected tips.
+- proof_demo MUST name a real person (Indian preferred: Ambani, Premji, Bajaj, Rakesh Jhunjhunwala) or a credible study.
+- This is Part {series_part} of 3 in a series. If hook mentions a series part number, use {series_part}.
+- End with an OPEN LOOP: tease something even bigger in the next video to force follows.
+- Length constraint: Total spoken words must map to a 35-45 second video. Be punchy. Trim anything that repeats information.
+- Return ONLY raw JSON. No markdown. No backticks. No explanation text.
+
+Mandatory: hook MUST use this text exactly: {hook}
+Mandatory: save_cta MUST use this text exactly: {cta}
+
+JSON Schema:
+{{
+  "hook": "{hook}",
+  "curiosity_teaser": "An open loop question or incomplete thought related to the hook. Max 6 words. Example: '₹847 ka asli sach?' or 'Sirf 1% log jaante hain...'",
+  "curiosity_payoff": "The explicit resolution to the curiosity_teaser, revealed during the proof section to close the loop. Max 8 words. Example: 'Yahi ₹847 tumhara loss hai.'",
+  "split_screen": {{
+    "left": "BROKE trap: [The single most PAINFUL and SPECIFIC behavior keeping 90% of Indians poor — max 6 words. Must sting.]",
+    "right": "WEALTH move: [The counterintuitive, surprising behavior of top 1% Indians — max 6 words. Must inspire.]"
+  }},
+  "authority_claim": "ONE brutal, specific, stat-backed truth bomb that makes the viewer's jaw drop. Must include a real Rupee amount OR a real percentage OR a real Indian name. Sound like a professor who has seen behind the curtain. MAX 18 words.",
+  "numbered_list": [
+    "Rule 1: [A counterintuitive, specific, actionable wealth rule with a number. Something a rich dad teaches his son. Max 10 words.]",
+    "Rule 2: [A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
+    "Rule 3: [A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words. This is the 'Aha!' moment.]"
+  ],
+  "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ne 5,000 se shuru kiya tha — 40,000 crore banaye. Yahi rule use kiya.' MAX 15 words.",
+  "proof_source": "ONE real, verifiable source for the proof_demo claim (e.g. 'Source: Forbes India 2024' or 'Source: RBI Annual Report 2025'). ONLY add if the claim is real and verifiable. If not verifiable, return empty string.",
+  "source_tag": "ONE short, real, verifiable source for Rule 3 only (e.g. 'Source: SEBI 2024' or 'Source: IIM-A Study 2023'). ONLY add if Rule 3 contains a real verifiable statistic. If not verifiable, return empty string.",
+  "comment_question": "A SPECIFIC question about this reel's exact content — NOT generic. Example for a 3-rules reel: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya? Sach bolo neeche' or for a mindset reel: 'Poor mindset ya Rich mindset — aap kis side ho? Type P ya R neeche 👇'. MAX 12 words. Must be answerable in 1-3 words so viewers actually comment.",
+  "save_cta": "{cta}",
+  "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India. Sentence 2 (THE COMMENT MAGNET): A direct, personal question the viewer MUST answer right now. End with EXACTLY these hashtags on a new line: {hashtags}"
+}}"""
     
     for key in valid_keys:
         logger.info(f"Trying Gemini API key starting with: {key[:8]}...")
-        genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            client = genai.Client(api_key=key)
+        except Exception as e:
+            logger.error(f"Failed to initialize genai client: {e}")
+            continue
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
-                response = model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
                         response_mime_type="application/json"
                     )
                 )
                 
-                if not response.candidates or not response.text:
-                    logger.error(f"Gemini response blocked or empty. Candidates: {response.candidates}")
+                if not response.text:
+                    logger.error(f"Gemini response blocked or empty.")
                     time.sleep(2)
                     continue
                     
@@ -158,46 +321,36 @@ def generate_offline_script():
     """Bulletproof offline fallback so the video ALWAYS renders with variety."""
     templates = [
         {
-          "micro_niche": "Psychology of Wealth",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["🧠", "🔥", "⚠️"],
-          "red_box_keyword": "FAKE",
-          "subliminal_flash_word": "WAKE UP",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "क्या आपको लगता है कि आप कभी अमीर नहीं बन पाएंगे?",
-          "phase_2": "आप अकेले नहीं हैं, 99% लोग यही सोचते हैं।",
-          "phase_3": "लेकिन सच यह है कि स्कूल हमें पैसे के बारे में सब कुछ गलत सिखाता है।",
-          "phase_4": "असली दौलत तब बनती है जब आपका पैसा आपके लिए काम करता है, न कि आप पैसे के लिए।",
-          "phase_5": "इस मैट्रिक्स से बाहर निकलने का समय आ गया है।",
-          "caption": "आज ही शुरुआत करें। #wealth #mindset #money #success #hindi"
+          "hook": "90% log paise se darte hain. Tum nahi.",
+          "split_screen": {
+              "left": "Poor Mindset - Saves money",
+              "right": "Rich Mindset - Invests money"
+          },
+          "authority_claim": "Tumhe lagta hai luck hai. Yeh ek pattern hai.",
+          "numbered_list": [
+              "Loss se zyada dar nahi lagta",
+              "Decisions data se, emotion se nahi",
+              "99% log EMI trap mein har saal 5 lakh khote hain"
+          ],
+          "proof_demo": "Proof: Mutual funds mein ₹10k/mo se tum 15 saal mein crorepati ho.",
+          "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
+          "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         },
         {
-          "micro_niche": "Dark Psychology",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["👁️", "🤐", "⚡"],
-          "red_box_keyword": "LIES",
-          "subliminal_flash_word": "TRUST NO ONE",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "क्या आप जानते हैं कि लोग आपको रोज़ाना कैसे मैनिपुलेट करते हैं?",
-          "phase_2": "यह आपके सबसे करीबियों से ही शुरू होता है।",
-          "phase_3": "साइकोलॉजी कहती है कि जो लोग हमेशा 'अच्छा' बनते हैं, वो सबसे बड़े मास्टरमाइंड होते हैं।",
-          "phase_4": "उनके मीठे शब्दों के पीछे छिपे असली इरादे को पहचानना सीखें।",
-          "phase_5": "अब और बेवकूफ मत बनो, खेल के नियम बदलो।",
-          "caption": "सच्चाई कड़वी है। #psychology #facts #mindset #lifehacks #hindi"
-        },
-        {
-          "micro_niche": "Sigma Male Rule",
-          "style_seed": random.randint(1, 100),
-          "emojis": ["🐺", "🤫", "📈"],
-          "red_box_keyword": "SILENCE",
-          "subliminal_flash_word": "GRIND HARD",
-          "serotonin_payoff_number": random.randint(10000, 999999),
-          "phase_1": "सिग्मा मेल्स कभी भीड़ का हिस्सा नहीं बनते।",
-          "phase_2": "वो अपनी मंज़िल अकेले तय करते हैं।",
-          "phase_3": "जब दुनिया शोर मचा रही होती है, सिग्मा शांत रहकर अपना एम्पायर खड़ा कर रहा होता है।",
-          "phase_4": "उनकी खामोशी में ही उनकी सबसे बड़ी ताकत छुपी है।",
-          "phase_5": "अकेले चलना सीखो, जीत पक्की है।",
-          "caption": "रूल नंबर 1: किसी पर निर्भर मत रहो। #sigma #motivation #rules #hindi #alpha"
+          "hook": "Why you are secretly sabotaging your own success...",
+          "split_screen": {
+              "left": "Poor Mindset - Blames others",
+              "right": "Rich Mindset - Takes responsibility"
+          },
+          "authority_claim": "Success koi accident nahi, ek formula hai.",
+          "numbered_list": [
+              "Stop waiting for the perfect time",
+              "Focus on skills, not salary",
+              "Average insaan scroll karta hai, top 1% create karta hai"
+          ],
+          "proof_demo": "Fact: Content creators make 5x more than average 9-to-5 workers in India.",
+          "save_cta": "Save this rule before you forget! 📌 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
+          "caption": "सच्चाई कड़वी है। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         }
     ]
     return random.choice(templates)
@@ -269,30 +422,41 @@ def create_8d_hypnotic_music(filename, duration=42.0):
                 rot_speed = 0.16 + 0.09 * math.sin(2 * math.pi * 0.04 * t)
                 angle    += (2 * math.pi * rot_speed) / sample_rate
 
-                # ── Power-preserving panning (never fully silent) ──
-                # Values stay in [0.15 .. 1.0] so sound always present
                 pan_l = 0.15 + 0.85 * ((1 + math.cos(angle)) / 2)
                 pan_r = 0.15 + 0.85 * ((1 + math.sin(angle)) / 2)
 
-                # ── Distance attenuation (sound feels near/far) ──
                 dist_mod = 0.75 + 0.25 * math.sin(2 * math.pi * 0.11 * t)
 
-                # ── Source signal ──
-                # 432 Hz healing carrier (left ear) + harmonics
-                sig_l  = math.sin(2 * math.pi * 432.0 * t)
-                sig_l += 0.32 * math.sin(2 * math.pi * 216.0 * t)   # sub-octave
-                sig_l += 0.20 * math.sin(2 * math.pi * 864.0 * t)   # 2nd harmonic
-                sig_l += 0.12 * math.sin(2 * math.pi * 1296.0 * t)  # 3rd harmonic
-                # 436 Hz binaural beat carrier (right ear) — 4 Hz diff = theta waves
-                sig_r  = math.sin(2 * math.pi * 436.0 * t)
-                sig_r += 0.32 * math.sin(2 * math.pi * 218.0 * t)
-                sig_r += 0.20 * math.sin(2 * math.pi * 872.0 * t)
-                sig_r += 0.12 * math.sin(2 * math.pi * 1308.0 * t)
-                # Sub-bass pulse shared (for headphone vibration)
-                sub = 0.45 * math.sin(2 * math.pi * 60.0 * t) * \
-                      (0.5 + 0.5 * math.sin(2 * math.pi * 1.5 * t))
-                sig_l += sub
-                sig_r += sub
+                # ── SIGMA TRAP BEAT GENERATOR ──
+                import random as _rand
+                bpm = 105.0
+                beat_len = 60.0 / bpm
+                bar_t = t % (beat_len * 4)
+
+                # 1. 808 Sub Kick (Beats 1 & 3)
+                is_kick = (bar_t < beat_len) or (bar_t >= beat_len * 2 and bar_t < beat_len * 2.5)
+                kick = 0.0
+                if is_kick:
+                    k_phase = bar_t if bar_t < beat_len else (bar_t - beat_len * 2)
+                    kick_freq = 120.0 * math.exp(-25.0 * k_phase) + 40.0
+                    kick_env = math.exp(-5.0 * k_phase)
+                    kick = math.sin(2 * math.pi * kick_freq * k_phase) * kick_env * 0.8
+
+                # 2. Trap Hi-Hat (Every 1/4 beat, faster bursts)
+                hh_phase = t % (beat_len / 4.0)
+                hh_env = math.exp(-40.0 * hh_phase)
+                hihat = ((i % 17) / 17.0 - 0.5) * hh_env * 0.3 # Pseudo-noise
+
+                # 3. Dark Phonk Drone (A1 + Harmonics)
+                drone_freq = 55.0
+                drone = math.sin(2 * math.pi * drone_freq * t)
+                drone += 0.5 * math.sin(2 * math.pi * drone_freq * 2.01 * t)
+                drone += 0.25 * math.sin(2 * math.pi * drone_freq * 3.0 * t)
+                drone *= 0.15 * (0.8 + 0.2 * math.sin(2 * math.pi * 0.5 * t)) # Wobble
+
+                # Mix: Kick is centered (mono), Hihat/Drone are 8D panned
+                sig_l = kick + (hihat + drone) * pan_l
+                sig_r = kick + (hihat + drone) * pan_r
 
                 # ── Room reverb (3 taps) ──
                 reverb_l = 0.0
@@ -309,10 +473,10 @@ def create_8d_hypnotic_music(filename, duration=42.0):
                 delay_buf[buf_idx] = (sig_l + sig_r) * 0.5
                 buf_idx = (buf_idx + 1) % (max_tap + 1)
 
-                # ── Final mix with 8D panning applied ──
-                vol = 0.26
-                left_val  = int(vol * pan_l * dist_mod * env * wet_l * 32767)
-                right_val = int(vol * pan_r * dist_mod * env * wet_r * 32767)
+                # ── Final mix with distance attenuation ──
+                vol = 0.35 # Slightly louder for the beat
+                left_val  = int(vol * dist_mod * env * wet_l * 32767)
+                right_val = int(vol * dist_mod * env * wet_r * 32767)
                 left_val  = max(-32767, min(32767, left_val))
                 right_val = max(-32767, min(32767, right_val))
                 f.writeframes(struct.pack('<hh', left_val, right_val))
@@ -336,7 +500,7 @@ def ensure_sfx(studio_dir):
 
 def generate_audio(text, voice_id, output_path):
     """Generate TTS audio using edge-tts."""
-    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--write-media", output_path]
+    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--rate", "+10%", "--write-media", output_path]
     subprocess.run(cmd, check=True)
 
 def get_audio_duration(file_path):
@@ -348,127 +512,263 @@ def get_audio_duration(file_path):
         return 2.0
 
 def download_dynamic_backgrounds(public_dir):
-    """Downloads 4 random high-quality background videos from a massive pool of 211 direct URLs to bypass GitHub IP bans on ytsearch."""
-    logger.info("🎬 Initializing Infinite Dynamic Visual Engine V4 (Anti-Ban Edition)...")
-    send_telegram_alert("🎬 <b>Infinite Visuals V4</b>\nFetching 4 fresh satisfying videos from massive anti-ban pool...")
-
-    # Massive pool of 211 satisfying, 4K, kinetic sand, luxury, and abstract shorts
-    raw_ids = "gZNZ09Ipma0,YOla8Witpsw,W16ZYbVv9HQ,Syd_4J6OWRk,xbbY4mwSnpU,Sb-hF0VxFAQ,39M4Y90P31g,AyL1vQT7vCo,A1nNEigi0sI,KF1p-aEWwDY,6aG36N_Fq00,tdvCen2-KWc,XcM1dbJlxmM,m-5v7tVR-d4,jn26FpJOzV0,842cQ-DVkgU,-vfBJzP3CoQ,GZz9pehwlgA,TXm39ahUdCE,jei0yDqTZEs,ZTy5KWnt__8,joI85ThNqfg,Ks_YLm9khYI,u8zHXq58r4k,fZxbZ54JAr4,e4ITqxOFkhk,-zeZjZjoH2c,blJsl1TxC6Y,DuclUv4q7dE,hmKdLa9m2f0,yiWxYWhzplc,DpCl9xPpwhg,tZgJObochEs,FBIhovLTOno,-QVXZPlPsx0,nDM6VYZElN0,cYHXJaF55E8,KbszjfNRYIU,lUc3FhOjZYY,daPgqtgvAOU,HPpfIHCBie4,5tSs_LAXN9s,bASxRUonggg,NmHYknWACK0,bHIFP44j_lU,6p1YEKKOdPI,T0yrzsgRmdM,18NaqLokQDw,9wzQSOSgUNA,LDYzC0hP-yg,1vCccIcUsTw,ynldNIHy_JY,drL8M9Vjuyc,zFEDCo-eyi4,zJAw8b43Cro,U_QDzkZ1e1w,leTDwQ-RpPA,-uubmFW4npk,H-0Hjm7b_XQ,Cv19w_2-rMc,NvKbHpcymIc,Ck86_rYjFtg,8-tVlZE_dx4,YSwha0Va08s,HvgTc1kK6wk,GPv9699gmHc,GdhUPN96GXM,BbxMC7WYUjI,mPxLJJE1n-o,w4kMt3sXZoM,kzxetZaAEBA,FHJ3CMWnVxY,vtxVK3sbZ0o,FSD9CSaDIEI,zcoEptW-e0U,17uv5_1EVnU,1zRt35DuUFk,-x3NVlK_k20,Cgf-S57gvvI,JgT9FvoDOYY,iLRsCtd5P9s,H4ePSTpwEf8,-rdjhVbhz3U,JEougUq9NPE,3ll5jzjNIcs,6O1bSNc3zik,nVwjnE7uRII,MWG3axiXPAQ,T8YdFHgNBz0,_zosu3mWD74,rAHXaByYFfc,lL1tw13fqSM,AvKf22KPbZs,82VgATisNFk,HLJ-u9-UAGE,jUNiQ-FH1x0,_7P-IvX-HGA,YtDKpxp56p8,b7Cl7S0pLRw,-9YigXrOrtw,YQTfXb0zvec,lOPDr8C4z_A,1xPDDLJiqHA,HZ2MghRKK0E,w_uJhdwIjW0,3-unrKVo8yg,D15el6p5fDs,kcfs1-ryKWE,hBia7Qfhbns,7EqsLd6YHy4,0UU8r2IdVEw,T8naeMyroIA,ZLnM_PbzTjg,Ul1CuejYFIs,H0ocsEiwEOM,eDzuw1je-Q8,_8dccTPJSJs,R9Zz4T0O_-g,ck7RGv4sJZM,msBue-eKiTw,m_kG1kyRiGA,x_o9rwq4QSk,Y6d9f6w4oRE,y8CAxo3QuRU,lP_hWQ1yiko,Ue4scIiV6BY,FIwvZWZoDpk,E0SH7LdHyF0,UF2GUZpyxjc,Uq4OLSRgSQE,wkJvBub5GIA,C6lF9yv0tXY,tmluNCd2a8g,2H_YyklnpFM,3a4iW1Nsq4g,6PQIBM1Fo64,lmOhLna4cgc,o3tMjM7uRME,ccEn8rKotTo,xdPfWDJ1664,278IRQ6HSi4,XR1jUhreXbs,n-lB3F9n_Y4,22KgACvhAXQ,pIUgYkpQEAs,nD4TQtF1baM,FE8rqdSNams,f9jbUEaOUeI,Cv19w_2-rMc,fzzcwMXAXgw,-fikg4wIy74,LxITuvJvryM,oqKXrLlW3_I,mLwlGsRhNIU,hQPR_x1aWng,0xhzwDXfLds,WBHDqnBeJVg,JX2oiG8N6jw,DA1CPXxJpHc,epAZs3kCot0,zlRqCxR7op8,cjAc6tZyf6c,atdsgdl37hg,vsnwEE94Sbg,vIrpykXum80,JhZrM4j1iu8,ptDgX3Vmx4Q,p7XQnAgt18g,5eWNzsThkFI,GbkFn2yaOgg,rF6awqlStl4,Xulwwt5b_GY,NNbUUS9xMNk,RJjaX9yOpQQ,SbI5EWTE4Uk,1EK3bFCZ4mw,MY7jJNE6JUg,t2yjLQ76b_I,agEN2zPaEzY,YAFUyPp_238,y8t5EU5S3xc,x2aAiBlJgTY,9AJGRwIo66I,6HZLhhNQ3D0,4FeU53QiRkY,0RcX_U2xWFs,qs9cf7_mZow,_ZJHzkE1vgI,pWVwVaYAVlM,cAJKxrSaKIA,R4MV2KZlFXE,iUtnZpzkbG8,JD61QhddkNk,9P-3HgcHbS0,ToH0W-0UV3U,oCGBpv_CqYU,t9-cMiEDNyk,D8XSlj_8h_c,L0q1hABMBug,SwqMsUR11EI,6g-3BGPLJcc,mPP7PQvjoDI,3SOY7a73Jzo,57xosdOWbFc,od6m7Z0Pu1w,9F7fNYjFByI,8BYrvVeejzg,Y4Z3GAGFyIs,LTwJnD0KtBU,g41ztfhuFIM,dVtZ3D-1PgM,Kb1WN3g9jOw,AM8zBqUuI3E,Elhj-UOTv0M,CWUvP0iYYOc,5jcUqJZt8F0,nmdpQDEMUio,SR1PF3ZTDBc,b70-_6EgXZw,FwJ50UzkXI4"
+    """Downloads 4 unique HD background videos from Pexels API.
     
-    urls = [f"https://www.youtube.com/shorts/{vid}" for vid in raw_ids.split(",")]
+    This is the PERMANENT fix for GitHub Actions IP bans.
+    YouTube blocks all cloud/datacenter IPs at the network level — no yt-dlp trick fixes this.
+    Pexels is a free official stock video API that:
+    - Works 100% from GitHub Actions (no IP ban ever)
+    - Returns gorgeous HD/4K satisfying portrait videos
+    - Returns DIFFERENT videos every run (AI topic-matched search)
+    - Is completely free and legal
+    
+    Setup: Add PEXELS_API_KEY to GitHub Secrets (free key from pexels.com/api)
+    """
+    logger.info("🎬 Initializing Pexels HD Video Engine (Permanent Fix)...")
+
+
+    pexels_key = os.getenv("PEXELS_API_KEY", "")
+    if not pexels_key:
+        logger.error("❌ PEXELS_API_KEY not set in environment/secrets. Add it at pexels.com/api (free)")
+        pexels_key = None
 
     output_names = ["gta", "sand", "bg3", "bg4"]
-    
-    # High-quality Pexels HD fallback videos (always available, no auth required)
-    fallback_urls = [
-        "https://videos.pexels.com/video-files/3195394/3195394-sd_540_960_25fps.mp4",  # City at night
-        "https://videos.pexels.com/video-files/2098881/2098881-sd_540_960_30fps.mp4",  # Bokeh lights
-        "https://videos.pexels.com/video-files/1580487/1580487-sd_540_960_30fps.mp4",  # Abstract waves
-        "https://videos.pexels.com/video-files/2792374/2792374-sd_540_960_30fps.mp4",  # Particles
+
+    satisfying_queries = [
+        "luxury car moving",
+        "dubai skyline night",
+        "rolex watch luxury",
+        "private jet flying",
+        "stock market trading screen",
+        "supercar slow motion",
+        "mansion luxury estate",
+        "miami beach penthouse",
+        "crypto trading chart",
+        "business man walking suit",
+        "money falling slow motion",
+        "gold bars wealth",
+        "yacht ocean aerial"
     ]
 
-    # Pick 4 random direct URLs
-    selected_urls = random.sample(urls, 4)
 
-    for i, url in enumerate(selected_urls):
-        name = output_names[i]
-        raw_out   = os.path.join(public_dir, f"{name}_raw.mp4")
+    # Pick 4 different queries for variety
+    chosen_queries = random.sample(satisfying_queries, 4)
+
+    for i, name in enumerate(output_names):
         final_out = os.path.join(public_dir, f"{name}.mp4")
+        raw_out   = os.path.join(public_dir, f"{name}_raw.mp4")
+        query     = chosen_queries[i]
+        downloaded = False
 
-        logger.info(f"📥 Downloading direct video URL: {url}")
-        try:
-            subprocess.run([
-                sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
-                url, "-o", raw_out, "--no-playlist", "--quiet", "--no-update"
-            ], check=True, timeout=120)
+        # ── PRIMARY: Pexels API ─────────────────────────────────────────────
+        if pexels_key:
+            try:
+                logger.info(f"📥 [{name}] Fetching Pexels video for: '{query}'")
+                headers_pexels = {"Authorization": pexels_key}
+                params = {
+                    "query": query,
+                    "per_page": 30,
+                    "orientation": "portrait",
+                    "size": "large",
+                    "page": random.randint(1, 3),  # rotate pages for variety
+                }
+                resp = requests.get(
+                    "https://api.pexels.com/videos/search",
+                    headers=headers_pexels,
+                    params=params,
+                    timeout=15,
+                )
+                if resp.status_code == 200:
+                    videos = resp.json().get("videos", [])
+                    if videos:
+                        # Pick a random video from the results
+                        video = random.choice(videos)
+                        # Prefer HD portrait (1080p), fallback to any
+                        video_files = video.get("video_files", [])
+                        # Sort by quality — prefer height >= 1080
+                        hd_files = sorted(
+                            [f for f in video_files if f.get("height", 0) >= 1080 and f.get("file_type") == "video/mp4"],
+                            key=lambda f: f.get("height", 0),
+                            reverse=True
+                        )
+                        if not hd_files:
+                            hd_files = sorted(
+                                [f for f in video_files if f.get("file_type") == "video/mp4"],
+                                key=lambda f: f.get("height", 0),
+                                reverse=True
+                            )
+                        if hd_files:
+                            video_url = hd_files[0]["link"]
+                            logger.info(f"⬇️  Downloading: {video_url[:80]}...")
+                            dl_resp = requests.get(
+                                video_url, 
+                                stream=True, 
+                                timeout=120,
+                                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                            )
+                            if dl_resp.status_code == 200:
+                                with open(raw_out, "wb") as f:
+                                    for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
+                                        f.write(chunk)
+                                if os.path.exists(raw_out) and os.path.getsize(raw_out) > 500 * 1024:
+                                    logger.info(f"⚙️  Processing {name}.mp4 → crisp 1080×1920 portrait...")
+                                    subprocess.run([
+                                        "ffmpeg", "-y", "-i", raw_out,
+                                        "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                                               "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
+                                        "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
+                                        "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
+                                    ], check=True, timeout=180, capture_output=True)
+                                    os.remove(raw_out)
+                                    logger.info(f"✅ [{name}] Pexels HD video ready! ({os.path.getsize(final_out)//1024} KB)")
+                                    downloaded = True
+                                else:
+                                    logger.warning(f"⚠️  [{name}] Downloaded file too small, trying next")
+                else:
+                    logger.warning(f"⚠️  Pexels API returned {resp.status_code}: {resp.text[:200]}")
+            except Exception as e:
+                logger.error(f"❌ [{name}] Pexels download failed: {e}")
 
-            # Validate download — corrupt/empty files are always < 50KB
-            if not os.path.exists(raw_out) or os.path.getsize(raw_out) < 50 * 1024:
-                raise ValueError(f"Downloaded file too small ({os.path.getsize(raw_out) if os.path.exists(raw_out) else 0} bytes) — likely corrupt")
-
-            logger.info(f"⚙️  Optimizing {name}.mp4 to crisp, clean 1080x1920 (no extra brightness)...")
-            subprocess.run([
-                "ffmpeg", "-y", "-i", raw_out,
-                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.15",
-                "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
-                "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
-            ], check=True, timeout=180)
-
-            if os.path.exists(raw_out):
-                os.remove(raw_out)
-            logger.info(f"✅ {name}.mp4 ready!")
-
-        except Exception as e:
-            logger.error(f"❌ Failed for background {i}: {e} — trying next video in pool")
-            # Try a different random video from the pool
-            fallback_tried = False
-            for retry_url in random.sample(urls, min(5, len(urls))):
-                if retry_url == url:
-                    continue
+        # ── SECONDARY: Pixabay API Fallback (Free, no-auth support) ──────────
+        if not downloaded:
+            pixabay_key = os.getenv("PIXABAY_API_KEY", "")
+            if pixabay_key:
                 try:
-                    logger.info(f"🔄 Retry with alternate video: {retry_url}")
-                    subprocess.run([
-                        sys.executable, "-m", "yt_dlp", "-f", "bestvideo[ext=mp4][height<=1080]/best[ext=mp4]/best",
-                        retry_url, "-o", final_out, "--no-playlist", "--quiet", "--no-update"
-                    ], check=True, timeout=120)
-                    if os.path.exists(final_out) and os.path.getsize(final_out) > 50 * 1024:
-                        logger.info(f"✅ Alternate video downloaded for {name}.mp4")
-                        fallback_tried = True
-                        break
-                except Exception:
+                    logger.info(f"📥 [{name}] Fetching Pixabay video for: '{query}'")
+                    resp = requests.get(
+                        "https://pixabay.com/api/videos/",
+                        params={"key": pixabay_key, "q": query, "per_page": 20},
+                        timeout=15
+                    )
+                    if resp.status_code == 200:
+                        hits = resp.json().get("hits", [])
+                        if hits:
+                            video_hit = random.choice(hits)
+                            videos_dict = video_hit.get("videos", {})
+                            # Pick medium or large mp4 video
+                            target_video = videos_dict.get("medium") or videos_dict.get("large") or videos_dict.get("small")
+                            if target_video:
+                                video_url = target_video.get("url")
+                                logger.info(f"⬇️ Downloading Pixabay: {video_url[:80]}...")
+                                dl_resp = requests.get(
+                                    video_url, 
+                                    stream=True, 
+                                    timeout=120,
+                                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                                )
+                                if dl_resp.status_code == 200:
+                                    with open(raw_out, "wb") as f:
+                                        for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
+                                            f.write(chunk)
+                                    if os.path.exists(raw_out) and os.path.getsize(raw_out) > 500 * 1024:
+                                        logger.info(f"⚙️ Processing {name}.mp4...")
+                                        subprocess.run([
+                                            "ffmpeg", "-y", "-i", raw_out,
+                                            "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                                                   "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
+                                            "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
+                                            "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
+                                        ], check=True, timeout=180, capture_output=True)
+                                        os.remove(raw_out)
+                                        logger.info(f"✅ [{name}] Pixabay HD video ready!")
+                                        downloaded = True
+                except Exception as pe:
+                    logger.warning(f"⚠️ Pixabay API failed: {pe}")
+
+        # ── TERTIARY: Direct Open-Source Public Video Loops (No Auth, Instant CDN Download) ──
+        if not downloaded:
+            # High quality direct vertical mp4 loop urls from open resources that do not block datacenters
+            direct_pools = {
+                "gta": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-fluid-art-of-blue-and-purple-ink-41618-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-acrylic-paint-mixing-abstract-art-41617-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-abstract-golden-particle-waves-background-loop-42867-large.mp4"
+                ],
+                "sand": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-sand-dunes-in-a-desert-4416-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-waves-in-a-blue-ocean-aerial-4401-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-pouring-colorful-sand-satisfying-video-43093-large.mp4"
+                ],
+                "bg3": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-neon-light-from-a-tunnel-in-a-futuristic-city-43187-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-glowing-neon-lights-42548-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-stars-in-space-background-loop-42879-large.mp4"
+                ],
+                "bg4": [
+                    "https://assets.mixkit.co/videos/preview/mixkit-driving-in-a-futuristic-neon-city-timelapse-43185-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-a-forest-aerial-view-4402-large.mp4",
+                    "https://assets.mixkit.co/videos/preview/mixkit-slow-motion-water-splashes-in-dark-background-42352-large.mp4"
+                ]
+            }
+            pool = direct_pools.get(name, direct_pools["gta"])
+            random.shuffle(pool)
+            for direct_url in pool:
+                try:
+                    logger.info(f"📥 [{name}] Direct fallback: {direct_url[:80]}...")
+                    dl_resp = requests.get(
+                        direct_url, 
+                        stream=True, 
+                        timeout=60,
+                        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                    )
+                    if dl_resp.status_code == 200:
+                        with open(raw_out, "wb") as f:
+                            for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
+                                f.write(chunk)
+                        if os.path.exists(raw_out) and os.path.getsize(raw_out) > 200 * 1024:
+                            subprocess.run([
+                                "ffmpeg", "-y", "-i", raw_out,
+                                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                                       "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
+                                "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
+                                "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
+                            ], check=True, timeout=180, capture_output=True)
+                            os.remove(raw_out)
+                            logger.info(f"✅ [{name}] Direct fallback ready!")
+                            downloaded = True
+                            break
+                except Exception as ce:
+                    logger.warning(f"⚠️ Direct URL failed: {ce}")
                     continue
 
-            if not fallback_tried:
-                logger.error(f"❌ All retries failed for {name} — GENERATING SYNTHETIC FALLBACK VIA PICSUM + FFMPEG")
-                try:
-                    # 1. Download a random high-res blurry abstract image from picsum (Never blocks bots)
-                    img_path = os.path.join(public_dir, f"{name}_bg.jpg")
-                    subprocess.run(["curl", "-sL", f"https://picsum.photos/1080/1920/?blur=2&random={random.randint(1,10000)}", "-o", img_path], check=True, timeout=30)
-                    
-                    # 2. Use FFmpeg to create a slow Ken Burns zoom-in animation (15 seconds) from the image
-                    # This bypasses all scraper protections and creates a beautiful, unique HD video every time!
-                    logger.info(f"⚙️  Rendering 15s synthetic satisfying loop for {name}.mp4...")
-                    subprocess.run([
-                        "ffmpeg", "-y", "-loop", "1", "-i", img_path,
-                        "-vf", "zoompan=z='zoom+0.0005':d=450:s=1080x1920",
-                        "-c:v", "libx264", "-preset", "superfast", "-tune", "stillimage",
-                        "-crf", "20", "-t", "15", "-pix_fmt", "yuv420p", "-an", final_out
-                    ], check=True, timeout=120)
-                    
-                    if os.path.exists(img_path):
-                        os.remove(img_path)
-                    
-                    logger.info(f"✅ Synthetic video generated for {name}.mp4")
-                except Exception as fe:
-                    logger.error(f"❌ Ultimate synthetic fallback failed: {fe}")
-                    # Absolute last resort: create a 2-second blank video so Remotion compositor NEVER crashes with 404
-                    subprocess.run([
-                        "ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=black:s=1080x1920:d=2",
-                        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
-                    ], check=False)
+        if not downloaded:
+            logger.error(f"❌ [{name}] All sources failed — creating solid-color placeholder")
+            subprocess.run([
+                "ffmpeg", "-y", "-f", "lavfi",
+                "-i", f"color=c=0x1a1a2e:s=1080x1920:d=15",
+                "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
+            ], check=False, capture_output=True)
 
-    logger.info("✅ All 4 Anti-Ban Dynamic Backgrounds Ready!")
+    logger.info("✅ All 4 HD Backgrounds Ready (Pexels/Pixabay/Mixkit Engine)!")
+
+
 
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
-    send_telegram_alert("⚡ <b>V32 Engine Starting</b>\nGenerating new unique script from Gemini...")
+
     
     script_data = generate_dynamic_script()
     if not script_data:
-        send_telegram_alert("❌ <b>V32 FAILED</b>\nGemini could not generate script. Aborting run.")
+        logger.error("❌ V32 FAILED - Gemini could not generate script. Aborting run.")
         logger.error("Failed to generate dynamic script. Aborting.")
         return None
         
     logger.info(f"✅ Generated Niche: {script_data.get('micro_niche')}")
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
-    send_telegram_alert(f"✅ <b>Script Ready</b>\nNiche: {script_data.get('micro_niche')}\nCaption: {script_data.get('caption')}")
+
     
-    # Extract phases safely
+    # Extract phases safely from new Storyboard JSON format
     try:
-        phases = [
-            script_data["phase_1"], script_data["phase_2"], script_data["phase_3"],
-            script_data["phase_4"], script_data["phase_5"]
-        ]
+        phase_1 = script_data["hook"]
+        phase_2 = f"{script_data['split_screen']['left']}. {script_data['split_screen']['right']}."
+        phase_3 = script_data["authority_claim"]
+        phase_l1 = script_data["numbered_list"][0]
+        phase_l2 = script_data["numbered_list"][1]
+        phase_l3 = script_data["numbered_list"][2]
+        phase_proof = script_data.get("proof_demo", "Proof: 99% fail without action.")
+        phase_cta = script_data["save_cta"]
+        
+        phases = [phase_1, phase_2, phase_3, phase_l1, phase_l2, phase_l3, phase_proof, phase_cta]
     except KeyError as e:
         logger.error(f"Script JSON missing key: {e}. Aborting.")
         return None
