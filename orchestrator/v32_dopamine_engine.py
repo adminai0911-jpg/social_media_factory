@@ -202,10 +202,11 @@ The SECRET formula of the most viral Indian finance accounts (FinancewithSharan,
 ═══════════════════════════════════════════════
 1. CURIOSITY GAP: The hook opens a mental loop. The only way to close it is to watch to the end. Never answer the hook's question before the final 5 seconds.
 2. IDENTITY MIRROR: Every line should make the viewer feel "This is talking directly to ME." Use "tum", "tumhara", "tum log" — never generic "log" or "people."
-3. SPECIFIC NUMBERS: Vague claims are ignored. Specific numbers are believed. Use exact figures: "₹43,847", "73% of Indians under 35", "18 months", "Mukesh Ambani was 24 when he did this."
+3. SPECIFIC NUMBERS: Vague claims are ignored. Specific numbers are believed. Use exact figures: "₹43,847", "73% of Indians under 35", "18 months", "Mukesh Ambani was 24 when he did this." (CRITICAL: THESE ARE JUST EXAMPLES. DO NOT COPY THEM. INVENT COMPLETELY NEW AND UNIQUE NUMBERS/PERCENTAGES EVERY TIME).
 4. LOSS AVERSION (2X POWER): The human brain reacts to loss 2.5x more strongly than gain. Frame every insight as something the viewer is CURRENTLY LOSING if they don't know this.
 5. SOCIAL PROOF ESCALATION: Reference real people, real studies, real companies. "Warren Buffett", "IIM study", "Zerodha data shows" — these phrases make viewers trust and share immediately.
 6. DOPAMINE MICRO-REWARDS: Every 3-4 seconds must deliver a NEW surprising fact, number, or insight. This creates a chemical dopamine loop that makes the video literally addictive to watch.
+7. ABSOLUTE UNIQUENESS: I am running this script multiple times a day. You MUST generate completely unique angles, unique numbers, unique examples, and unique topics every single time. NEVER repeat yourself.
 
 ═══════════════════════════════════════════════
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
@@ -261,7 +262,8 @@ JSON Schema:
                     model='gemini-2.5-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        response_mime_type="application/json"
+                        response_mime_type="application/json",
+                        temperature=1.0
                     )
                 )
                 
