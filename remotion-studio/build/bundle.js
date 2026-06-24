@@ -776,7 +776,7 @@ const PALETTES = [
 ];
 const RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "SCAM", "CHEAT", "DANGER"];
 const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f, _g;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
   const t = frame / fps;
@@ -785,7 +785,16 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
   const pal = PALETTES[seed % PALETTES.length];
   const redKw = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g, "") : "WARNING";
   const activeRedWords = [...RED_WORDS, redKw];
-  const [, p2, p3, p_l1, p_l2, p_l3, p_proof, p_cta] = audio_offsets;
+  const [
+    ,
+    p2 = total_duration,
+    p3 = total_duration,
+    p_l1 = total_duration,
+    p_l2 = total_duration,
+    p_l3 = total_duration,
+    p_proof = total_duration,
+    p_cta = total_duration
+  ] = audio_offsets;
   let phase = 1;
   if (t >= p2 && t < p3) phase = 2;
   else if (t >= p3 && t < p_l1) phase = 3;
@@ -954,12 +963,12 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [0, 1]) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [20, 0])}px)` }, children: "POOR MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 20], [0.8, 1])})` }, children: "\u{1F61E}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_c = (_b = script.split_screen) == null ? void 0 : _b.left) == null ? void 0 : _c.split("-")[1]) || "Saves money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: (((_c = (_b = script.split_screen) == null ? void 0 : _b.left) == null ? void 0 : _c.includes("-")) ? script.split_screen.left.split("-")[1] : (_d = script.split_screen) == null ? void 0 : _d.left) || "Saves money" })
       ] }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [0, 1], { extrapolateLeft: "clamp" }) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: pal.p, letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [20, 0], { extrapolateLeft: "clamp" })}px)` }, children: "RICH MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 35], [0.8, 1], { extrapolateLeft: "clamp" })})` }, children: "\u{1F9E0}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_e = (_d = script.split_screen) == null ? void 0 : _d.right) == null ? void 0 : _e.split("-")[1]) || "Invests money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: (((_f = (_e = script.split_screen) == null ? void 0 : _e.right) == null ? void 0 : _f.includes("-")) ? script.split_screen.right.split("-")[1] : (_g = script.split_screen) == null ? void 0 : _g.right) || "Invests money" })
       ] })
     ] }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p3 * fps), durationInFrames: Math.round((p_l1 - p3) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p3)})` }, children: [

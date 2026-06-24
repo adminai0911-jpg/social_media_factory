@@ -752,7 +752,7 @@ def build_v32_payload():
     if not script_data:
         logger.error("❌ V32 FAILED - Gemini could not generate script. Aborting run.")
         logger.error("Failed to generate dynamic script. Aborting.")
-        return None
+        sys.exit(1)
         
     logger.info(f"✅ Generated Niche: {script_data.get('micro_niche')}")
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
@@ -760,19 +760,24 @@ def build_v32_payload():
     
     # Extract phases safely from new Storyboard JSON format
     try:
-        phase_1 = script_data["hook"]
-        phase_2 = f"{script_data['split_screen']['left']}. {script_data['split_screen']['right']}."
-        phase_3 = script_data["authority_claim"]
-        phase_l1 = script_data["numbered_list"][0]
-        phase_l2 = script_data["numbered_list"][1]
-        phase_l3 = script_data["numbered_list"][2]
+        phase_1 = script_data.get("hook", "Rich vs Poor Mindset")
+        split_left = script_data.get("split_screen", {}).get("left", "Poor Mindset")
+        split_right = script_data.get("split_screen", {}).get("right", "Rich Mindset")
+        phase_2 = f"{split_left}. {split_right}."
+        phase_3 = script_data.get("authority_claim", "Most people never learn this.")
+        
+        nl = script_data.get("numbered_list", [])
+        phase_l1 = nl[0] if len(nl) > 0 else "Rule 1: Always learn."
+        phase_l2 = nl[1] if len(nl) > 1 else "Rule 2: Invest early."
+        phase_l3 = nl[2] if len(nl) > 2 else "Rule 3: Stay consistent."
+        
         phase_proof = script_data.get("proof_demo", "Proof: 99% fail without action.")
-        phase_cta = script_data["save_cta"]
+        phase_cta = script_data.get("save_cta", "Save this video now.")
         
         phases = [phase_1, phase_2, phase_3, phase_l1, phase_l2, phase_l3, phase_proof, phase_cta]
-    except KeyError as e:
-        logger.error(f"Script JSON missing key: {e}. Aborting.")
-        return None
+    except Exception as e:
+        logger.error(f"Script JSON parsing failed: {e}. Aborting.")
+        sys.exit(1)
     
     # Randomly pick voice pair
     base_voice = random.choice(VOICES)
@@ -810,8 +815,8 @@ def build_v32_payload():
                 })
         current_time += duration + 0.1
     
-    # Ensure we have all 5 audio offsets for MainVideo.tsx
-    while len(audio_offsets) < 5:
+    # Ensure we have all 8 audio offsets for MainVideo.tsx
+    while len(audio_offsets) < 8:
         audio_offsets.append(current_time)
         
     payload = {
