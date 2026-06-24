@@ -425,6 +425,12 @@ def trigger_make_webhook(video_url, caption):
     # Generate a Twitter-safe caption (< 280 characters)
     # This strips all hashtags and truncates to 250 chars safely
     twitter_cap = caption.split("#")[0].strip()
+    if not twitter_cap:
+        import re
+        twitter_cap = re.sub(r'#\w+', '', caption).strip()
+    if not twitter_cap:
+        twitter_cap = "Must watch! 🚀"
+        
     if len(twitter_cap) > 250:
         twitter_cap = twitter_cap[:247] + "..."
         
