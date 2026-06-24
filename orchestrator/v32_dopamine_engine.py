@@ -829,6 +829,18 @@ def build_v32_payload():
     while len(audio_offsets) < 8:
         audio_offsets.append(current_time)
         
+    # ── THE ULTIMATE SANITIZER ──
+    # Protect the React UI from ANY possible Gemini type hallucinations (e.g. returning numbers or arrays instead of strings)
+    # This guarantees the React .split() and .includes() methods will NEVER throw a TypeError.
+    for key in ["hook", "curiosity_teaser", "curiosity_payoff", "authority_claim", "proof_demo", "source_tag", "comment_question", "save_cta", "caption"]:
+        if key in script_data and not isinstance(script_data[key], str):
+            script_data[key] = str(script_data[key])
+            
+    if "split_screen" in script_data and isinstance(script_data["split_screen"], dict):
+        for skey in ["left", "right"]:
+            if skey in script_data["split_screen"] and not isinstance(script_data["split_screen"][skey], str):
+                script_data["split_screen"][skey] = str(script_data["split_screen"][skey])
+        
     payload = {
         "script": script_data,
         "timings": timings,
