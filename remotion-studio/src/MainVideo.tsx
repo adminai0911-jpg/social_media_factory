@@ -492,7 +492,7 @@ export const MainVideo: React.FC<{
 
         <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
 
-          {(script.numbered_list || []).map((item: string, i: number) => {
+          {(script.numbered_list || []).slice(0, 3).map((item: string, i: number) => {
 
             const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
 
@@ -691,7 +691,7 @@ export const MainVideo: React.FC<{
               display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40,
               opacity: interpolate(t - p_cta, [1.5, 2.5], [1, 0.4], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
             }}>
-              {(script.numbered_list || []).map((item: string, i: number) => (
+              {(script.numbered_list || []).slice(0, 3).map((item: string, i: number) => (
                 <div key={i} style={{
                   fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.75)",
                   fontWeight: 600, display: "flex", alignItems: "center", gap: 18
