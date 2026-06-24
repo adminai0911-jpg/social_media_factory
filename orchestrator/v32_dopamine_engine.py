@@ -55,11 +55,11 @@ HASHTAG_POOL = {
 def get_dynamic_hashtags():
     """Pick a fresh, optimized hashtag combo every run — never the same set twice."""
     selected = []
-    selected += random.sample(HASHTAG_POOL["mega"], 2)          # 2 mega tags
-    selected += random.sample(HASHTAG_POOL["niche_wealth"], 3)  # 3 niche wealth
-    selected += random.sample(HASHTAG_POOL["hindi"], 3)         # 3 Hindi/India
-    selected += random.sample(HASHTAG_POOL["psychology"], 2)    # 2 psychology
-    selected += random.sample(HASHTAG_POOL["platform"], 2)      # 2 platform algo
+    selected += random.sample(HASHTAG_POOL["mega"], 1)          # 1 mega tag
+    selected += random.sample(HASHTAG_POOL["niche_wealth"], 1)  # 1 niche wealth
+    selected += random.sample(HASHTAG_POOL["hindi"], 1)         # 1 Hindi/India
+    selected += random.sample(HASHTAG_POOL["psychology"], 1)    # 1 psychology
+    selected += random.sample(HASHTAG_POOL["platform"], 1)      # 1 platform algo
     random.shuffle(selected)
     return " ".join(selected)
 
