@@ -114,9 +114,17 @@ export const MainVideo: React.FC<{
 
 
 
-  // Map 8-phase audio offsets
+  // Map 8-phase audio offsets (with safe fallbacks to total_duration if missing)
 
-  const [, p2, p3, p_l1, p_l2, p_l3, p_proof, p_cta] = audio_offsets;
+  const [,
+    p2 = total_duration,
+    p3 = total_duration,
+    p_l1 = total_duration,
+    p_l2 = total_duration,
+    p_l3 = total_duration,
+    p_proof = total_duration,
+    p_cta = total_duration
+  ] = audio_offsets;
 
   
 
@@ -411,7 +419,7 @@ export const MainVideo: React.FC<{
 
             <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
 
-              {script.split_screen?.left?.split("-")[1] || "Saves money"}
+              {(script.split_screen?.left?.includes("-") ? script.split_screen.left.split("-")[1] : script.split_screen?.left) || "Saves money"}
 
             </div>
 
@@ -427,7 +435,7 @@ export const MainVideo: React.FC<{
 
             <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
 
-              {script.split_screen?.right?.split("-")[1] || "Invests money"}
+              {(script.split_screen?.right?.includes("-") ? script.split_screen.right.split("-")[1] : script.split_screen?.right) || "Invests money"}
 
             </div>
 
