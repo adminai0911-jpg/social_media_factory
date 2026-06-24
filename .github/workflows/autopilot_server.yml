@@ -36,13 +36,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ── STEP 2: Full Human Jitter (1 to 60 minutes) ───────────────────────
+      # ── STEP 2: Micro Jitter (max 5 minutes — so posts always arrive on time) ──
       - name: Human Jitter (Anti-Bot Delay)
         if: github.event_name != 'workflow_dispatch'
         run: |
-          # Random delay between 60 seconds (1 minute) and 3600 seconds (60 minutes)
-          JITTER=$((60 + RANDOM % 3540))
-          echo "💤 Sleeping ${JITTER}s (anti-bot jitter, 1 to 60 minutes)"
+          # Random delay 0-300 seconds (5 minutes max) — keeps posts on schedule
+          JITTER=$((RANDOM % 300))
+          echo "💤 Sleeping ${JITTER}s (anti-bot micro-jitter, max 5 minutes)"
           sleep $JITTER
 
 

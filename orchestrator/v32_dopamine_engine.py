@@ -235,7 +235,10 @@ JSON Schema:
     "Rule 2: [A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
     "Rule 3: [A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words. This is the 'Aha!' moment.]"
   ],
-  "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ने ₹5,000 से शुरू किया था — ₹40,000 crore बनाए। यही rule use किया।' MAX 15 words.",
+  "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ne 5,000 se shuru kiya tha — 40,000 crore banaye. Yahi rule use kiya.' MAX 15 words.",
+  "proof_source": "ONE real, verifiable source for the proof_demo claim (e.g. 'Source: Forbes India 2024' or 'Source: RBI Annual Report 2025'). ONLY add if the claim is real and verifiable. If not verifiable, return empty string.",
+  "source_tag": "ONE short, real, verifiable source for Rule 3 only (e.g. 'Source: SEBI 2024' or 'Source: IIM-A Study 2023'). ONLY add if Rule 3 contains a real verifiable statistic. If not verifiable, return empty string.",
+  "comment_question": "A SPECIFIC question about this reel's exact content — NOT generic. Example for a 3-rules reel: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya? Sach bolo neeche' or for a mindset reel: 'Poor mindset ya Rich mindset — aap kis side ho? Type P ya R neeche 👇'. MAX 12 words. Must be answerable in 1-3 words so viewers actually comment.",
   "save_cta": "{cta}",
   "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India. Sentence 2 (THE COMMENT MAGNET): A direct, personal question the viewer MUST answer right now. End with EXACTLY these hashtags on a new line: {hashtags}"
 }}"""

@@ -7,7 +7,8 @@ import {
   staticFile,
   Img,
   random,
-  Sequence
+  Sequence,
+  useCurrentScale
 } from "remotion";
 import React from "react";
 
@@ -77,10 +78,19 @@ export const MainVideo: React.FC<{
   const sx = shakeAmt > 0 ? (random(frame)     - 0.5) * shakeAmt : 0;
   const sy = shakeAmt > 0 ? (random(frame + 1) - 0.5) * shakeAmt : 0;
 
-  // Helper for Ken Burns Scale
+  // Helper for Ken Burns Scale (continuous slow zoom)
   const kenBurns = (startOffset: number) => {
-    return interpolate(frame, [Math.round(startOffset * fps), Math.round((startOffset + 6) * fps)], [1, 1.05], { extrapolateRight: "clamp" });
+    return interpolate(frame, [Math.round(startOffset * fps), Math.round((startOffset + 8) * fps)], [1.0, 1.08], { extrapolateRight: "clamp", extrapolateLeft: "clamp" });
   };
+
+  // Count-up animation helper: animates from 0 to target over 1.5s
+  const countUp = (target: number, startTime: number) => {
+    return Math.round(interpolate(frame, [Math.round(startTime * fps), Math.round((startTime + 1.5) * fps)], [0, target], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  };
+
+  // Particle drift offset for background grain
+  const grainX = Math.sin(frame * 0.03) * 3;
+  const grainY = Math.cos(frame * 0.02) * 3;
 
   return (
     <AbsoluteFill style={{
@@ -101,23 +111,32 @@ export const MainVideo: React.FC<{
       
       {/* ── SFX ─────────────────────────────────────────────────── */}
       <Sequence from={0}><Audio src={staticFile("hypno.wav")} volume={0.15} loop /></Sequence>
-      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("riser.wav")} volume={0.5}/></Sequence>}
-      {/* Ticks for staggered list items */}
-      {p_l1 && <Sequence from={Math.round(p_l1*fps)}><Audio src={staticFile("ding.wav")} volume={1.5}/></Sequence>}
-      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("ding.wav")} volume={1.5}/></Sequence>}
-      {p_l3 && <Sequence from={Math.round(p_l3*fps)}><Audio src={staticFile("ding.wav")} volume={1.5}/></Sequence>}
-      {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("impact.wav")} volume={1.5}/></Sequence>}
-      {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("impact.wav")} volume={2.0}/></Sequence>}
+      {/* Rising tension before Rule #3 reveal */}
+      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("riser.wav")} volume={0.7}/></Sequence>}
+      {/* Whoosh impact on every rule-card entrance */}
+      {p_l1 && <Sequence from={Math.round(p_l1*fps)}><Audio src={staticFile("impact.wav")} volume={1.2}/></Sequence>}
+      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("impact.wav")} volume={1.2}/></Sequence>}
+      {p_l3 && <Sequence from={Math.round(p_l3*fps)}><Audio src={staticFile("impact.wav")} volume={1.5}/></Sequence>}
+      {/* Ticks confirm each rule */}
+      {p_l1 && <Sequence from={Math.round(p_l1*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
+      {p_l2 && <Sequence from={Math.round(p_l2*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
+      {p_l3 && <Sequence from={Math.round(p_l3*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
+      {/* Proof beat */}
+      {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("impact.wav")} volume={1.8}/></Sequence>}
+      {/* Rewarding chime on save card */}
+      {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("ding.wav")} volume={2.5}/></Sequence>}
+      {p_cta && <Sequence from={Math.round(p_cta*fps)+5}><Audio src={staticFile("impact.wav")} volume={1.5}/></Sequence>}
 
-      {/* ── PREMIUM BACKGROUND & GRAIN ───────────────────────────── */}
+      {/* ── PREMIUM BACKGROUND & DRIFTING GRAIN ────────────────────── */}
       <AbsoluteFill style={{ zIndex: 0, backgroundColor: pal.bg1 }}>
         <div style={{
           position: "absolute", inset: 0,
           background: `radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)`,
         }}/>
-        {/* Subtle noise texture */}
+        {/* Animated drifting grain — eliminates dead static frames */}
         <div style={{
-          position: "absolute", inset: 0, opacity: 0.05, mixBlendMode: "overlay",
+          position: "absolute", inset: 0, opacity: 0.07, mixBlendMode: "overlay",
+          transform: `translate(${grainX}px, ${grainY}px) scale(1.05)`,
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
         }}/>
       </AbsoluteFill>
@@ -190,34 +209,47 @@ export const MainVideo: React.FC<{
       </Sequence>
 
       {/* ── PHASE 4: STAGGERED NUMBERED LIST (p_l1 - p_proof) ───────── */}
+      {/* FIX: Safe padding 12% left/right prevents any card clipping at frame edge */}
       <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof-p_l1)*fps)}>
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "10% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "8% 12%", transform: `scale(${kenBurns(p_l1)})` }}>
           {(script.numbered_list || []).map((item: string, i: number) => {
             const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
-            if (t < itemTime) return null; // Staggered reveal
-            
+            if (t < itemTime) return null;
+            const slideProgress = interpolate(frame, [Math.round(itemTime*fps), Math.round(itemTime*fps)+18], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+            // FIX: Start translateX from -80 (well within safe margin) not -500
             return (
               <div key={i} style={{
                 display: "flex", alignItems: "center",
-                background: "rgba(255,255,255,0.05)",
-                padding: "40px 50px", borderRadius: 30, marginBottom: 40,
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-                opacity: interpolate(frame, [Math.round(itemTime*fps), Math.round(itemTime*fps)+15], [0, 1], {extrapolateLeft: "clamp"}),
-                transform: `translateX(${interpolate(frame, [Math.round(itemTime*fps), Math.round(itemTime*fps)+15], [-50, 0], {extrapolateLeft: "clamp"})}px)`
+                background: i === 2 ? `rgba(${parseInt(pal.p.slice(1,3),16)},${parseInt(pal.p.slice(3,5),16)},${parseInt(pal.p.slice(5,7),16)},0.15)` : "rgba(255,255,255,0.05)",
+                padding: "35px 45px", borderRadius: 30, marginBottom: 30,
+                border: i === 2 ? `2px solid ${pal.p}88` : "1px solid rgba(255,255,255,0.08)",
+                boxShadow: i === 2 ? `0 10px 40px ${pal.p}33` : "0 10px 30px rgba(0,0,0,0.5)",
+                opacity: slideProgress,
+                transform: `translateX(${interpolate(slideProgress, [0, 1], [-80, 0])}px)`
               }}>
                 <div style={{
-                  width: 90, height: 90, borderRadius: "50%", background: pal.p,
+                  width: 80, height: 80, borderRadius: "50%",
+                  background: i === 2 ? pal.p : "rgba(255,255,255,0.15)",
                   display: "flex", justifyContent: "center", alignItems: "center",
-                  fontFamily: TITLE_FONT, fontSize: 50, fontWeight: 900, color: pal.bg1,
-                  marginRight: 40, flexShrink: 0
+                  fontFamily: TITLE_FONT, fontSize: 46, fontWeight: 900,
+                  color: i === 2 ? pal.bg1 : pal.p,
+                  marginRight: 35, flexShrink: 0,
+                  boxShadow: i === 2 ? `0 0 20px ${pal.p}88` : "none"
                 }}>
                   {i + 1}
                 </div>
-                <div style={{
-                  fontFamily: HINDI_FONT, fontSize: 68, fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2
-                }}>
-                  {item}
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: HINDI_FONT, fontSize: 62, fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2
+                  }}>
+                    {item}
+                  </div>
+                  {/* Source tag only on Rule #3 (the most impactful one) */}
+                  {i === 2 && script.source_tag && (
+                    <div style={{ fontFamily: TITLE_FONT, fontSize: 28, color: `${pal.p}99`, marginTop: 10, letterSpacing: 1 }}>
+                      {script.source_tag}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -227,26 +259,35 @@ export const MainVideo: React.FC<{
 
       {/* ── PHASE 5: PROOF/DEMO (p_proof - p_cta) ────────────────── */}
       <Sequence from={Math.round(p_proof*fps)} durationInFrames={Math.round((p_cta-p_proof)*fps)}>
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, transform: `scale(${kenBurns(p_proof)})` }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "5% 8%", transform: `scale(${kenBurns(p_proof)})` }}>
           <div style={{
-            border: `2px solid rgba(255,255,255,0.2)`, borderRadius: 30, padding: "80px 60px", width: "95%",
+            border: `2px solid ${pal.p}66`, borderRadius: 30, padding: "60px 60px", width: "96%",
             display: "flex", flexDirection: "column", alignItems: "center",
-            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)",
-            boxShadow: `0 30px 60px rgba(0,0,0,0.8), inset 0 0 100px rgba(255,255,255,0.05)`
+            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(20px)",
+            boxShadow: `0 30px 60px rgba(0,0,0,0.8), 0 0 60px ${pal.p}22`
           }}>
-            <div style={{ fontSize: 130, marginBottom: 40 }}>📊</div>
+            <div style={{ fontSize: 110, marginBottom: 30 }}>📊</div>
             <div style={{
-              fontFamily: TITLE_FONT, fontSize: 50, fontWeight: 900,
-              color: "rgba(255,255,255,0.5)", letterSpacing: 4, marginBottom: 30
+              fontFamily: TITLE_FONT, fontSize: 44, fontWeight: 900,
+              color: "rgba(255,255,255,0.5)", letterSpacing: 4, marginBottom: 25
             }}>
               FACT CHECK
             </div>
             <div style={{
-              fontFamily: HINDI_FONT, fontSize: 75, fontWeight: 700,
+              fontFamily: HINDI_FONT, fontSize: 70, fontWeight: 700,
               color: pal.p, textAlign: "center", lineHeight: 1.3
             }}>
               {script.proof_demo}
             </div>
+            {/* Credibility source tag */}
+            {script.proof_source && (
+              <div style={{
+                fontFamily: TITLE_FONT, fontSize: 30, color: "rgba(255,255,255,0.4)",
+                marginTop: 25, letterSpacing: 1, textAlign: "center"
+              }}>
+                📚 {script.proof_source}
+              </div>
+            )}
           </div>
         </AbsoluteFill>
       </Sequence>
@@ -268,21 +309,30 @@ export const MainVideo: React.FC<{
               SAVE KARO
             </div>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: 20, width: "100%", alignItems: "flex-start", marginBottom: 60 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40 }}>
               {(script.numbered_list || []).map((item: string, i: number) => (
                 <div key={i} style={{
-                  fontFamily: HINDI_FONT, fontSize: 45, color: "rgba(255,255,255,0.7)",
-                  fontWeight: 600, display: "flex", alignItems: "center", gap: 20
+                  fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.75)",
+                  fontWeight: 600, display: "flex", alignItems: "center", gap: 18
                 }}>
-                  <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 45 }}>{i + 1}.</span>
+                  <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 42 }}>{i + 1}.</span>
                   {item}
                 </div>
               ))}
             </div>
 
+            {/* Content-specific comment driving question */}
             <div style={{
-              fontFamily: HINDI_FONT, fontSize: 65, fontWeight: 900,
-              color: "#FFFFFF", textAlign: "center", borderTop: `2px solid rgba(255,255,255,0.1)`, paddingTop: 40, width: "100%"
+              fontFamily: HINDI_FONT, fontSize: 46, fontWeight: 700,
+              color: pal.p, textAlign: "center",
+              borderTop: `2px solid ${pal.p}44`, paddingTop: 30, width: "100%", marginBottom: 20
+            }}>
+              {script.comment_question || "Rule 1, 2, ya 3 — kaunsa tumne miss kiya? Comment karo 👇"}
+            </div>
+
+            <div style={{
+              fontFamily: HINDI_FONT, fontSize: 52, fontWeight: 900,
+              color: "#FFFFFF", textAlign: "center", width: "100%"
             }}>
               {script.save_cta}
             </div>
