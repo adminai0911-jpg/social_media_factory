@@ -206,7 +206,7 @@ The SECRET formula of the most viral Indian finance accounts (FinancewithSharan,
 4. LOSS AVERSION (2X POWER): The human brain reacts to loss 2.5x more strongly than gain. Frame every insight as something the viewer is CURRENTLY LOSING if they don't know this.
 5. SOCIAL PROOF ESCALATION: Reference real people, real studies, real companies. "Warren Buffett", "IIM study", "Zerodha data shows" — these phrases make viewers trust and share immediately.
 6. DOPAMINE MICRO-REWARDS: Every 3-4 seconds must deliver a NEW surprising fact, number, or insight. This creates a chemical dopamine loop that makes the video literally addictive to watch.
-7. ABSOLUTE UNIQUENESS: I am running this script multiple times a day. You MUST generate completely unique angles, unique numbers, unique examples, and unique topics every single time. NEVER repeat yourself.
+7. ABSOLUTE UNIQUENESS & REAL DATA: You MUST generate completely unique angles and topics every single time without repeating yourself. However, EVERY STATISTIC, NUMBER, AND FACT MUST BE 100% REAL AND VERIFIABLE. DO NOT HALLUCINATE OR INVENT FAKE DATA. Use different, REAL financial statistics from credible sources for each script.
 
 ═══════════════════════════════════════════════
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
