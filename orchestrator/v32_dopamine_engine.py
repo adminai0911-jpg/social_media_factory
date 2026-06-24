@@ -104,10 +104,66 @@ for raw in raw_keys:
             if clean_k and clean_k not in GEMINI_KEYS:
                 GEMINI_KEYS.append(clean_k)
 
-VOICES = [
-    "hi-IN-MadhurNeural", # Male
-    "hi-IN-SwaraNeural",  # Female
-]
+# ── LANGUAGE & VOICE ROULETTE ──
+# 50% chance to run in English, 50% chance in Hindi.
+CURRENT_LANGUAGE = random.choice(["English", "Hindi"])
+
+if CURRENT_LANGUAGE == "English":
+    EDGE_VOICES = ["en-US-ChristopherNeural", "en-US-EricNeural"]
+    ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"] # Adam, Antoni
+else:
+    EDGE_VOICES = ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"]
+    ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"] # We can use Adam/Antoni for Hindi too, ElevenLabs v2 Turbo supports multilingual!
+
+def get_youtube_analytics_feedback():
+    """Fetches recent video performance from YouTube API to guide Gemini."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        client_id = os.environ.get("YOUTUBE_CLIENT_ID")
+        client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET")
+        refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN")
+        
+        if not (client_id and client_secret and refresh_token):
+            return ""
+            
+        token_url = "https://oauth2.googleapis.com/token"
+        res = requests.post(token_url, data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token"
+        }, timeout=10).json()
+        
+        access_token = res.get("access_token")
+        if not access_token: return ""
+        
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        # Get your channel ID
+        channel_res = requests.get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true", headers=headers, timeout=10).json()
+        uploads_list_id = channel_res["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        
+        # Get last 5 videos
+        playlist_res = requests.get(f"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={uploads_list_id}&maxResults=5", headers=headers, timeout=10).json()
+        video_ids = ",".join([i["snippet"]["resourceId"]["videoId"] for i in playlist_res.get("items", [])])
+        
+        if not video_ids: return ""
+        
+        # Get view counts
+        stats_res = requests.get(f"https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id={video_ids}", headers=headers, timeout=10).json()
+        
+        feedback = "\n\nCRITICAL ANALYTICS FEEDBACK FROM PREVIOUS VIDEOS:\n"
+        for item in stats_res.get("items", []):
+            title = item["snippet"]["title"]
+            views = item["statistics"].get("viewCount", "0")
+            feedback += f"- '{title}': {views} views\n"
+            
+        feedback += "Use this real-world data to double-down on what is working. Lean into the topics/hooks that got the most views above.\n"
+        return feedback
+    except Exception as e:
+        logger.warning(f"Could not fetch analytics feedback: {e}")
+        return ""
 
 
 def generate_dynamic_script():
@@ -187,7 +243,18 @@ def generate_dynamic_script():
     logger.info(f"📅 Series Part: {series_part}/3")
     logger.info(f"#️⃣  Hashtags this run: {hashtags}")
 
-    prompt = f"""You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
+    # Analytics Feedback
+    analytics_text = get_youtube_analytics_feedback()
+
+    prompt = f"""You are an elite TikTok/Reels/Shorts growth expert and dopamine-engineering copywriter.
+    Your sole purpose is to write highly viral, 15-30 second scripts about wealth, dark psychology, or deep success.
+
+    {analytics_text}
+
+    LANGUAGE REQUIREMENT:
+    The entire script MUST be written in {CURRENT_LANGUAGE}. If Hindi, use Devanagari script. If English, use English.
+
+    You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
 
 ═══════════════════════════════════════════════
 DUAL MISSION (BOTH are non-negotiable):
@@ -501,9 +568,40 @@ def ensure_sfx(studio_dir):
     logger.info("🎧 Generating TRUE 8D spatial audio (432/436 Hz binaural + rotating pan + reverb)...")
     create_8d_hypnotic_music(os.path.join(sfx_dir, "hypno.wav"), duration=42.0)
 
-def generate_audio(text, voice_id, output_path):
-    """Generate TTS audio using edge-tts."""
-    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", voice_id, "--rate", "+10%", "--write-media", output_path]
+def generate_audio(text, edge_voice, eleven_voice, output_path):
+    """Generate audio using ElevenLabs (if key exists & has credits), fallback to edge-tts."""
+    eleven_key = os.environ.get("ELEVENLABS_API_KEY")
+    if eleven_key:
+        try:
+            logger.info(f"🎙️ Attempting ElevenLabs API generation for: {text[:20]}...")
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{eleven_voice}"
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": eleven_key
+            }
+            data = {
+                "text": text,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.75
+                }
+            }
+            response = requests.post(url, json=data, headers=headers, timeout=20)
+            if response.status_code == 200:
+                with open(output_path, "wb") as f:
+                    f.write(response.content)
+                logger.info("✅ ElevenLabs generation successful.")
+                return
+            else:
+                logger.warning(f"ElevenLabs failed ({response.status_code}): {response.text}. Falling back to edge-tts.")
+        except Exception as e:
+            logger.warning(f"ElevenLabs error: {e}. Falling back to edge-tts.")
+            
+    # FALLBACK to edge-tts
+    logger.info(f"🎙️ Using edge-tts fallback voice: {edge_voice}")
+    cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", edge_voice, "--rate", "+10%", "--write-media", output_path]
     subprocess.run(cmd, check=True)
 
 def get_audio_duration(file_path):
@@ -790,8 +888,11 @@ def build_v32_payload():
         sys.exit(1)
     
     # Randomly pick voice pair
-    base_voice = random.choice(VOICES)
-    alternate_voice = VOICES[1] if base_voice == VOICES[0] else VOICES[0]
+    base_edge = random.choice(EDGE_VOICES)
+    alt_edge = EDGE_VOICES[1] if base_edge == EDGE_VOICES[0] else EDGE_VOICES[0]
+    
+    base_eleven = random.choice(ELEVEN_VOICES)
+    alt_eleven = ELEVEN_VOICES[1] if base_eleven == ELEVEN_VOICES[0] else ELEVEN_VOICES[0]
     
     # Path to remotion-studio/public
     public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "public"))
@@ -808,8 +909,11 @@ def build_v32_payload():
         logger.info(f"Generating audio for Phase {i+1}...")
         # BUG FIX: Changed v31_audio to v32_audio to match MainVideo.tsx staticFile names
         audio_path = os.path.join(public_dir, f"v32_audio_{i}.mp3")
-        voice_to_use = alternate_voice if i == 2 else base_voice
-        generate_audio(phase_text, voice_to_use, audio_path)
+        
+        edge_to_use = alt_edge if i == 2 else base_edge
+        eleven_to_use = alt_eleven if i == 2 else base_eleven
+        
+        generate_audio(phase_text, edge_to_use, eleven_to_use, audio_path)
         
         duration = get_audio_duration(audio_path)
         audio_offsets.append(current_time)
