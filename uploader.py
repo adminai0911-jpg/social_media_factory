@@ -231,7 +231,7 @@ def upload_to_facebook_story(video_path):
         logger.error(f"❌ Facebook Story failed: {e}")
     return False
 
-def upload_to_instagram_reels(video_url, description):
+def upload_to_instagram_reels(video_url, description, cover_url=None):
     if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID:
         logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
         return False
@@ -241,6 +241,8 @@ def upload_to_instagram_reels(video_url, description):
     
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
     container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
+    if cover_url:
+        container_payload["cover_url"] = cover_url
     
     try:
         container_res = requests.post(container_url, data=container_payload, timeout=30).json()
@@ -443,7 +445,7 @@ def trigger_make_webhook(video_url, caption):
         logger.error(f"❌ Make.com Webhook exception: {e}")
         return False
 
-def distribute_to_all_platforms(video_path, description):
+def distribute_to_all_platforms(video_path, description, cover_path=None):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
 
     # 💰 MONETIZATION: Inject affiliate link into every caption BEFORE hashtags
@@ -464,10 +466,11 @@ def distribute_to_all_platforms(video_path, description):
     time.sleep(5)
     
     video_url = upload_to_temp_host(video_path)
+    cover_url = upload_to_temp_host(cover_path) if cover_path and os.path.exists(cover_path) else None
     ig, ig_story, fb_story, buffer_bridge = False, False, False, False
     
     if video_url:
-        ig = upload_to_instagram_reels(video_url, description)
+        ig = upload_to_instagram_reels(video_url, description, cover_url)
         time.sleep(5)
         ig_story = upload_to_instagram_story(video_url)
         time.sleep(5)
@@ -526,4 +529,5 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"Failed to read caption from JSON: {e}")
             
-    distribute_to_all_platforms(video_path, caption)
+    cover_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "cover.jpg"))
+    distribute_to_all_platforms(video_path, caption, cover_path)

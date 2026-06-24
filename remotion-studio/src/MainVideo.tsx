@@ -22,7 +22,7 @@ import {
 
 } from "remotion";
 
-import React from "react";
+import React, { useMemo } from "react";
 
 
 
@@ -134,13 +134,25 @@ export const MainVideo: React.FC<{
 
 
 
-  // Captions System
-
   const wordIdx = timings.findIndex(w => t >= w.start && t <= w.end + 0.1);
-
   const wordObj = timings[wordIdx];
-
   const isRed   = wordObj ? activeRedWords.some(r => wordObj.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r)) : false;
+
+  const subtitleChunks = useMemo(() => {
+    if (!timings) return [];
+    const chunks = [];
+    for (let i = 0; i < timings.length; i += 5) {
+      const slice = timings.slice(i, i + 5);
+      chunks.push({
+        start: slice[0].start,
+        end: slice[slice.length - 1].end + 0.1,
+        words: slice
+      });
+    }
+    return chunks;
+  }, [timings]);
+
+  const activeChunk = subtitleChunks.find(c => t >= c.start && t <= c.end);
 
 
 
@@ -299,79 +311,46 @@ export const MainVideo: React.FC<{
 
 
       {/* ── PHASE 1: HOOK (0 - p2) ────────────────────────────────── */}
-
-      {/* ROTATING HOOK: seed%3==0 count-up | seed%3==1 text | seed%3==2 face */}
       <Sequence from={0} durationInFrames={Math.round(p2*fps)}>
-        <AbsoluteFill style={{ display: "flex", justifyContent: "center", alignItems: "center",
-          padding: 60, transform: `scale(${kenBurns(0)})` }}>
-
-          {/* REEL A: Count-up number opener */}
-          {(seed % 3 === 0) && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 30 }}>
-              <div style={{ fontFamily: TITLE_FONT, fontSize: 170, fontWeight: 900, color: pal.p,
-                lineHeight: 1, textShadow: `0 0 60px ${pal.p}88` }}>
-                {countUp(script.hook_number || 92, 0)}
-                <span style={{ fontSize: 80, color: "#FFFFFF" }}>
-                  {script.hook_number_suffix || "%"}
-                </span>
-              </div>
-              <div style={{ fontFamily: HINDI_FONT, fontSize: 68, fontWeight: 900,
-                color: "#FFFFFF", textAlign: "center", lineHeight: 1.2,
-                opacity: interpolate(frame,
-                  [Math.round(1.2*fps), Math.round(1.8*fps)], [0,1],
-                  {extrapolateLeft:"clamp",extrapolateRight:"clamp"}) }}>
-                {script.hook_number_label || script.hook?.split(" ").slice(0,5).join(" ")}
-              </div>
-            </div>
-          )}
-
-          {/* REEL B: Bold text hook */}
-          {(seed % 3 === 1) && (
-            <div style={{ fontFamily: HOOK_FONT, fontSize: 96, fontWeight: 900,
-              color: "#FFFFFF", textAlign: "center", lineHeight: 1.2 }}>
+        <AbsoluteFill style={{
+          display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
+          padding: "60px 40px",
+          transform: `scale(${kenBurns(0)})`
+        }}>
+          {/* STATIC DELAY: Keep fully static for 15 frames for perfect native thumbnails */}
+          <div style={{
+             display: "flex", flexDirection: "column", alignItems: "center", gap: 30, width: "100%",
+             opacity: frame < 15 ? 1 : interpolate(frame, [15, 25], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"}),
+             transform: frame < 15 ? "translateY(0px)" : `translateY(${interpolate(frame, [15, 30], [40, 0], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})}px)`
+          }}>
+            <div style={{ fontFamily: HOOK_FONT, fontSize: 100, fontWeight: 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.15 }}>
               {script.hook?.split(" ").map((w: string, i: number) => {
-                const hi = activeRedWords.some(r => w.toUpperCase().includes(r))
-                  || i === Math.floor(script.hook.split(" ").length / 2);
+                const hi = activeRedWords.some(r => w.toUpperCase().includes(r)) || i === 0 || i === Math.floor(script.hook.split(" ").length / 2);
+                const isBgColor = (seed % 3) === 1;
                 return (
-                  <span key={i} style={{ color: hi ? pal.p : "#FFFFFF",
-                    display: "inline-block", marginRight: 18 }}>{w}</span>
+                  <span key={i} style={{ 
+                    color: hi && !isBgColor ? pal.p : (hi && isBgColor ? pal.bg1 : "#FFFFFF"),
+                    backgroundColor: hi && isBgColor ? pal.p : "transparent",
+                    padding: hi && isBgColor ? "0 20px" : "0",
+                    display: "inline-block", marginRight: 18, marginBottom: 15, borderRadius: 15
+                  }}>{w}</span>
                 );
               })}
             </div>
-          )}
-
-          {/* REEL C: Face-first authority hook */}
-          {(seed % 3 === 2) && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 35 }}>
-              <div style={{ width: 300, height: 300, borderRadius: "50%", overflow: "hidden",
-                border: `6px solid ${pal.p}`,
-                boxShadow: `0 0 0 ${4 + Math.sin(frame*0.12)*5}px ${pal.p}55`,
-                transform: `translateY(${Math.sin(frame*0.08)*6}px) rotate(${Math.sin(frame*0.05)*1.5}deg)`,
-                flexShrink: 0 }}>
-                <Img src={staticFile("host_photo.png")}
-                  style={{ width:"100%", height:"100%", objectFit:"cover",
-                    objectPosition:"center top",
-                    transform:`scale(${1 + Math.sin(frame*0.04)*0.015})` }} />
-              </div>
-              <div style={{ fontFamily: HOOK_FONT, fontSize: 80, fontWeight: 900,
-                color: "#FFFFFF", textAlign: "center", lineHeight: 1.2,
-                opacity: interpolate(frame,
-                  [Math.round(0.6*fps), Math.round(1.2*fps)], [0,1],
-                  {extrapolateLeft:"clamp",extrapolateRight:"clamp"}) }}>
-                {script.hook?.split(" ").slice(0,6).map((w: string, i: number) => (
-                  <span key={i} style={{ color: i===0 ? pal.p : "#FFFFFF",
-                    display:"inline-block", marginRight:16 }}>{w}</span>
-                ))}
-              </div>
+          </div>
+          
+          {/* Small Corner Badge Profile Photo */}
+          <div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: `4px solid ${pal.p}`, boxShadow: `0 10px 30px rgba(0,0,0,0.5)` }}>
+              <Img src={staticFile("host_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
             </div>
-          )}
-
+          </div>
         </AbsoluteFill>
       </Sequence>
 
 
-      {/* UPGRADE #4: CURIOSITY LOOP — teaser planted in first 10s, resolved in proof */}
-      {t >= 2.0 && t < p_l1 && script.curiosity_teaser && (
+      {/* UPGRADE #4: CURIOSITY LOOP — planted early, persists until resolved */}
+      {t >= 2.0 && t < p_proof && script.curiosity_teaser && (
         <AbsoluteFill style={{ zIndex: 9990, justifyContent: "flex-end",
           alignItems: "center", paddingBottom: 220 }}>
           <div style={{
@@ -503,7 +482,7 @@ export const MainVideo: React.FC<{
 
       <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof-p_l1)*fps)}>
 
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "8% 12%", transform: `scale(${kenBurns(p_l1)})` }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
 
           {(script.numbered_list || []).map((item: string, i: number) => {
 
@@ -523,7 +502,7 @@ export const MainVideo: React.FC<{
 
                 background: i === 2 ? `rgba(${parseInt(pal.p.slice(1,3),16)},${parseInt(pal.p.slice(3,5),16)},${parseInt(pal.p.slice(5,7),16)},0.15)` : "rgba(255,255,255,0.05)",
 
-                padding: "35px 45px", borderRadius: 30, marginBottom: 30,
+                padding: "45px 50px", borderRadius: 35, marginBottom: 40,
 
                 border: i === 2 ? `2px solid ${pal.p}88` : "1px solid rgba(255,255,255,0.08)",
 
@@ -544,7 +523,7 @@ export const MainVideo: React.FC<{
 
                   display: "flex", justifyContent: "center", alignItems: "center",
 
-                  fontFamily: TITLE_FONT, fontSize: i === 2 ? 56 : 46, fontWeight: 900,
+                  fontFamily: TITLE_FONT, fontSize: i === 2 ? 70 : 60, fontWeight: 900,
 
                   color: i === 2 ? pal.bg1 : pal.p,
 
@@ -562,7 +541,7 @@ export const MainVideo: React.FC<{
 
                   <div style={{
 
-                    fontFamily: HINDI_FONT, fontSize: i === 2 ? 62 : 56, fontWeight: i === 2 ? 700 : 600, color: i === 2 ? "#FFFFFF" : "rgba(255,255,255,0.88)", color: "#FFFFFF", lineHeight: 1.2
+                    fontFamily: HINDI_FONT, fontSize: i === 2 ? 75 : 65, fontWeight: i === 2 ? 700 : 600, color: i === 2 ? "#FFFFFF" : "rgba(255,255,255,0.88)", color: "#FFFFFF", lineHeight: 1.2
 
                   }}>
 
@@ -700,98 +679,68 @@ export const MainVideo: React.FC<{
 
             
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40 }}>
-
+            <div style={{ 
+              display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40,
+              opacity: interpolate(t - p_cta, [1.5, 2.5], [1, 0.4], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
+            }}>
               {(script.numbered_list || []).map((item: string, i: number) => (
-
                 <div key={i} style={{
-
                   fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.75)",
-
                   fontWeight: 600, display: "flex", alignItems: "center", gap: 18
-
                 }}>
-
                   <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 42 }}>{i + 1}.</span>
-
                   {item}
-
                 </div>
-
               ))}
-
             </div>
-
-
 
             {/* Content-specific comment driving question */}
-
             <div style={{
-
               fontFamily: HINDI_FONT, fontSize: 46, fontWeight: 700,
-
               color: pal.p, textAlign: "center",
-
-              borderTop: `2px solid ${pal.p}44`, paddingTop: 30, width: "100%", marginBottom: 20
-
+              borderTop: `2px solid ${pal.p}44`, paddingTop: 30, width: "100%", marginBottom: 20,
+              opacity: interpolate(t - p_cta, [1.5, 2.0], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
             }}>
-
               {script.comment_question || "Rule 1, 2, ya 3 — kaunsa tumne miss kiya? Comment karo 👇"}
-
             </div>
-
-
 
             <div style={{
-
               fontFamily: HINDI_FONT, fontSize: 52, fontWeight: 900,
-
-              color: "#FFFFFF", textAlign: "center", width: "100%"
-
+              color: "#FFFFFF", textAlign: "center", width: "100%",
+              opacity: interpolate(t - p_cta, [2.5, 3.0], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
             }}>
-
               {script.save_cta}
-
             </div>
-
           </div>
-
         </AbsoluteFill>
-
       </Sequence>
 
-
-
       {/* ── DYNAMIC SUBTITLES ────────────────────────────────────── */}
-
       {/* We don't show subtitles during the Hook (too much text overlap) or the CTA */}
-
-      {phase > 1 && phase < 6 && wordObj && (
-
+      {phase > 1 && phase < 6 && activeChunk && (
         <AbsoluteFill style={{ zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: 150 }}>
-
           <div style={{
-
-            background: "rgba(0,0,0,0.8)", padding: "20px 40px", borderRadius: 20,
-
+            background: "rgba(0,0,0,0.85)", padding: "20px 40px", borderRadius: 20,
             border: `2px solid ${pal.p}55`,
-
             boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
-
-            transform: `scale(${interpolate(frame, [Math.round(wordObj.start*fps), Math.round(wordObj.start*fps)+5], [0.9, 1], {extrapolateLeft: "clamp"})})`
-
+            display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 18px", maxWidth: "85%"
           }}>
-
-            <span style={{ fontFamily: HINDI_FONT, fontSize: 65, fontWeight: 900, color: isRed ? pal.p : "#FFFFFF" }}>
-
-              {wordObj.word.toUpperCase()}
-
-            </span>
-
+            {activeChunk.words.map((wObj: any, idx: number) => {
+              const isActive = t >= wObj.start && t <= wObj.end + 0.1;
+              const isHighlight = activeRedWords.some(r => wObj.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r));
+              const scale = isActive ? 1.05 : 1;
+              const color = isActive ? (isHighlight ? "#FF3366" : pal.p) : "#FFFFFF";
+              return (
+                <span key={idx} style={{ 
+                  fontFamily: HINDI_FONT, fontSize: 58, fontWeight: isActive ? 900 : 700, 
+                  color, transform: `scale(${scale})`, transition: "all 0.1s ease-out" 
+                }}>
+                  {wObj.word.toUpperCase()}
+                </span>
+              );
+            })}
           </div>
-
         </AbsoluteFill>
-
       )}
 
 

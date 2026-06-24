@@ -211,6 +211,7 @@ The SECRET formula of the most viral Indian finance accounts (FinancewithSharan,
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
 ═══════════════════════════════════════════════
 - Language: Natural Hinglish — the way a brilliant, wealthy friend speaks over chai. NOT formal textbook Hindi.
+- GRAMMAR QA PASS: Ensure every generated sentence is a complete, grammatically correct thought in either English or Hindi. Reject and rewrite any broken fragments (e.g., 'Dhirubhai Ambani, Rakesh Jhunjhunwala — rule follow'). Do not mix English and Hindi into a non-grammatical fragment.
 - ZERO generic advice: Never say "work hard", "save money", "be disciplined." These are content killers.
 - Every insight MUST be counterintuitive — something that surprises even a financially aware person.
 - The numbered list must teach a COMPLETE, ACTIONABLE mini-framework — not just disconnected tips.
@@ -852,7 +853,61 @@ def build_v32_payload():
         "--timeout=1200000",
     ]
     subprocess.run(cmd, cwd=studio_dir, check=True)
-    logger.info(f"✅ V34 4K render complete: {out_file}")
+    logger.info(f"✅ V35 render complete: {out_file}")
+
+    # ── GENERATE COVER FRAME ──
+    cover_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cover.jpg"))
+    logger.info("📸 Exporting unique cover frame (Frame 15)...")
+    subprocess.run([
+        "npx", "remotion", "still",
+        "src/index.ts", "MainVideo", cover_file,
+        "--props", json_path,
+        "--frame=15"
+    ], cwd=studio_dir, check=True)
+
+    # ── PROFESSIONAL AUDIO MIX (BGM DUCKING & VO COMPRESSION) ──
+    logger.info("🎛️ Starting Professional Audio Mix...")
+    bgm_path = os.path.join(public_dir, "bgm.mp3")
+    if not os.path.exists(bgm_path):
+        logger.info("🎵 Downloading ambient BGM...")
+        subprocess.run([
+            "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
+            "-x", "--audio-format", "mp3", "-o", bgm_path
+        ], check=True)
+    
+    mixed_file = out_file.replace(".mp4", "_mixed.mp4")
+    
+    # Extract raw VO from remotion output
+    subprocess.run(["ffmpeg", "-y", "-i", out_file, "-q:a", "0", "-map", "a", "temp_vo.wav"], check=True)
+    
+    # FFmpeg Magic:
+    # 1. Denoiser and compressor on VO
+    # 2. BGM set to extremely low volume (0.06 baseline)
+    # 3. Sidechain ducking BGM by another 6-8dB when VO is active
+    # 4. Mix them and mux with original video
+    mix_cmd = [
+        "ffmpeg", "-y",
+        "-i", out_file,
+        "-i", "temp_vo.wav",
+        "-i", bgm_path,
+        "-filter_complex",
+        "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB[vo_polished];"
+        "[2:a]volume=0.06[bgm_vol];"
+        "[bgm_vol][vo_polished]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
+        "[vo_polished][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
+        "-map", "0:v",
+        "-map", "[a_out]",
+        "-c:v", "copy",
+        "-c:a", "aac", "-b:a", "192k",
+        mixed_file
+    ]
+    subprocess.run(mix_cmd, check=True)
+    
+    os.replace(mixed_file, out_file)
+    try:
+        os.remove("temp_vo.wav")
+    except:
+        pass
 
     logger.info("Video rendering complete. Script execution finished.")
 
