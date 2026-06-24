@@ -60,6 +60,15 @@ const HINDI_FONT = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-se
 
 const TITLE_FONT = `${montserratFont}, Impact, sans-serif`;
 
+const cleanSplitText = (str: string | undefined | null) => {
+  if (!str) return "";
+  if (str.includes(":")) return str.split(":")[1].trim();
+  if (str.includes("-")) return str.split("-")[1].trim();
+  return str;
+};
+
+
+
 const HOOK_FONT = `${playfairFont}, Georgia, serif`;
 
 
@@ -419,7 +428,7 @@ export const MainVideo: React.FC<{
 
             <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
 
-              {(script.split_screen?.left?.includes("-") ? script.split_screen.left.split("-")[1] : script.split_screen?.left) || "Saves money"}
+              {cleanSplitText(script.split_screen?.left) || "Saves money"}
 
             </div>
 
@@ -435,7 +444,7 @@ export const MainVideo: React.FC<{
 
             <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
 
-              {(script.split_screen?.right?.includes("-") ? script.split_screen.right.split("-")[1] : script.split_screen?.right) || "Invests money"}
+              {cleanSplitText(script.split_screen?.right) || "Invests money"}
 
             </div>
 
@@ -492,7 +501,7 @@ export const MainVideo: React.FC<{
 
         <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
 
-          {(script.numbered_list || []).slice(0, 3).map((item: string, i: number) => {
+          {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item: string, i: number) => {
 
             const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
 
@@ -691,7 +700,7 @@ export const MainVideo: React.FC<{
               display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40,
               opacity: interpolate(t - p_cta, [1.5, 2.5], [1, 0.4], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
             }}>
-              {(script.numbered_list || []).slice(0, 3).map((item: string, i: number) => (
+              {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item: string, i: number) => (
                 <div key={i} style={{
                   fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.75)",
                   fontWeight: 600, display: "flex", alignItems: "center", gap: 18

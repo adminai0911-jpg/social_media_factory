@@ -767,6 +767,12 @@ const { fontFamily: playfairFont } = PlayfairDisplay_loadFont("normal", { weight
 const GlobalStyle = () => /* @__PURE__ */ (0,jsx_runtime.jsx)("style", { children: `* { box-sizing: border-box; }` });
 const HINDI_FONT = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-serif`;
 const TITLE_FONT = `${montserratFont}, Impact, sans-serif`;
+const cleanSplitText = (str) => {
+  if (!str) return "";
+  if (str.includes(":")) return str.split(":")[1].trim();
+  if (str.includes("-")) return str.split("-")[1].trim();
+  return str;
+};
 const HOOK_FONT = `${playfairFont}, Georgia, serif`;
 const PALETTES = [
   { p: "#FAC775", a: "#F8B133", g: "#E59400", bg1: "#0C1420", bg2: "#080D15" },
@@ -776,7 +782,7 @@ const PALETTES = [
 ];
 const RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "SCAM", "CHEAT", "DANGER"];
 const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
-  var _a, _b, _c, _d, _e, _f, _g;
+  var _a, _b, _c;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
   const t = frame / fps;
@@ -963,12 +969,12 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [0, 1]) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [20, 0])}px)` }, children: "POOR MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 20], [0.8, 1])})` }, children: "\u{1F61E}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: (((_c = (_b = script.split_screen) == null ? void 0 : _b.left) == null ? void 0 : _c.includes("-")) ? script.split_screen.left.split("-")[1] : (_d = script.split_screen) == null ? void 0 : _d.left) || "Saves money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: cleanSplitText((_b = script.split_screen) == null ? void 0 : _b.left) || "Saves money" })
       ] }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [0, 1], { extrapolateLeft: "clamp" }) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: pal.p, letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [20, 0], { extrapolateLeft: "clamp" })}px)` }, children: "RICH MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 35], [0.8, 1], { extrapolateLeft: "clamp" })})` }, children: "\u{1F9E0}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: (((_f = (_e = script.split_screen) == null ? void 0 : _e.right) == null ? void 0 : _f.includes("-")) ? script.split_screen.right.split("-")[1] : (_g = script.split_screen) == null ? void 0 : _g.right) || "Invests money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: cleanSplitText((_c = script.split_screen) == null ? void 0 : _c.right) || "Invests money" })
       ] })
     ] }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p3 * fps), durationInFrames: Math.round((p_l1 - p3) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p3)})` }, children: [
@@ -1004,7 +1010,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         maxWidth: "90%"
       }, children: script.authority_claim })
     ] }) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }, children: (script.numbered_list || []).slice(0, 3).map((item, i) => {
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }, children: (Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item, i) => {
       const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
       if (t < itemTime) return null;
       const slideProgress = (0,esm.interpolate)(frame, [Math.round(itemTime * fps), Math.round(itemTime * fps) + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -1120,7 +1126,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         alignItems: "flex-start",
         marginBottom: 40,
         opacity: (0,esm.interpolate)(t - p_cta, [1.5, 2.5], [1, 0.4], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
-      }, children: (script.numbered_list || []).slice(0, 3).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+      }, children: (Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
         fontFamily: HINDI_FONT,
         fontSize: 42,
         color: "rgba(255,255,255,0.75)",
