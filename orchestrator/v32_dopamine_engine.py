@@ -763,12 +763,20 @@ def build_v32_payload():
     # Extract phases safely from new Storyboard JSON format
     try:
         phase_1 = script_data.get("hook", "Rich vs Poor Mindset")
-        split_left = script_data.get("split_screen", {}).get("left", "Poor Mindset")
-        split_right = script_data.get("split_screen", {}).get("right", "Rich Mindset")
+        
+        split_screen_data = script_data.get("split_screen", {})
+        if not isinstance(split_screen_data, dict):
+            split_screen_data = {}
+            
+        split_left = split_screen_data.get("left", "Poor Mindset")
+        split_right = split_screen_data.get("right", "Rich Mindset")
         phase_2 = f"{split_left}. {split_right}."
         phase_3 = script_data.get("authority_claim", "Most people never learn this.")
         
         nl = script_data.get("numbered_list", [])
+        if not isinstance(nl, list):
+            nl = []
+            
         phase_l1 = nl[0] if len(nl) > 0 else "Rule 1: Always learn."
         phase_l2 = nl[1] if len(nl) > 1 else "Rule 2: Invest early."
         phase_l3 = nl[2] if len(nl) > 2 else "Rule 3: Stay consistent."
