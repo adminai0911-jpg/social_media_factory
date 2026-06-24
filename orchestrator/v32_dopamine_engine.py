@@ -115,8 +115,11 @@ else:
     EDGE_VOICES = ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"]
     ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"] # We can use Adam/Antoni for Hindi too, ElevenLabs v2 Turbo supports multilingual!
 
-def get_youtube_analytics_feedback():
-    """Fetches recent video performance from YouTube API to guide Gemini."""
+def get_omni_analytics_feedback():
+    """Fetches recent video performance from YouTube, Instagram, and Facebook APIs to guide Gemini."""
+    feedback = ""
+    
+    # ── YOUTUBE ANALYTICS ──
     try:
         from dotenv import load_dotenv
         load_dotenv()
@@ -124,46 +127,71 @@ def get_youtube_analytics_feedback():
         client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET")
         refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN")
         
-        if not (client_id and client_secret and refresh_token):
-            return ""
+        if client_id and client_secret and refresh_token:
+            token_url = "https://oauth2.googleapis.com/token"
+            res = requests.post(token_url, data={
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "refresh_token": refresh_token,
+                "grant_type": "refresh_token"
+            }, timeout=10).json()
             
-        token_url = "https://oauth2.googleapis.com/token"
-        res = requests.post(token_url, data={
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "refresh_token": refresh_token,
-            "grant_type": "refresh_token"
-        }, timeout=10).json()
-        
-        access_token = res.get("access_token")
-        if not access_token: return ""
-        
-        headers = {"Authorization": f"Bearer {access_token}"}
-        
-        # Get your channel ID
-        channel_res = requests.get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true", headers=headers, timeout=10).json()
-        uploads_list_id = channel_res["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-        
-        # Get last 5 videos
-        playlist_res = requests.get(f"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={uploads_list_id}&maxResults=5", headers=headers, timeout=10).json()
-        video_ids = ",".join([i["snippet"]["resourceId"]["videoId"] for i in playlist_res.get("items", [])])
-        
-        if not video_ids: return ""
-        
-        # Get view counts
-        stats_res = requests.get(f"https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id={video_ids}", headers=headers, timeout=10).json()
-        
-        feedback = "\n\nCRITICAL ANALYTICS FEEDBACK FROM PREVIOUS VIDEOS:\n"
-        for item in stats_res.get("items", []):
-            title = item["snippet"]["title"]
-            views = item["statistics"].get("viewCount", "0")
-            feedback += f"- '{title}': {views} views\n"
-            
-        feedback += "Use this real-world data to double-down on what is working. Lean into the topics/hooks that got the most views above.\n"
-        return feedback
+            access_token = res.get("access_token")
+            if access_token:
+                headers = {"Authorization": f"Bearer {access_token}"}
+                channel_res = requests.get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true", headers=headers, timeout=10).json()
+                if "items" in channel_res:
+                    uploads_list_id = channel_res["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+                    playlist_res = requests.get(f"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={uploads_list_id}&maxResults=5", headers=headers, timeout=10).json()
+                    video_ids = ",".join([i["snippet"]["resourceId"]["videoId"] for i in playlist_res.get("items", [])])
+                    
+                    if video_ids:
+                        stats_res = requests.get(f"https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id={video_ids}", headers=headers, timeout=10).json()
+                        feedback += "\n[YOUTUBE PERFORMANCE]\n"
+                        for item in stats_res.get("items", []):
+                            title = item["snippet"]["title"]
+                            views = item["statistics"].get("viewCount", "0")
+                            feedback += f"- '{title}': {views} views\n"
     except Exception as e:
-        logger.warning(f"Could not fetch analytics feedback: {e}")
-        return ""
+        logger.warning(f"YouTube Analytics error: {e}")
+
+    # ── INSTAGRAM ANALYTICS ──
+    try:
+        ig_id = os.environ.get("INSTAGRAM_ACCOUNT_ID")
+        fb_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+        if ig_id and fb_token:
+            ig_url = f"https://graph.facebook.com/v19.0/{ig_id}/media?fields=caption,like_count,comments_count&limit=5&access_token={fb_token}"
+            ig_res = requests.get(ig_url, timeout=10).json()
+            if "data" in ig_res and ig_res["data"]:
+                feedback += "\n[INSTAGRAM REELS PERFORMANCE]\n"
+                for item in ig_res["data"]:
+                    caption = item.get("caption", "No Caption")[:50].replace("\n", " ") + "..."
+                    likes = item.get("like_count", 0)
+                    comments = item.get("comments_count", 0)
+                    feedback += f"- '{caption}': {likes} likes, {comments} comments\n"
+    except Exception as e:
+        logger.warning(f"Instagram Analytics error: {e}")
+        
+    # ── FACEBOOK ANALYTICS ──
+    try:
+        fb_id = os.environ.get("FACEBOOK_PAGE_ID")
+        fb_token = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+        if fb_id and fb_token:
+            fb_url = f"https://graph.facebook.com/v19.0/{fb_id}/published_posts?fields=message,likes.summary(true),comments.summary(true)&limit=5&access_token={fb_token}"
+            fb_res = requests.get(fb_url, timeout=10).json()
+            if "data" in fb_res and fb_res["data"]:
+                feedback += "\n[FACEBOOK PERFORMANCE]\n"
+                for item in fb_res["data"]:
+                    message = item.get("message", "No Message")[:50].replace("\n", " ") + "..."
+                    likes = item.get("likes", {}).get("summary", {}).get("total_count", 0)
+                    comments = item.get("comments", {}).get("summary", {}).get("total_count", 0)
+                    feedback += f"- '{message}': {likes} likes, {comments} comments\n"
+    except Exception as e:
+        logger.warning(f"Facebook Analytics error: {e}")
+        
+    if feedback:
+        return f"\n\nCRITICAL OMNI-CHANNEL ANALYTICS FEEDBACK FROM PREVIOUS UPLOADS:{feedback}\nUse this real-world data to double-down on what is working. Lean into the topics/hooks that got the most views/likes across platforms.\n"
+    return ""
 
 
 def generate_dynamic_script():
@@ -244,7 +272,7 @@ def generate_dynamic_script():
     logger.info(f"#️⃣  Hashtags this run: {hashtags}")
 
     # Analytics Feedback
-    analytics_text = get_youtube_analytics_feedback()
+    analytics_text = get_omni_analytics_feedback()
 
     prompt = f"""You are an elite TikTok/Reels/Shorts growth expert and dopamine-engineering copywriter.
     Your sole purpose is to write highly viral, 15-30 second scripts about wealth, dark psychology, or deep success.
