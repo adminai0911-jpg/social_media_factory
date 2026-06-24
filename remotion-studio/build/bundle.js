@@ -10,6 +10,8 @@
 var esm = __webpack_require__(3947);
 // EXTERNAL MODULE: ./node_modules/react/jsx-runtime.js
 var jsx_runtime = __webpack_require__(4848);
+// EXTERNAL MODULE: ./node_modules/react/index.js
+var react = __webpack_require__(6540);
 // EXTERNAL MODULE: ./node_modules/remotion/dist/esm/no-react.mjs
 var no_react = __webpack_require__(9382);
 ;// ./node_modules/@remotion/google-fonts/dist/esm/NotoSansDevanagari.mjs
@@ -755,6 +757,7 @@ var PlayfairDisplay_loadFont = (style, options) => {
 
 
 
+
 const { fontFamily: devanagariFont } = loadFont("normal", {
   weights: ["700", "900"],
   subsets: ["devanagari"]
@@ -773,7 +776,7 @@ const PALETTES = [
 ];
 const RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "SCAM", "CHEAT", "DANGER"];
 const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
-  var _a, _b, _c, _d, _e, _f, _g;
+  var _a, _b, _c, _d, _e;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
   const t = frame / fps;
@@ -792,6 +795,20 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
   const wordIdx = timings.findIndex((w) => t >= w.start && t <= w.end + 0.1);
   const wordObj = timings[wordIdx];
   const isRed = wordObj ? activeRedWords.some((r) => wordObj.word.toUpperCase().replace(/[^A-Z0-9]/g, "").includes(r)) : false;
+  const subtitleChunks = (0,react.useMemo)(() => {
+    if (!timings) return [];
+    const chunks = [];
+    for (let i = 0; i < timings.length; i += 5) {
+      const slice = timings.slice(i, i + 5);
+      chunks.push({
+        start: slice[0].start,
+        end: slice[slice.length - 1].end + 0.1,
+        words: slice
+      });
+    }
+    return chunks;
+  }, [timings]);
+  const activeChunk = subtitleChunks.find((c) => t >= c.start && t <= c.end);
   const isVHS = frame % 50 > 46;
   const shatterActive = phase === 4 && frame < Math.round(p_l1 * fps) + 12;
   const shakeAmt = isRed ? 14 : shatterActive ? 35 : isVHS ? 4 : 0;
@@ -847,97 +864,36 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 9999 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", bottom: 40, right: 40, fontFamily: TITLE_FONT, fontSize: 30, color: "rgba(255,255,255,0.2)", fontWeight: 900, letterSpacing: 2 }, children: "@adminAI_0911" }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: 0, durationInFrames: Math.round(p2 * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: {
       display: "flex",
+      flexDirection: "column",
       justifyContent: "center",
       alignItems: "center",
-      padding: 60,
+      padding: "60px 40px",
       transform: `scale(${kenBurns(0)})`
     }, children: [
-      seed % 3 === 0 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 30 }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
-          fontFamily: TITLE_FONT,
-          fontSize: 170,
-          fontWeight: 900,
-          color: pal.p,
-          lineHeight: 1,
-          textShadow: `0 0 60px ${pal.p}88`
-        }, children: [
-          countUp(script.hook_number || 92, 0),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontSize: 80, color: "#FFFFFF" }, children: script.hook_number_suffix || "%" })
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-          fontFamily: HINDI_FONT,
-          fontSize: 68,
-          fontWeight: 900,
-          color: "#FFFFFF",
-          textAlign: "center",
-          lineHeight: 1.2,
-          opacity: (0,esm.interpolate)(
-            frame,
-            [Math.round(1.2 * fps), Math.round(1.8 * fps)],
-            [0, 1],
-            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-          )
-        }, children: script.hook_number_label || ((_a = script.hook) == null ? void 0 : _a.split(" ").slice(0, 5).join(" ")) })
-      ] }),
-      seed % 3 === 1 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-        fontFamily: HOOK_FONT,
-        fontSize: 96,
-        fontWeight: 900,
-        color: "#FFFFFF",
-        textAlign: "center",
-        lineHeight: 1.2
-      }, children: (_b = script.hook) == null ? void 0 : _b.split(" ").map((w, i) => {
-        const hi = activeRedWords.some((r) => w.toUpperCase().includes(r)) || i === Math.floor(script.hook.split(" ").length / 2);
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 30,
+        width: "100%",
+        opacity: frame < 15 ? 1 : (0,esm.interpolate)(frame, [15, 25], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+        transform: frame < 15 ? "translateY(0px)" : `translateY(${(0,esm.interpolate)(frame, [15, 30], [40, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })}px)`
+      }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HOOK_FONT, fontSize: 100, fontWeight: 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.15 }, children: (_a = script.hook) == null ? void 0 : _a.split(" ").map((w, i) => {
+        const hi = activeRedWords.some((r) => w.toUpperCase().includes(r)) || i === 0 || i === Math.floor(script.hook.split(" ").length / 2);
+        const isBgColor = seed % 3 === 1;
         return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
-          color: hi ? pal.p : "#FFFFFF",
+          color: hi && !isBgColor ? pal.p : hi && isBgColor ? pal.bg1 : "#FFFFFF",
+          backgroundColor: hi && isBgColor ? pal.p : "transparent",
+          padding: hi && isBgColor ? "0 20px" : "0",
           display: "inline-block",
-          marginRight: 18
+          marginRight: 18,
+          marginBottom: 15,
+          borderRadius: 15
         }, children: w }, i);
-      }) }),
-      seed % 3 === 2 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 35 }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          overflow: "hidden",
-          border: `6px solid ${pal.p}`,
-          boxShadow: `0 0 0 ${4 + Math.sin(frame * 0.12) * 5}px ${pal.p}55`,
-          transform: `translateY(${Math.sin(frame * 0.08) * 6}px) rotate(${Math.sin(frame * 0.05) * 1.5}deg)`,
-          flexShrink: 0
-        }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          esm.Img,
-          {
-            src: (0,esm.staticFile)("host_photo.png"),
-            style: {
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center top",
-              transform: `scale(${1 + Math.sin(frame * 0.04) * 0.015})`
-            }
-          }
-        ) }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-          fontFamily: HOOK_FONT,
-          fontSize: 80,
-          fontWeight: 900,
-          color: "#FFFFFF",
-          textAlign: "center",
-          lineHeight: 1.2,
-          opacity: (0,esm.interpolate)(
-            frame,
-            [Math.round(0.6 * fps), Math.round(1.2 * fps)],
-            [0, 1],
-            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-          )
-        }, children: (_c = script.hook) == null ? void 0 : _c.split(" ").slice(0, 6).map((w, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
-          color: i === 0 ? pal.p : "#FFFFFF",
-          display: "inline-block",
-          marginRight: 16
-        }, children: w }, i)) })
-      ] })
+      }) }) }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: `4px solid ${pal.p}`, boxShadow: `0 10px 30px rgba(0,0,0,0.5)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: (0,esm.staticFile)("host_photo.png"), style: { width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" } }) }) })
     ] }) }),
-    t >= 2 && t < p_l1 && script.curiosity_teaser && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: {
+    t >= 2 && t < p_proof && script.curiosity_teaser && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: {
       zIndex: 9990,
       justifyContent: "flex-end",
       alignItems: "center",
@@ -998,12 +954,12 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [0, 1]) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [20, 0])}px)` }, children: "POOR MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 20], [0.8, 1])})` }, children: "\u{1F61E}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_e = (_d = script.split_screen) == null ? void 0 : _d.left) == null ? void 0 : _e.split("-")[1]) || "Saves money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_c = (_b = script.split_screen) == null ? void 0 : _b.left) == null ? void 0 : _c.split("-")[1]) || "Saves money" })
       ] }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [0, 1], { extrapolateLeft: "clamp" }) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: pal.p, letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [20, 0], { extrapolateLeft: "clamp" })}px)` }, children: "RICH MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 35], [0.8, 1], { extrapolateLeft: "clamp" })})` }, children: "\u{1F9E0}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_g = (_f = script.split_screen) == null ? void 0 : _f.right) == null ? void 0 : _g.split("-")[1]) || "Invests money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_e = (_d = script.split_screen) == null ? void 0 : _d.right) == null ? void 0 : _e.split("-")[1]) || "Invests money" })
       ] })
     ] }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p3 * fps), durationInFrames: Math.round((p_l1 - p3) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p3)})` }, children: [
@@ -1039,7 +995,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         maxWidth: "90%"
       }, children: script.authority_claim })
     ] }) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "8% 12%", transform: `scale(${kenBurns(p_l1)})` }, children: (script.numbered_list || []).map((item, i) => {
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p_l1 * fps), durationInFrames: Math.round((p_proof - p_l1) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }, children: (script.numbered_list || []).map((item, i) => {
       const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
       if (t < itemTime) return null;
       const slideProgress = (0,esm.interpolate)(frame, [Math.round(itemTime * fps), Math.round(itemTime * fps) + 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
@@ -1047,9 +1003,9 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         display: "flex",
         alignItems: "center",
         background: i === 2 ? `rgba(${parseInt(pal.p.slice(1, 3), 16)},${parseInt(pal.p.slice(3, 5), 16)},${parseInt(pal.p.slice(5, 7), 16)},0.15)` : "rgba(255,255,255,0.05)",
-        padding: "35px 45px",
-        borderRadius: 30,
-        marginBottom: 30,
+        padding: "45px 50px",
+        borderRadius: 35,
+        marginBottom: 40,
         border: i === 2 ? `2px solid ${pal.p}88` : "1px solid rgba(255,255,255,0.08)",
         boxShadow: i === 2 ? `0 10px 40px ${pal.p}33` : "0 10px 30px rgba(0,0,0,0.5)",
         opacity: slideProgress,
@@ -1065,7 +1021,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
           justifyContent: "center",
           alignItems: "center",
           fontFamily: TITLE_FONT,
-          fontSize: i === 2 ? 56 : 46,
+          fontSize: i === 2 ? 70 : 60,
           fontWeight: 900,
           color: i === 2 ? pal.bg1 : pal.p,
           marginRight: 28,
@@ -1075,7 +1031,7 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1 }, children: [
           /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
             fontFamily: HINDI_FONT,
-            fontSize: i === 2 ? 62 : 56,
+            fontSize: i === 2 ? 75 : 65,
             fontWeight: i === 2 ? 700 : 600,
             color: i === 2 ? "#FFFFFF" : "rgba(255,255,255,0.88)",
             color: "#FFFFFF",
@@ -1147,7 +1103,15 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         marginBottom: 40,
         textAlign: "center"
       }, children: "SAVE KARO" }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40 }, children: (script.numbered_list || []).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 15,
+        width: "100%",
+        alignItems: "flex-start",
+        marginBottom: 40,
+        opacity: (0,esm.interpolate)(t - p_cta, [1.5, 2.5], [1, 0.4], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+      }, children: (script.numbered_list || []).map((item, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
         fontFamily: HINDI_FONT,
         fontSize: 42,
         color: "rgba(255,255,255,0.75)",
@@ -1171,7 +1135,8 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         borderTop: `2px solid ${pal.p}44`,
         paddingTop: 30,
         width: "100%",
-        marginBottom: 20
+        marginBottom: 20,
+        opacity: (0,esm.interpolate)(t - p_cta, [1.5, 2], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
       }, children: script.comment_question || "Rule 1, 2, ya 3 \u2014 kaunsa tumne miss kiya? Comment karo \u{1F447}" }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
         fontFamily: HINDI_FONT,
@@ -1179,17 +1144,35 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
         fontWeight: 900,
         color: "#FFFFFF",
         textAlign: "center",
-        width: "100%"
+        width: "100%",
+        opacity: (0,esm.interpolate)(t - p_cta, [2.5, 3], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
       }, children: script.save_cta })
     ] }) }) }),
-    phase > 1 && phase < 6 && wordObj && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: 150 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-      background: "rgba(0,0,0,0.8)",
+    phase > 1 && phase < 6 && activeChunk && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: 150 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      background: "rgba(0,0,0,0.85)",
       padding: "20px 40px",
       borderRadius: 20,
       border: `2px solid ${pal.p}55`,
       boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
-      transform: `scale(${(0,esm.interpolate)(frame, [Math.round(wordObj.start * fps), Math.round(wordObj.start * fps) + 5], [0.9, 1], { extrapolateLeft: "clamp" })})`
-    }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: HINDI_FONT, fontSize: 65, fontWeight: 900, color: isRed ? pal.p : "#FFFFFF" }, children: wordObj.word.toUpperCase() }) }) }),
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      gap: "10px 18px",
+      maxWidth: "85%"
+    }, children: activeChunk.words.map((wObj, idx) => {
+      const isActive = t >= wObj.start && t <= wObj.end + 0.1;
+      const isHighlight = activeRedWords.some((r) => wObj.word.toUpperCase().replace(/[^A-Z0-9]/g, "").includes(r));
+      const scale = isActive ? 1.05 : 1;
+      const color = isActive ? isHighlight ? "#FF3366" : pal.p : "#FFFFFF";
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+        fontFamily: HINDI_FONT,
+        fontSize: 58,
+        fontWeight: isActive ? 900 : 700,
+        color,
+        transform: `scale(${scale})`,
+        transition: "all 0.1s ease-out"
+      }, children: wObj.word.toUpperCase() }, idx);
+    }) }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 9999, justifyContent: "flex-end" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
       height: 12,
       width: `${frame / (total_duration * fps) * 100}%`,
