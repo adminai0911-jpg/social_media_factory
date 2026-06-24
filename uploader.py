@@ -448,23 +448,25 @@ def trigger_make_webhook(video_url, caption):
 def distribute_to_all_platforms(video_path, description, cover_path=None):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
 
+    raw_description = description
+
     # 💰 MONETIZATION: Inject affiliate link into every caption BEFORE hashtags
     if "#" in description:
         idx = description.find("#")
         base_text = description[:idx].strip()
         tags_text = description[idx:].strip()
-        description = f"{base_text}\n\n{CURRENT_CTA['caption']}\n\n{tags_text}"
+        injected_description = f"{base_text}\n\n{CURRENT_CTA['caption']}\n\n{tags_text}"
     else:
-        description = f"{description}\n\n{CURRENT_CTA['caption']}"
+        injected_description = f"{description}\n\n{CURRENT_CTA['caption']}"
         
     logger.info(f"💰 Monetization CTA injected into caption: {CURRENT_CTA['caption'][:40]}...")
 
-    logger.info(f"📝 Final Caption: {description}")
+    logger.info(f"📝 Final Caption: {injected_description}")
     
-    yt = upload_to_youtube_shorts(video_path, description)
+    yt = upload_to_youtube_shorts(video_path, raw_description)
     time.sleep(5)
     
-    fb = upload_to_facebook_reels(video_path, description)
+    fb = upload_to_facebook_reels(video_path, injected_description)
     time.sleep(5)
     
     video_url = upload_to_temp_host(video_path)
@@ -472,13 +474,13 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     ig, ig_story, fb_story, buffer_bridge = False, False, False, False
     
     if video_url:
-        ig = upload_to_instagram_reels(video_url, description, cover_url)
+        ig = upload_to_instagram_reels(video_url, injected_description, cover_url)
         time.sleep(5)
         ig_story = upload_to_instagram_story(video_url)
         time.sleep(5)
         fb_story = upload_to_facebook_story(video_path)
         time.sleep(5)
-        buffer_bridge = trigger_make_webhook(video_url, description)
+        buffer_bridge = trigger_make_webhook(video_url, injected_description)
     else:
         logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
         
@@ -501,7 +503,7 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
 <b>Caption Used:</b>
-{__import__('html').escape(description)}
+{__import__('html').escape(injected_description)}
 """
     send_telegram_alert(status_msg)
     
