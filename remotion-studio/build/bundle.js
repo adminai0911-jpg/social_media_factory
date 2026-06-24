@@ -773,7 +773,7 @@ const PALETTES = [
 ];
 const RED_WORDS = ["WAKE", "SIMULATION", "SHADOWS", "TRAP", "LYING", "FAKE", "DREAM", "FEAR", "PANIC", "NOW", "LIES", "BREAK", "SCAM", "CHEAT", "DANGER"];
 const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f, _g;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
   const t = frame / fps;
@@ -845,39 +845,133 @@ const MainVideo = ({ script, timings, audio_offsets, total_duration }) => {
       } })
     ] }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 9999 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", bottom: 40, right: 40, fontFamily: TITLE_FONT, fontSize: 30, color: "rgba(255,255,255,0.2)", fontWeight: 900, letterSpacing: 2 }, children: "@adminAI_0911" }) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: 0, durationInFrames: Math.round(p2 * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { display: "flex", justifyContent: "center", alignItems: "center", padding: 60, transform: `scale(${kenBurns(0)})` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-      fontFamily: HOOK_FONT,
-      fontSize: 100,
-      fontWeight: 900,
-      color: "#FFFFFF",
-      textAlign: "center",
-      lineHeight: 1.2
-    }, children: (_a = script.hook) == null ? void 0 : _a.split(" ").map((w, i) => {
-      const isHighlight = activeRedWords.some((r) => w.toUpperCase().includes(r)) || i === Math.floor(script.hook.split(" ").length / 2);
-      return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: isHighlight ? pal.p : "#FFFFFF", display: "inline-block", marginRight: 20 }, children: w }, i);
-    }) }) }) }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: 0, durationInFrames: Math.round(p2 * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 60,
+      transform: `scale(${kenBurns(0)})`
+    }, children: [
+      seed % 3 === 0 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 30 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+          fontFamily: TITLE_FONT,
+          fontSize: 170,
+          fontWeight: 900,
+          color: pal.p,
+          lineHeight: 1,
+          textShadow: `0 0 60px ${pal.p}88`
+        }, children: [
+          countUp(script.hook_number || 92, 0),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontSize: 80, color: "#FFFFFF" }, children: script.hook_number_suffix || "%" })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+          fontFamily: HINDI_FONT,
+          fontSize: 68,
+          fontWeight: 900,
+          color: "#FFFFFF",
+          textAlign: "center",
+          lineHeight: 1.2,
+          opacity: (0,esm.interpolate)(
+            frame,
+            [Math.round(1.2 * fps), Math.round(1.8 * fps)],
+            [0, 1],
+            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+          )
+        }, children: script.hook_number_label || ((_a = script.hook) == null ? void 0 : _a.split(" ").slice(0, 5).join(" ")) })
+      ] }),
+      seed % 3 === 1 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+        fontFamily: HOOK_FONT,
+        fontSize: 96,
+        fontWeight: 900,
+        color: "#FFFFFF",
+        textAlign: "center",
+        lineHeight: 1.2
+      }, children: (_b = script.hook) == null ? void 0 : _b.split(" ").map((w, i) => {
+        const hi = activeRedWords.some((r) => w.toUpperCase().includes(r)) || i === Math.floor(script.hook.split(" ").length / 2);
+        return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+          color: hi ? pal.p : "#FFFFFF",
+          display: "inline-block",
+          marginRight: 18
+        }, children: w }, i);
+      }) }),
+      seed % 3 === 2 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 35 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+          width: 300,
+          height: 300,
+          borderRadius: "50%",
+          overflow: "hidden",
+          border: `6px solid ${pal.p}`,
+          boxShadow: `0 0 0 ${4 + Math.sin(frame * 0.12) * 5}px ${pal.p}55`,
+          transform: `translateY(${Math.sin(frame * 0.08) * 6}px) rotate(${Math.sin(frame * 0.05) * 1.5}deg)`,
+          flexShrink: 0
+        }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          esm.Img,
+          {
+            src: (0,esm.staticFile)("host_photo.png"),
+            style: {
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+              transform: `scale(${1 + Math.sin(frame * 0.04) * 0.015})`
+            }
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+          fontFamily: HOOK_FONT,
+          fontSize: 80,
+          fontWeight: 900,
+          color: "#FFFFFF",
+          textAlign: "center",
+          lineHeight: 1.2,
+          opacity: (0,esm.interpolate)(
+            frame,
+            [Math.round(0.6 * fps), Math.round(1.2 * fps)],
+            [0, 1],
+            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+          )
+        }, children: (_c = script.hook) == null ? void 0 : _c.split(" ").slice(0, 6).map((w, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+          color: i === 0 ? pal.p : "#FFFFFF",
+          display: "inline-block",
+          marginRight: 16
+        }, children: w }, i)) })
+      ] })
+    ] }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p2 * fps), durationInFrames: Math.round((p3 - p2) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "row", transform: `scale(${kenBurns(p2)})` }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [0, 1]) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 15], [20, 0])}px)` }, children: "POOR MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps, p2 * fps + 20], [0.8, 1])})` }, children: "\u{1F61E}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_c = (_b = script.split_screen) == null ? void 0 : _b.left) == null ? void 0 : _c.split("-")[1]) || "Saves money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_e = (_d = script.split_screen) == null ? void 0 : _d.left) == null ? void 0 : _e.split("-")[1]) || "Saves money" })
       ] }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: (0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [0, 1], { extrapolateLeft: "clamp" }) }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: TITLE_FONT, fontSize: 45, color: pal.p, letterSpacing: 2, marginBottom: 40, transform: `translateY(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 30], [20, 0], { extrapolateLeft: "clamp" })}px)` }, children: "RICH MINDSET" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 180, marginBottom: 60, transform: `scale(${(0,esm.interpolate)(frame, [p2 * fps + 15, p2 * fps + 35], [0.8, 1], { extrapolateLeft: "clamp" })})` }, children: "\u{1F9E0}" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_e = (_d = script.split_screen) == null ? void 0 : _d.right) == null ? void 0 : _e.split("-")[1]) || "Invests money" })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }, children: ((_g = (_f = script.split_screen) == null ? void 0 : _f.right) == null ? void 0 : _g.split("-")[1]) || "Invests money" })
       ] })
     ] }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: Math.round(p3 * fps), durationInFrames: Math.round((p_l1 - p3) * fps), children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p3)})` }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-        width: 420,
-        height: 420,
+        width: 380,
+        height: 380,
         borderRadius: "50%",
         overflow: "hidden",
         border: `6px solid ${pal.p}`,
-        boxShadow: `0 0 0 3px ${pal.bg1}, 0 0 0 9px ${pal.p}55, 0 0 80px ${pal.p}44`,
+        boxShadow: `0 0 0 ${4 + Math.sin(frame * 0.1) * 5}px ${pal.p}44, 0 0 80px ${pal.p}44`,
+        transform: `translateY(${Math.sin(frame * 0.07) * 5}px) rotate(${Math.sin(frame * 0.04) * 1.2}deg)`,
         flexShrink: 0
-      }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: (0,esm.staticFile)("host_photo.png"), style: { width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" } }) }),
+      }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        esm.Img,
+        {
+          src: (0,esm.staticFile)("host_photo.png"),
+          style: {
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center top",
+            transform: `scale(${1.02 + Math.sin(frame * 0.05) * 0.015}) translateY(${Math.cos(frame * 0.06) * 3}px)`
+          }
+        }
+      ) }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
         fontFamily: HINDI_FONT,
         fontSize: 75,

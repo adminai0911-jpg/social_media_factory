@@ -36,13 +36,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ── STEP 2: Micro Jitter (max 5 minutes — so posts always arrive on time) ──
+      # ── STEP 2: Human Jitter (5 to 60 min) — protects from bot-detection ──
       - name: Human Jitter (Anti-Bot Delay)
         if: github.event_name != 'workflow_dispatch'
         run: |
-          # Random delay 0-300 seconds (5 minutes max) — keeps posts on schedule
-          JITTER=$((RANDOM % 300))
-          echo "💤 Sleeping ${JITTER}s (anti-bot micro-jitter, max 5 minutes)"
+          # Random delay 300-3600 seconds (5-60 minutes)
+          # WHY: Instagram/YouTube flag accounts posting at EXACT same time daily.
+          # This makes posts look fully human. Manual "Run workflow" skips this.
+          JITTER=$((300 + RANDOM % 3300))
+          echo "💤 Sleeping ${JITTER}s (anti-bot human jitter, 5–60 min)"
           sleep $JITTER
 
 
