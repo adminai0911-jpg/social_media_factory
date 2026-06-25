@@ -223,11 +223,11 @@ def generate_dynamic_script():
         "तुम्हारे parents ने पैसे के बारे में 3 झूठ सिखाए। आज तोड़ते हैं।",
         "The financially free version of you is watching this. Will you listen?",
 
-        # 🏆 CATEGORY 4: AUTHORITY + PROOF — Builds instant credibility and trust
+        # 🏆 CATEGORY 4: AUTHORITY + PROOF / RELATABLE REALITY — Mix billionaires with relatable scenarios
         "Dhirubhai Ambani, Rakesh Jhunjhunwala — दोनों ने यह एक rule follow किया।",
         "Harvard Business Study says: 92% of middle class makes THIS mistake before 35.",
-        "Warren Buffett ने यह rule 14 साल की उम्र में सीखा। आप आज सीखोगे।",
-        "The wealth rule that took me 7 years to learn — in 60 seconds.",
+        "Mere ek dost ki salary ₹60,000 hai phir bhi wo hamesha broke rehta hai. Kyun?",
+        "Agar tumhari age 20s me hai aur bank balance ₹1 lakh se kam hai, toh yeh suno.",
 
         # 🔁 CATEGORY 5: SERIES / OPEN LOOP — Forces follow for Part 2
         "Part 1/3: पैसे की वो psychology जो 1% लोग जानते हैं।",
@@ -285,62 +285,43 @@ def generate_dynamic_script():
     You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
 
 ═══════════════════════════════════════════════
-DUAL MISSION (BOTH are non-negotiable):
-═══════════════════════════════════════════════
-1. PSYCHOLOGICAL AGGRESSION: Every second of the video must be so gripping the viewer physically cannot scroll away.
-2. GENUINE DEEP VALUE: Every insight must be so real, specific, and actionable that the viewer feels they just learned something worth ₹10,000. This is what builds loyal followers who keep coming back.
-
-The SECRET formula of the most viral Indian finance accounts (FinancewithSharan, Ankur Warikoo, CA Rachana): They are AGGRESSIVE enough to stop the scroll AND VALUABLE enough to earn the save and share. Your script must do BOTH.
-
-═══════════════════════════════════════════════
-6 PSYCHOLOGICAL WEAPONS (USE ALL 6):
-═══════════════════════════════════════════════
-1. CURIOSITY GAP: The hook opens a mental loop. The only way to close it is to watch to the end. Never answer the hook's question before the final 5 seconds.
-2. IDENTITY MIRROR: Every line should make the viewer feel "This is talking directly to ME." Use "tum", "tumhara", "tum log" — never generic "log" or "people."
-3. SPECIFIC NUMBERS: Vague claims are ignored. Specific numbers are believed. Use exact figures: "₹43,847", "73% of Indians under 35", "18 months", "Mukesh Ambani was 24 when he did this." (CRITICAL: THESE ARE JUST EXAMPLES. DO NOT COPY THEM. INVENT COMPLETELY NEW AND UNIQUE NUMBERS/PERCENTAGES EVERY TIME).
-4. LOSS AVERSION (2X POWER): The human brain reacts to loss 2.5x more strongly than gain. Frame every insight as something the viewer is CURRENTLY LOSING if they don't know this.
-5. SOCIAL PROOF ESCALATION: Reference real people, real studies, real companies. "Warren Buffett", "IIM study", "Zerodha data shows" — these phrases make viewers trust and share immediately.
-6. DOPAMINE MICRO-REWARDS: Every 3-4 seconds must deliver a NEW surprising fact, number, or insight. This creates a chemical dopamine loop that makes the video literally addictive to watch.
-7. ABSOLUTE UNIQUENESS & REAL DATA: You MUST generate completely unique angles and topics every single time without repeating yourself. However, EVERY STATISTIC, NUMBER, AND FACT MUST BE 100% REAL AND VERIFIABLE. DO NOT HALLUCINATE OR INVENT FAKE DATA. Use different, REAL financial statistics from credible sources for each script.
-
-═══════════════════════════════════════════════
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
 ═══════════════════════════════════════════════
 - Language: Natural Hinglish — the way a brilliant, wealthy friend speaks over chai. NOT formal textbook Hindi.
-- GRAMMAR QA PASS: Ensure every generated sentence is a complete, grammatically correct thought in either English or Hindi. Reject and rewrite any broken fragments (e.g., 'Dhirubhai Ambani, Rakesh Jhunjhunwala — rule follow'). Do not mix English and Hindi into a non-grammatical fragment.
+- GRAMMAR QA PASS: Ensure every generated sentence is a complete, grammatically correct thought in either English or Hindi.
 - ZERO generic advice: Never say "work hard", "save money", "be disciplined." These are content killers.
-- Every insight MUST be counterintuitive — something that surprises even a financially aware person.
-- The numbered list must teach a COMPLETE, ACTIONABLE mini-framework — not just disconnected tips.
-- proof_demo MUST name a real person (Indian preferred: Ambani, Premji, Bajaj, Rakesh Jhunjhunwala) or a credible study.
-- This is Part {series_part} of 3 in a series. If hook mentions a series part number, use {series_part}.
-- End with an OPEN LOOP: tease something even bigger in the next video to force follows.
-- Length constraint: Total spoken words must map to a 35-45 second video. Be punchy. Trim anything that repeats information.
+- Every insight MUST be counterintuitive.
+- The numbered list must teach a COMPLETE, ACTIONABLE mini-framework.
+- proof_demo MUST name a real person or a credible study OR be a highly relatable real-world scenario (e.g., a friend earning ₹60k/month).
 - Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
 Mandatory: hook MUST use this text exactly: {hook}
 Mandatory: save_cta MUST use this text exactly: {cta}
 
-JSON Schema:
+JSON Schema (RETURN ONLY THIS):
 {{
   "hook": "{hook}",
-  "curiosity_teaser": "An open loop question or incomplete thought related to the hook. Max 6 words. Example: '₹847 ka asli sach?' or 'Sirf 1% log jaante hain...'",
-  "curiosity_payoff": "The explicit resolution to the curiosity_teaser, revealed during the proof section to close the loop. Max 8 words. Example: 'Yahi ₹847 tumhara loss hai.'",
-  "split_screen": {{
-    "left": "BROKE trap: [The single most PAINFUL and SPECIFIC behavior keeping 90% of Indians poor — max 6 words. Must sting.]",
-    "right": "WEALTH move: [The counterintuitive, surprising behavior of top 1% Indians — max 6 words. Must inspire.]"
-  }},
-  "authority_claim": "ONE brutal, specific, stat-backed truth bomb that makes the viewer's jaw drop. Must include a real Rupee amount OR a real percentage OR a real Indian name. Sound like a professor who has seen behind the curtain. MAX 18 words.",
-  "numbered_list": [ // MUST BE EXACTLY 3 ITEMS. NO MORE. NO LESS.
-    "Rule 1: [A counterintuitive, specific, actionable wealth rule with a number. Something a rich dad teaches his son. Max 10 words.]",
-    "Rule 2: [A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
-    "Rule 3: [A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words. This is the 'Aha!' moment.]"
+  "authority_claim": "ONE brutal, specific, stat-backed truth bomb that makes the viewer's jaw drop. Sound like a professor who has seen behind the curtain. MAX 18 words.",
+  "numbered_list": [
+    {{
+      "text": "[A counterintuitive, specific, actionable wealth rule with a number. Something a rich dad teaches his son. Max 10 words.]",
+      "type": "INSIGHT"
+    }},
+    {{
+      "text": "[A dark psychological truth about money that most people are too scared to admit about themselves. Max 10 words.]",
+      "type": "INSIGHT"
+    }},
+    {{
+      "text": "[A SHOCKING, jaw-dropping statistic with a real Rupee figure or percentage that reframes everything. Max 12 words.]",
+      "type": "DATA",
+      "source": "[ONE short, real, verifiable source e.g. 'Source: SEBI 2024'. If not verifiable, return empty string.]"
+    }}
   ],
-  "proof_demo": "Real-world proof using a NAMED Indian or global billionaire, or a credible institution (IIM, RBI, SEBI, Forbes). Make it feel like insider knowledge. Example: 'Rakesh Jhunjhunwala ne 5,000 se shuru kiya tha — 40,000 crore banaye. Yahi rule use kiya.' MAX 15 words.",
-  "proof_source": "ONE real, verifiable source for the proof_demo claim (e.g. 'Source: Forbes India 2024' or 'Source: RBI Annual Report 2025'). ONLY add if the claim is real and verifiable. If not verifiable, return empty string.",
-  "source_tag": "ONE short, real, verifiable source for Rule 3 only (e.g. 'Source: SEBI 2024' or 'Source: IIM-A Study 2023'). ONLY add if Rule 3 contains a real verifiable statistic. If not verifiable, return empty string.",
-  "comment_question": "A SPECIFIC question about this reel's exact content — NOT generic. Example for a 3-rules reel: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya? Sach bolo neeche' or for a mindset reel: 'Poor mindset ya Rich mindset — aap kis side ho? Type P ya R neeche 👇'. MAX 12 words. Must be answerable in 1-3 words so viewers actually comment.",
+  "proof_demo": "Real-world proof using a NAMED billionaire, a credible institution, OR a relatable real-world scenario (e.g. ₹60k/month earner). Make it feel like insider knowledge. MAX 15 words.",
+  "proof_source": "ONE real, verifiable source for the proof_demo claim (e.g. 'Source: Forbes India 2024'). ONLY add if the claim is real and verifiable. If not verifiable, return empty string.",
+  "comment_question": "A SPECIFIC question about this reel's exact content. Example: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya?' MAX 12 words.",
   "save_cta": "{cta}",
-  "caption": "2 sentences total. Sentence 1 (THE STOP-SCROLL BOMB): A controversial, provocative, or deeply uncomfortable truth about money in India. Sentence 2 (THE COMMENT MAGNET): A direct, personal question the viewer MUST answer right now. End with EXACTLY these hashtags on a new line: {hashtags}"
+  "caption": "2 sentences total. Sentence 1: A controversial truth. Sentence 2: A direct question. End with EXACTLY these hashtags on a new line: {hashtags}"
 }}"""
     
     for key in valid_keys:
@@ -420,45 +401,31 @@ def generate_offline_script():
     templates = [
         {
           "hook": "90% log paise se darte hain. Tum nahi.",
-          "curiosity_teaser": "Sirf 1% jaante hain...",
-          "curiosity_payoff": "Yahi dar tumhe garib rakhta hai.",
-          "split_screen": {
-              "left": "Poor Mindset - Saves money",
-              "right": "Rich Mindset - Invests money"
-          },
           "authority_claim": "Tumhe lagta hai luck hai. Yeh ek pattern hai.",
           "numbered_list": [
-              "Loss se zyada dar nahi lagta",
-              "Decisions data se, emotion se nahi",
-              "99% log EMI trap mein har saal 5 lakh khote hain"
+              {"text": "Loss se zyada dar nahi lagta", "type": "INSIGHT"},
+              {"text": "Decisions data se, emotion se nahi", "type": "INSIGHT"},
+              {"text": "99% log EMI trap mein har saal 5 lakh khote hain", "type": "DATA", "source": "Source: RBI Data"}
           ],
           "proof_demo": "Proof: Mutual funds mein ₹10k/mo se tum 15 saal mein crorepati ho.",
           "proof_source": "Source: Compound Interest Math",
-          "source_tag": "Source: RBI Data",
           "comment_question": "Tum 1, 2 ya 3 ho? 👇",
           "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         },
         {
           "hook": "Why you are secretly sabotaging your own success...",
-          "curiosity_teaser": "The truth hurts...",
-          "curiosity_payoff": "You chose comfort.",
-          "split_screen": {
-              "left": "Poor Mindset - Blames others",
-              "right": "Rich Mindset - Takes responsibility"
-          },
           "authority_claim": "Success koi accident nahi, ek formula hai.",
           "numbered_list": [
-              "Stop waiting for the perfect time",
-              "Focus on skills, not salary",
-              "Average insaan scroll karta hai, top 1% create karta hai"
+              {"text": "Stop waiting for the perfect time", "type": "INSIGHT"},
+              {"text": "Focus on skills, not salary", "type": "INSIGHT"},
+              {"text": "Average insaan scroll karta hai, top 1% create karta hai", "type": "DATA", "source": "Source: Forbes 2024"}
           ],
           "proof_demo": "Fact: Content creators make 5x more than average 9-to-5 workers in India.",
           "proof_source": "Source: Creator Economy Report",
-          "source_tag": "Source: Forbes 2024",
           "comment_question": "Do you scroll or create? 👇",
-          "save_cta": "Save this rule before you forget! 📌 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
-          "caption": "सच्चाई कड़वी है। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
+          "save_cta": "Follow for daily dopamine hits. 🚀",
+          "caption": "Shift your perspective. #GrowthMindset #FinancialFreedom #ReelItFeelIt #Shorts"
         }
     ]
     return random.choice(templates)
@@ -606,8 +573,23 @@ def ensure_sfx(studio_dir):
     logger.info("🎧 Generating TRUE 8D spatial audio (432/436 Hz binaural + rotating pan + reverb)...")
     create_8d_hypnotic_music(os.path.join(sfx_dir, "hypno.wav"), duration=42.0)
 
+def clean_for_tts(text):
+    """Pre-processes text to prevent TTS engine hallucination and symbol reading errors."""
+    if not text:
+        return text
+    import re
+    # Fix Rupee symbol: move it after the amount (e.g. "₹ 10 lakh" -> "10 lakh rupees")
+    cleaned = re.sub(r'₹\s*([0-9.,]+\s*(?:lakh|crore|k|m|billion|million)?)', r'\1 rupees ', text, flags=re.IGNORECASE)
+    # Catch any remaining isolated ₹ symbols
+    cleaned = cleaned.replace("₹", " rupees ")
+    # Fix % symbol mispronounced or causing number hallucinations
+    cleaned = cleaned.replace("%", " percent ")
+    # Basic cleanup for excessive whitespaces
+    return " ".join(cleaned.split())
+
 def generate_audio(text, edge_voice, eleven_voice, output_path):
     """Generate audio using ElevenLabs (if key exists & has credits), fallback to edge-tts."""
+    text = clean_for_tts(text)
     eleven_key = os.environ.get("ELEVENLABS_API_KEY")
     if eleven_key:
         try:
@@ -855,14 +837,18 @@ def download_dynamic_backgrounds(public_dir):
                             for chunk in dl_resp.iter_content(chunk_size=1024 * 256):
                                 f.write(chunk)
                         if os.path.exists(raw_out) and os.path.getsize(raw_out) > 200 * 1024:
-                            subprocess.run([
-                                "ffmpeg", "-y", "-i", raw_out,
-                                "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
-                                       "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
-                                "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
-                                "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
-                            ], check=True, timeout=180, capture_output=True)
-                            os.remove(raw_out)
+                            try:
+                                subprocess.run([
+                                    "ffmpeg", "-y", "-i", raw_out,
+                                    "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
+                                           "unsharp=3:3:0.5:3:3:0.0,eq=contrast=1.05:saturation=1.2",
+                                    "-c:v", "libx264", "-preset", "superfast", "-tune", "fastdecode",
+                                    "-crf", "17", "-g", "1", "-keyint_min", "1", "-an", final_out
+                                ], check=True, timeout=180, capture_output=True)
+                                os.remove(raw_out)
+                            except FileNotFoundError:
+                                import shutil
+                                shutil.move(raw_out, final_out)
                             logger.info(f"✅ [{name}] Direct fallback ready!")
                             downloaded = True
                             break
@@ -871,12 +857,20 @@ def download_dynamic_backgrounds(public_dir):
                     continue
 
         if not downloaded:
-            logger.error(f"❌ [{name}] All sources failed — creating solid-color placeholder")
-            subprocess.run([
-                "ffmpeg", "-y", "-f", "lavfi",
-                "-i", f"color=c=0x1a1a2e:s=1080x1920:d=15",
-                "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
-            ], check=False, capture_output=True)
+            logger.error(f"❌ [{name}] All sources failed — creating fallback placeholder")
+            try:
+                subprocess.run([
+                    "ffmpeg", "-y", "-f", "lavfi",
+                    "-i", f"color=c=0x1a1a2e:s=1080x1920:d=15",
+                    "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28", final_out
+                ], check=False, capture_output=True)
+            except FileNotFoundError:
+                import shutil
+                gta_src = os.path.join(public_dir, "gta.mp4")
+                if os.path.exists(gta_src) and name != "gta":
+                    shutil.copy(gta_src, final_out)
+                else:
+                    open(final_out, 'w').close()
 
     logger.info("✅ All 4 HD Backgrounds Ready (Pexels/Pixabay/Mixkit Engine)!")
 
@@ -900,27 +894,20 @@ def build_v32_payload():
     try:
         phase_1 = script_data.get("hook", "Rich vs Poor Mindset")
         
-        split_screen_data = script_data.get("split_screen", {})
-        if not isinstance(split_screen_data, dict):
-            split_screen_data = {}
-            
-        split_left = split_screen_data.get("left", "Poor Mindset")
-        split_right = split_screen_data.get("right", "Rich Mindset")
-        phase_2 = f"{split_left}. {split_right}."
-        phase_3 = script_data.get("authority_claim", "Most people never learn this.")
+        phase_2 = script_data.get("authority_claim", "Most people never learn this.")
         
         nl = script_data.get("numbered_list", [])
         if not isinstance(nl, list):
             nl = []
             
-        phase_l1 = nl[0] if len(nl) > 0 else "Rule 1: Always learn."
-        phase_l2 = nl[1] if len(nl) > 1 else "Rule 2: Invest early."
-        phase_l3 = nl[2] if len(nl) > 2 else "Rule 3: Stay consistent."
+        phase_l1 = nl[0].get("text", "Rule 1: Always learn.") if len(nl) > 0 and isinstance(nl[0], dict) else (nl[0] if len(nl) > 0 else "Rule 1: Always learn.")
+        phase_l2 = nl[1].get("text", "Rule 2: Invest early.") if len(nl) > 1 and isinstance(nl[1], dict) else (nl[1] if len(nl) > 1 else "Rule 2: Invest early.")
+        phase_l3 = nl[2].get("text", "Rule 3: Stay consistent.") if len(nl) > 2 and isinstance(nl[2], dict) else (nl[2] if len(nl) > 2 else "Rule 3: Stay consistent.")
         
         phase_proof = script_data.get("proof_demo", "Proof: 99% fail without action.")
         phase_cta = script_data.get("save_cta", "Save this video now.")
         
-        phases = [phase_1, phase_2, phase_3, phase_l1, phase_l2, phase_l3, phase_proof, phase_cta]
+        phases = [phase_1, phase_2, phase_l1, phase_l2, phase_l3, phase_proof, phase_cta]
     except Exception as e:
         logger.error(f"Script JSON parsing failed: {e}. Aborting.")
         sys.exit(1)
@@ -1012,7 +999,7 @@ def build_v32_payload():
     concurrency = os.environ.get("REMOTION_CONCURRENCY", "2")
 
     cmd = [
-        "npx", "remotion", "render",
+        "npx.cmd" if os.name == "nt" else "npx", "remotion", "render",
         "src/index.ts", "MainVideo", out_file,
         "--props", json_path,
         "--scale=1",
@@ -1028,7 +1015,7 @@ def build_v32_payload():
     cover_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cover.jpg"))
     logger.info("📸 Exporting unique cover frame (Frame 15)...")
     subprocess.run([
-        "npx", "remotion", "still",
+        "npx.cmd" if os.name == "nt" else "npx", "remotion", "still",
         "src/index.ts", "MainVideo", cover_file,
         "--props", json_path,
         "--frame=15"
@@ -1037,61 +1024,57 @@ def build_v32_payload():
     # ── PROFESSIONAL AUDIO MIX (BGM DUCKING & VO COMPRESSION) ──
     logger.info("🎛️ Starting Professional Audio Mix...")
     bgm_path = os.path.join(public_dir, "bgm.mp3")
-    if not os.path.exists(bgm_path):
-        logger.info("🎵 Downloading ambient BGM...")
-        try:
-            subprocess.run([
-                "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
-                "-x", "--audio-format", "mp3", "-o", bgm_path
-            ], check=True, timeout=60)
-        except Exception as e:
-            logger.warning(f"yt-dlp BGM download failed (likely bot protection): {e}. Using direct fallback.")
-            try:
-                # Direct unblockable Pixabay dark ambient MP3 fallback
-                res = requests.get("https://cdn.pixabay.com/audio/2022/10/25/audio_24e93fb276.mp3", timeout=15)
-                if res.status_code == 200:
-                    with open(bgm_path, "wb") as f:
-                        f.write(res.content)
-                else:
-                    raise Exception(f"HTTP {res.status_code}")
-            except Exception as e2:
-                logger.warning(f"Fallback download failed: {e2}. Proceeding with silent BGM.")
-                # Generate 1-second silence to prevent ffmpeg from crashing downstream
-                subprocess.run(["ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5", "-q:a", "9", "-acodec", "libmp3lame", bgm_path], check=True)
-    
-    mixed_file = out_file.replace(".mp4", "_mixed.mp4")
-    
-    # Extract raw VO from remotion output
-    subprocess.run(["ffmpeg", "-y", "-i", out_file, "-q:a", "0", "-map", "a", "temp_vo.wav"], check=True)
-    
-    # FFmpeg Magic:
-    # 1. Denoiser and compressor on VO
-    # 2. BGM set to extremely low volume (0.06 baseline)
-    # 3. Sidechain ducking BGM by another 6-8dB when VO is active
-    # 4. Mix them and mux with original video
-    mix_cmd = [
-        "ffmpeg", "-y",
-        "-i", out_file,
-        "-i", "temp_vo.wav",
-        "-stream_loop", "-1", "-i", bgm_path,
-        "-filter_complex",
-        "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
-        "[2:a]volume=0.06[bgm_vol];"
-        "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
-        "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
-        "-map", "0:v",
-        "-map", "[a_out]",
-        "-c:v", "copy",
-        "-c:a", "aac", "-b:a", "192k",
-        mixed_file
-    ]
-    subprocess.run(mix_cmd, check=True)
-    
-    os.replace(mixed_file, out_file)
     try:
-        os.remove("temp_vo.wav")
-    except:
-        pass
+        if not os.path.exists(bgm_path):
+            logger.info("🎵 Downloading ambient BGM...")
+            try:
+                subprocess.run([
+                    "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
+                    "-x", "--audio-format", "mp3", "-o", bgm_path
+                ], check=True, timeout=60)
+            except Exception as e:
+                logger.warning(f"yt-dlp BGM download failed (likely bot protection): {e}. Using direct fallback.")
+                try:
+                    # Direct unblockable Pixabay dark ambient MP3 fallback
+                    res = requests.get("https://cdn.pixabay.com/audio/2022/10/25/audio_24e93fb276.mp3", timeout=15)
+                    if res.status_code == 200:
+                        with open(bgm_path, "wb") as f:
+                            f.write(res.content)
+                    else:
+                        raise Exception(f"HTTP {res.status_code}")
+                except Exception as e2:
+                    logger.warning(f"Fallback download failed: {e2}. Proceeding with silent BGM.")
+                    subprocess.run(["ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5", "-q:a", "9", "-acodec", "libmp3lame", bgm_path], check=True)
+        
+        mixed_file = out_file.replace(".mp4", "_mixed.mp4")
+        subprocess.run(["ffmpeg", "-y", "-i", out_file, "-q:a", "0", "-map", "a", "temp_vo.wav"], check=True)
+        
+        mix_cmd = [
+            "ffmpeg", "-y",
+            "-i", out_file,
+            "-i", "temp_vo.wav",
+            "-stream_loop", "-1", "-i", bgm_path,
+            "-filter_complex",
+            "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
+            "[2:a]volume=0.06[bgm_vol];"
+            "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
+            "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
+            "-map", "0:v",
+            "-map", "[a_out]",
+            "-c:v", "copy",
+            "-c:a", "aac", "-b:a", "192k",
+            mixed_file
+        ]
+        subprocess.run(mix_cmd, check=True)
+        os.replace(mixed_file, out_file)
+        try:
+            os.remove("temp_vo.wav")
+        except:
+            pass
+    except FileNotFoundError:
+        logger.warning("⚠️ ffmpeg or yt-dlp not installed on this system! Skipping BGM ducking and mixing. Video is still completely rendered with voiceover!")
+    except Exception as e:
+        logger.warning(f"⚠️ Audio mix failed: {e}. Video is still completely rendered with voiceover!")
 
     logger.info("Video rendering complete. Script execution finished.")
 

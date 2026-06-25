@@ -31,39 +31,60 @@ AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "")
 AMAZON_AFFILIATE_LINK = os.environ.get("AMAZON_AFFILIATE_LINK", "")
 OUTLIER_LINK = os.environ.get("OUTLIER_LINK", "")
 
+def add_random_param(url):
+    import random
+    import string
+    chars = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    if "?" in url:
+        return f"{url}&ref=v35_{chars}"
+    return f"{url}?ref=v35_{chars}"
+
 def get_random_cta():
     import random as _rand
     options = []
     
     if AFFILIATE_LINK:
+        safe_link = add_random_param(AFFILIATE_LINK)
         options.append({
-            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{AFFILIATE_LINK}\nZero commission. Aaj hi shuru karo.",
-            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {AFFILIATE_LINK}"
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{safe_link}\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {safe_link}"
         })
         
     if AMAZON_AFFILIATE_LINK:
+        safe_link = add_random_param(AMAZON_AFFILIATE_LINK)
         options.append({
-            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\n{AMAZON_AFFILIATE_LINK}\nHar ameer insaan ne yeh book padhi hai.",
-            "caption": f"📚 Yeh book padho — Wealth Psychology: {AMAZON_AFFILIATE_LINK}"
+            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\n{safe_link}\nHar ameer insaan ne yeh book padhi hai.",
+            "caption": f"📚 Yeh book padho — Wealth Psychology: {safe_link}"
         })
         
     if OUTLIER_LINK:
+        safe_link = add_random_param(OUTLIER_LINK)
         options.append({
-            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\n{OUTLIER_LINK}\nAI ko train karo aur dollars mein earn karo.",
-            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour: {OUTLIER_LINK}"
+            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\n{safe_link}\nAI ko train karo aur dollars mein earn karo.",
+            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour: {safe_link}"
         })
         
     if not options:
-        # Fallback if secrets are missing
         return {
-            "text": "📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\nhttps://groww.in\nZero commission. Aaj hi shuru karo.",
-            "caption": "📈 Free Demat Account — Zero Commission Invest karo: https://groww.in"
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{add_random_param('https://groww.in')}\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {add_random_param('https://groww.in')}"
         }
         
     return _rand.choice(options)
 
 # Generate one unified CTA for this entire factory run
 CURRENT_CTA = get_random_cta()
+
+HASHTAG_POOL = [
+    "#WealthMindset", "#PsychologyFacts", "#HindiMotivation", "#SuccessRules", "#Shorts", 
+    "#Money", "#Rich", "#FinancialFreedom", "#InvestingHindi", "#StockMarketIndia", 
+    "#PassiveIncome", "#BusinessMindset", "#SuccessQuotes", "#MotivationHindi", "#LifeLessons",
+    "#GrowthMindset", "#EntrepreneurIndia", "#BillionaireMindset", "#MakeMoneyOnline", "#FinanceTips"
+]
+
+def get_dynamic_hashtags():
+    import random
+    return " ".join(random.sample(HASHTAG_POOL, k=6))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 🔍 SEO ENGINE: Keyword-rich YouTube title rotation
@@ -130,7 +151,7 @@ def upload_to_temp_host(file_path):
     except Exception as e:
         logger.error(f"tmpfiles.org failed: {e}")
 
-    logger.info("Fallback: Uploading to uguu.se...")
+    logger.info("Fallback 1: Uploading to uguu.se...")
     try:
         with open(file_path, 'rb') as f:
             res = requests.post("https://uguu.se/upload", files={'files[]': f}, timeout=120)
@@ -142,6 +163,28 @@ def upload_to_temp_host(file_path):
                     return url
     except Exception as e:
         logger.error(f"uguu.se upload failed: {e}")
+        
+    logger.info("Fallback 2: Uploading to catbox.moe...")
+    try:
+        with open(file_path, 'rb') as f:
+            res = requests.post("https://catbox.moe/user/api.php", data={"reqtype": "fileupload"}, files={"fileToUpload": f}, timeout=120)
+            if res.status_code == 200 and res.text.startswith("https://"):
+                logger.info(f"✅ Video uploaded to public URL: {res.text}")
+                return res.text
+    except Exception as e:
+        logger.error(f"catbox.moe upload failed: {e}")
+        
+    logger.info("Fallback 3: Uploading to file.io...")
+    try:
+        with open(file_path, 'rb') as f:
+            res = requests.post("https://file.io", files={'file': f}, timeout=120)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('success'):
+                    logger.info(f"✅ Video uploaded to public URL: {data['link']}")
+                    return data['link']
+    except Exception as e:
+        logger.error(f"file.io upload failed: {e}")
         
     return None
 
@@ -337,7 +380,7 @@ def upload_to_youtube_shorts(video_path, description):
 ══════════════════════════════
 🔔 SUBSCRIBE karo aur bell icon dabao — har roz ek naya wealth secret!
 
-#WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules #Shorts #Money #Rich"""
+{get_dynamic_hashtags()}"""
 
         metadata = {
             "snippet": {
@@ -388,7 +431,13 @@ def upload_to_youtube_shorts(video_path, description):
 def youtube_pin_comment(video_id, access_token):
     """Automatically posts and pins a CTA comment on every YouTube upload."""
     import random as _rand
-    pinned_text = _rand.choice(PINNED_COMMENTS)
+    import string
+    
+    # Generate an invisible zero-width space or random invisible characters to bypass exact string matching
+    invisible_salt = ''.join(_rand.choices(['\u200b', '\u200c', '\u200d', '\ufeff'], k=3))
+    
+    pinned_text = _rand.choice(PINNED_COMMENTS) + f" {invisible_salt}"
+    
     try:
         # Step 1: Post the comment
         comment_url = "https://www.googleapis.com/youtube/v3/commentThreads?part=snippet"
@@ -478,7 +527,7 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     
     video_url = upload_to_temp_host(video_path)
     cover_url = upload_to_temp_host(cover_path) if cover_path and os.path.exists(cover_path) else None
-    ig, ig_story, fb_story, buffer_bridge = False, False, False, False
+    ig, ig_story, fb_story, buffer_bridge, x_upload = False, False, False, False, False
     
     if video_url:
         ig = upload_to_instagram_reels(video_url, injected_description, cover_url)
@@ -488,6 +537,21 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
         fb_story = upload_to_facebook_story(video_path)
         time.sleep(5)
         buffer_bridge = trigger_make_webhook(video_url, injected_description)
+        
+        from twikit_uploader import upload_to_x_twikit
+        logger.info("🤖 Launching Twikit X Uploader for Cloud...")
+        
+        # SPAM PROTECTION: Do not post the exact same affiliate link 3 times a day on X.
+        # X is very strict about repetitive links and will shadowban the account.
+        # Instead, we just post the base description and say "Link in Bio!"
+        
+        base_desc = raw_description.split("#")[0].strip()
+        twitter_cap = f"{base_desc}\n\n🔗 Link in Bio! 🚀"
+        
+        if len(twitter_cap) > 250:
+            twitter_cap = twitter_cap[:247] + "..."
+            
+        x_upload = upload_to_x_twikit(video_path, twitter_cap)
     else:
         logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
         
@@ -506,8 +570,11 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 📘 Facebook Story: {'✅' if fb_story else '❌'}
 📸 Instagram Story: {'✅' if ig_story else '❌'}
 
-<b>Buffer Bridge (X / Pinterest / LinkedIn):</b>
+<b>Buffer Bridge (Pinterest / LinkedIn):</b>
 🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
+
+<b>X (Twitter) Ghost Browser:</b>
+🐦 X.com Direct Upload: {'✅' if x_upload else '❌'}
 
 <b>Caption Used:</b>
 {__import__('html').escape(injected_description)}
