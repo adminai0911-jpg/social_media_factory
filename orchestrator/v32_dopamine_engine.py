@@ -1063,12 +1063,12 @@ def build_v32_payload():
         "ffmpeg", "-y",
         "-i", out_file,
         "-i", "temp_vo.wav",
-        "-i", bgm_path,
+        "-stream_loop", "-1", "-i", bgm_path,
         "-filter_complex",
-        "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB[vo_polished];"
+        "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
         "[2:a]volume=0.06[bgm_vol];"
-        "[bgm_vol][vo_polished]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
-        "[vo_polished][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
+        "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
+        "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
         "-map", "0:v",
         "-map", "[a_out]",
         "-c:v", "copy",
