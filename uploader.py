@@ -451,6 +451,44 @@ def trigger_make_webhook(video_url, caption):
         logger.error(f"❌ Make.com Webhook exception: {e}")
         return False
 
+def upload_to_twitter(video_path, caption):
+    auth_token = os.environ.get("X_AUTH_TOKEN")
+    ct0 = os.environ.get("X_CT0")
+    if not auth_token or not ct0:
+        logger.warning("⏭️ Skipping X/Twitter (Missing auth_token or ct0)")
+        return False
+        
+    logger.info("🐦 Starting X/Twitter upload using Twikit...")
+    import asyncio
+    return asyncio.run(_async_twitter_upload(video_path, caption, auth_token, ct0))
+
+async def _async_twitter_upload(video_path, caption, auth_token, ct0):
+    try:
+        from twikit import Client
+        client = Client('en-US')
+        client.set_cookies({
+            'auth_token': auth_token,
+            'ct0': ct0
+        })
+        
+        twitter_cap = caption.split("#")[0].strip()
+        if not twitter_cap:
+            import re
+            twitter_cap = re.sub(r'#\w+', '', caption).strip()
+        if not twitter_cap: twitter_cap = "Must watch! 🚀"
+        if len(twitter_cap) > 250: twitter_cap = twitter_cap[:247] + "..."
+            
+        logger.info("Uploading video to X...")
+        media_id = await client.upload_media(video_path, media_category='tweet_video')
+        
+        logger.info(f"Video uploaded with Media ID {media_id}. Posting tweet...")
+        await client.create_tweet(text=twitter_cap, media_ids=[media_id])
+        logger.info("✅ Successfully published to X/Twitter!")
+        return True
+    except Exception as e:
+        logger.error(f"X/Twitter Upload Exception: {e}")
+        return False
+
 def distribute_to_all_platforms(video_path, description, cover_path=None):
     logger.info("🌐 Initiating Multi-Platform Distribution Pipeline...")
 
@@ -473,6 +511,9 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     time.sleep(5)
     
     fb = upload_to_facebook_reels(video_path, injected_description)
+    time.sleep(5)
+    
+    x_tw = upload_to_twitter(video_path, description)
     time.sleep(5)
     
     video_url = upload_to_temp_host(video_path)
@@ -500,12 +541,13 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 🟥 YouTube Shorts: {'✅' if yt else '❌'}
 🟦 Facebook Reels: {'✅' if fb else '❌'}
 🟪 Instagram Reels: {'✅' if ig else '❌'}
+🐦 X (Twitter): {'✅' if x_tw else '❌'}
 
 <b>Stories:</b>
 📘 Facebook Story: {'✅' if fb_story else '❌'}
 📸 Instagram Story: {'✅' if ig_story else '❌'}
 
-<b>Buffer Bridge (X / Pinterest / LinkedIn):</b>
+<b>Buffer Bridge (Pinterest / LinkedIn):</b>
 🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
 <b>Caption Used:</b>
@@ -517,6 +559,7 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
         "facebook": fb,
         "instagram": ig,
         "youtube": yt,
+        "twitter": x_tw,
         "fb_story": fb_story,
         "ig_story": ig_story,
         "buffer_bridge": buffer_bridge
