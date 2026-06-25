@@ -120,6 +120,33 @@ def send_telegram_alert(message):
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
+def upload_to_telegram_channel(video_path, caption):
+    # Sends the video directly to the public Telegram channel
+    # Requires TELEGRAM_BOT_TOKEN and the channel username @wealth_Matrix_Ai
+    channel_username = "@wealth_Matrix_Ai"
+    if not TELEGRAM_BOT_TOKEN:
+        logger.warning("⏭️ Skipping Telegram Channel: Missing Bot Token")
+        return False
+        
+    logger.info(f"📤 Uploading Video to Telegram Channel {channel_username}...")
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendVideo"
+    
+    try:
+        with open(video_path, 'rb') as video_file:
+            files = {'video': video_file}
+            data = {'chat_id': channel_username, 'caption': caption, 'parse_mode': 'HTML'}
+            res = requests.post(url, data=data, files=files, timeout=600)
+            
+        if res.status_code == 200:
+            logger.info("✅ Telegram Channel Upload SUCCESS!")
+            return True
+        else:
+            logger.error(f"❌ Telegram Channel Upload FAILED: {res.text}")
+            return False
+    except Exception as e:
+        logger.error(f"❌ Telegram Channel Exception: {e}")
+        return False
+
 def get_facebook_page_token(user_token, page_id):
     if not user_token or not page_id:
         return user_token
@@ -560,6 +587,9 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     else:
         logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
         
+    # Send to Telegram Channel (always runs, doesn't need public URL)
+    tg_channel = upload_to_telegram_channel(video_path, injected_description)
+    
     logger.info("🚀 Distribution Complete!")
     
     status_msg = f"""
@@ -570,8 +600,10 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 🟥 YouTube Shorts: {'✅' if yt else '❌'}
 🟦 Facebook Reels: {'✅' if fb else '❌'}
 🟪 Instagram Reels: {'✅' if ig else '❌'}
+🐦 X (Twikit): {'✅' if x_upload else '❌'}
+✈️ Telegram Channel: {'✅' if tg_channel else '❌'}
 
-<b>Stories:</b>
+<b>Secondary Distribution:</b>
 📘 Facebook Story: {'✅' if fb_story else '❌'}
 📸 Instagram Story: {'✅' if ig_story else '❌'}
 
