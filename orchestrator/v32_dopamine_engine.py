@@ -404,6 +404,8 @@ def generate_offline_script():
     templates = [
         {
           "hook": "90% log paise se darte hain. Tum nahi.",
+          "red_box_keyword": "darte hain",
+          "curiosity_teaser": "Watch till the end to find out why.",
           "authority_claim": "Tumhe lagta hai luck hai. Yeh ek pattern hai.",
           "numbered_list": [
               {"text": "Loss se zyada dar nahi lagta", "type": "INSIGHT"},
@@ -418,6 +420,8 @@ def generate_offline_script():
         },
         {
           "hook": "Why you are secretly sabotaging your own success...",
+          "red_box_keyword": "sabotaging",
+          "curiosity_teaser": "This will change how you work.",
           "authority_claim": "Success koi accident nahi, ek formula hai.",
           "numbered_list": [
               {"text": "Stop waiting for the perfect time", "type": "INSIGHT"},
