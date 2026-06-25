@@ -1,77 +1,52 @@
 import {
-
   AbsoluteFill,
-
   Audio,
-
   interpolate,
-
   useCurrentFrame,
-
   useVideoConfig,
-
   staticFile,
-
   Img,
-
   random,
-
   Sequence,
-
-  useCurrentScale
-
 } from "remotion";
 
 import React, { useMemo } from "react";
 
-
-
 import { loadFont as loadDevanagari } from "@remotion/google-fonts/NotoSansDevanagari";
-
 import { loadFont as loadMontserrat } from "@remotion/google-fonts/Montserrat";
-
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
 
-
-
 const { fontFamily: devanagariFont } = loadDevanagari("normal", {
-
   weights: ["700", "900"],
-
   subsets: ["devanagari"],
-
 });
-
 const { fontFamily: montserratFont } = loadMontserrat("normal", { weights: ["900", "700", "600"] });
-
 const { fontFamily: playfairFont } = loadPlayfair("normal", { weights: ["900", "700"] });
 
-
-
 const GlobalStyle = () => (
-
   <style>{`* { box-sizing: border-box; }`}</style>
-
 );
 
-
-
 const HINDI_FONT = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-serif`;
-
 const TITLE_FONT = `${montserratFont}, Impact, sans-serif`;
-
-const cleanSplitText = (str: string | undefined | null) => {
-  if (!str) return "";
-  if (str.includes(":")) return str.split(":")[1].trim();
-  if (str.includes("-")) return str.split("-")[1].trim();
-  return str;
-};
-
-
 
 const HOOK_FONT = `${playfairFont}, Georgia, serif`;
 
-
+const BilingualText: React.FC<{ text: string }> = ({ text }) => {
+  if (!text) return null;
+  // Split on Latin characters, numbers, and common symbols (like %, ₹)
+  const parts = text.split(/([a-zA-Z0-9₹%]+(?:[ \-][a-zA-Z0-9₹%]+)*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (/[a-zA-Z0-9₹%]/.test(part)) {
+          return <span key={i} style={{ margin: "0 6px", fontFamily: TITLE_FONT, fontWeight: 700, letterSpacing: 1 }}>{part}</span>;
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
 
 const PALETTES = [
 
@@ -107,47 +82,30 @@ export const MainVideo: React.FC<{
 
 
 
-  // We need 8 audio offsets now
-
-  if (!script || !audio_offsets || audio_offsets.length < 8) return null;
-
-
+  // We need 7 audio offsets now (split screen removed)
+  if (!script || !audio_offsets || audio_offsets.length < 7) return null;
 
   const seed       = script.style_seed || 1;
-
   const pal        = PALETTES[seed % PALETTES.length];
-
   const redKw      = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g,"") : "WARNING";
-
   const activeRedWords = [...RED_WORDS, redKw];
 
-
-
-  // Map 8-phase audio offsets (with safe fallbacks to total_duration if missing)
-
+  // Map 7-phase audio offsets (with safe fallbacks to total_duration if missing)
   const [,
-    p2 = total_duration,
-    p3 = total_duration,
+    p_auth = total_duration,
     p_l1 = total_duration,
     p_l2 = total_duration,
     p_l3 = total_duration,
     p_proof = total_duration,
     p_cta = total_duration
   ] = audio_offsets;
-
   
-
   let phase = 1;
-
-  if (t >= p2 && t < p3) phase = 2;
-
-  else if (t >= p3 && t < p_l1) phase = 3;
-
-  else if (t >= p_l1 && t < p_proof) phase = 4;
-
-  else if (t >= p_proof && t < p_cta) phase = 5;
-
-  else if (t >= p_cta) phase = 6;
+  if (t >= p_auth && t < p_l1) phase = 2;
+  else if (t >= p_l1 && t < p_proof) phase = 3;
+  else if (t >= p_proof && t < p_cta) phase = 4;
+  else if (t >= p_cta && t < p_cta + 2.5) phase = 5;
+  else if (t >= p_cta + 2.5) phase = 6;
 
 
 
@@ -188,24 +146,9 @@ export const MainVideo: React.FC<{
 
 
   // Helper for Ken Burns Scale (continuous slow zoom)
-
   const kenBurns = (startOffset: number) => {
-
     return interpolate(frame, [Math.round(startOffset * fps), Math.round((startOffset + 8) * fps)], [1.0, 1.08], { extrapolateRight: "clamp", extrapolateLeft: "clamp" });
-
   };
-
-
-
-  // Count-up animation helper: animates from 0 to target over 1.5s
-
-  const countUp = (target: number, startTime: number) => {
-
-    return Math.round(interpolate(frame, [Math.round(startTime * fps), Math.round((startTime + 1.5) * fps)], [0, target], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
-
-  };
-
-
 
   // Particle drift offset for background grain
 
@@ -229,33 +172,21 @@ export const MainVideo: React.FC<{
 
 
 
-      {/* ── AUDIO SEQUENCES (8 parts) ─────────────────────────────── */}
-
+      {/* ── AUDIO SEQUENCES (7 parts) ─────────────────────────────── */}
       <Sequence from={0}><Audio src={staticFile("v32_audio_0.mp3")} volume={1.6} /></Sequence>
-
-      {p2 && <Sequence from={Math.round(p2*fps)}><Audio src={staticFile("v32_audio_1.mp3")} volume={1.6} /></Sequence>}
-
-      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("v32_audio_2.mp3")} volume={1.6} /></Sequence>}
-
-      {p_l1 && <Sequence from={Math.round(p_l1*fps)}><Audio src={staticFile("v32_audio_3.mp3")} volume={1.6} /></Sequence>}
-
-      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("v32_audio_4.mp3")} volume={1.6} /></Sequence>}
-
-      {p_l3 && <Sequence from={Math.round(p_l3*fps)}><Audio src={staticFile("v32_audio_5.mp3")} volume={1.6} /></Sequence>}
-
-      {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("v32_audio_6.mp3")} volume={1.6} /></Sequence>}
-
-      {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("v32_audio_7.mp3")} volume={1.6} /></Sequence>}
-
-      
+      {p_auth && <Sequence from={Math.round(p_auth*fps)}><Audio src={staticFile("v32_audio_1.mp3")} volume={1.6} /></Sequence>}
+      {p_l1 && <Sequence from={Math.round(p_l1*fps)}><Audio src={staticFile("v32_audio_2.mp3")} volume={1.6} /></Sequence>}
+      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("v32_audio_3.mp3")} volume={1.6} /></Sequence>}
+      {p_l3 && <Sequence from={Math.round(p_l3*fps)}><Audio src={staticFile("v32_audio_4.mp3")} volume={1.6} /></Sequence>}
+      {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("v32_audio_5.mp3")} volume={1.6} /></Sequence>}
+      {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("v32_audio_6.mp3")} volume={1.6} /></Sequence>}
 
       {/* ── SFX ─────────────────────────────────────────────────── */}
 
       <Sequence from={0}><Audio src={staticFile("hypno.wav")} volume={0.15} loop /></Sequence>
 
       {/* Rising tension before Rule #3 reveal */}
-
-      {p3 && <Sequence from={Math.round(p3*fps)}><Audio src={staticFile("riser.wav")} volume={0.7}/></Sequence>}
+      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("riser.wav")} volume={0.7}/></Sequence>}
 
       {/* Whoosh impact on every rule-card entrance */}
 
@@ -327,32 +258,36 @@ export const MainVideo: React.FC<{
 
 
 
-      {/* ── PHASE 1: HOOK (0 - p2) ────────────────────────────────── */}
-      <Sequence from={0} durationInFrames={Math.round(p2*fps)}>
+      {/* ── PHASE 1: HOOK (0 - p_auth) ────────────────────────────────── */}
+      <Sequence from={0} durationInFrames={Math.round(p_auth*fps)}>
         <AbsoluteFill style={{
           display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
           padding: "60px 40px",
           transform: `scale(${kenBurns(0)})`
         }}>
-          {/* STATIC DELAY: Keep fully static for 15 frames for perfect native thumbnails */}
           <div style={{
              display: "flex", flexDirection: "column", alignItems: "center", gap: 30, width: "100%",
-             opacity: frame < 15 ? 1 : interpolate(frame, [15, 25], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"}),
-             transform: frame < 15 ? "translateY(0px)" : `translateY(${interpolate(frame, [15, 30], [40, 0], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})}px)`
+             opacity: interpolate(frame, [0, 10], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"}),
+             transform: `translateY(${interpolate(frame, [0, 15], [20, 0], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})}px)`
           }}>
             <div style={{ fontFamily: HOOK_FONT, fontSize: 100, fontWeight: 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.15 }}>
-              {script.hook?.split(" ").map((w: string, i: number) => {
-                const hi = activeRedWords.some(r => w.toUpperCase().includes(r)) || i === 0 || i === Math.floor(script.hook.split(" ").length / 2);
-                const isBgColor = (seed % 3) === 1;
-                return (
-                  <span key={i} style={{ 
-                    color: hi && !isBgColor ? pal.p : (hi && isBgColor ? pal.bg1 : "#FFFFFF"),
-                    backgroundColor: hi && isBgColor ? pal.p : "transparent",
-                    padding: hi && isBgColor ? "0 20px" : "0",
-                    display: "inline-block", marginRight: 18, marginBottom: 15, borderRadius: 15
-                  }}>{w}</span>
-                );
-              })}
+              {(() => {
+                const hookText = script.hook || script.phase_1 || "";
+                if (!hookText.trim()) throw new Error("Render Validation Failed: Hook text is completely empty.");
+                const words = hookText.split(/\s+/).filter(Boolean);
+                return words.map((w: string, i: number) => {
+                  const hi = activeRedWords.some(r => w.toUpperCase().includes(r)) || i === 0 || i === Math.floor(words.length / 2);
+                  const isBgColor = (seed % 3) === 1;
+                  return (
+                    <span key={i} style={{ 
+                      color: hi && !isBgColor ? pal.p : (hi && isBgColor ? pal.bg1 : "#FFFFFF"),
+                      backgroundColor: hi && isBgColor ? pal.p : "transparent",
+                      padding: hi && isBgColor ? "0 20px" : "0",
+                      display: "inline-block", marginRight: 18, marginBottom: 15, borderRadius: 15
+                    }}>{w}</span>
+                  );
+                });
+              })()}
             </div>
           </div>
           
@@ -366,10 +301,10 @@ export const MainVideo: React.FC<{
       </Sequence>
 
 
-      {/* UPGRADE #4: CURIOSITY LOOP — planted early, persists until resolved */}
-      {t >= 2.0 && t < p_proof && script.curiosity_teaser && (
+      {/* UPGRADE #4: CURIOSITY LOOP — planted early, exits 0.5s before Rule 1 to avoid numeric claims collision */}
+      {t >= 2.0 && t < (p_l1 - 0.5) && script.curiosity_teaser && (
         <AbsoluteFill style={{ zIndex: 9990, justifyContent: "flex-end",
-          alignItems: "center", paddingBottom: 220 }}>
+          alignItems: "center", paddingBottom: 380 }}>
           <div style={{
             background: "rgba(12,20,32,0.97)",
             border: `2px solid ${pal.p}66`,
@@ -412,55 +347,11 @@ export const MainVideo: React.FC<{
       )}
 
 
-      {/* ── PHASE 2: SPLIT SCREEN (p2 - p3) ─────────────────────── */}
+      {/* ── PHASE 2: AUTHORITY CLAIM (p_auth - p_l1) ──────────────────── */}
 
-      <Sequence from={Math.round(p2*fps)} durationInFrames={Math.round((p3-p2)*fps)}>
+      <Sequence from={Math.round(p_auth*fps)} durationInFrames={Math.round((p_l1-p_auth)*fps)}>
 
-        <AbsoluteFill style={{ display: "flex", flexDirection: "row", transform: `scale(${kenBurns(p2)})` }}>
-
-          {/* LEFT: Poor Mindset */}
-
-          <div style={{ flex: 1, borderRight: "2px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: interpolate(frame, [p2*fps, p2*fps+15], [0, 1]) }}>
-
-            <div style={{ fontFamily: TITLE_FONT, fontSize: 45, color: "rgba(255,255,255,0.5)", letterSpacing: 2, marginBottom: 40, transform: `translateY(${interpolate(frame, [p2*fps, p2*fps+15], [20, 0])}px)` }}>POOR MINDSET</div>
-
-            <div style={{ fontSize: 180, marginBottom: 60, transform: `scale(${interpolate(frame, [p2*fps, p2*fps+20], [0.8, 1])})` }}>😞</div>
-
-            <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
-
-              {cleanSplitText(script.split_screen?.left) || "Saves money"}
-
-            </div>
-
-          </div>
-
-          {/* RIGHT: Rich Mindset */}
-
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "25%", opacity: interpolate(frame, [p2*fps+15, p2*fps+30], [0, 1], {extrapolateLeft: "clamp"}) }}>
-
-            <div style={{ fontFamily: TITLE_FONT, fontSize: 45, color: pal.p, letterSpacing: 2, marginBottom: 40, transform: `translateY(${interpolate(frame, [p2*fps+15, p2*fps+30], [20, 0], {extrapolateLeft: "clamp"})}px)` }}>RICH MINDSET</div>
-
-            <div style={{ fontSize: 180, marginBottom: 60, transform: `scale(${interpolate(frame, [p2*fps+15, p2*fps+35], [0.8, 1], {extrapolateLeft: "clamp"})})` }}>🧠</div>
-
-            <div style={{ fontFamily: HINDI_FONT, fontSize: 60, color: "#FFFFFF", textAlign: "center", padding: 40 }}>
-
-              {cleanSplitText(script.split_screen?.right) || "Invests money"}
-
-            </div>
-
-          </div>
-
-        </AbsoluteFill>
-
-      </Sequence>
-
-
-
-      {/* ── PHASE 3: AUTHORITY CLAIM (p3 - p_l1) ──────────────────── */}
-
-      <Sequence from={Math.round(p3*fps)} durationInFrames={Math.round((p_l1-p3)*fps)}>
-
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p3)})` }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 60, gap: 60, transform: `scale(${kenBurns(p_auth)})` }}>
 
           {/* Animated face: head-bob + breathing pulse ring = never looks frozen */}
           <div style={{
@@ -470,21 +361,16 @@ export const MainVideo: React.FC<{
             transform: `translateY(${Math.sin(frame*0.07)*5}px) rotate(${Math.sin(frame*0.04)*1.2}deg)`,
             flexShrink: 0
           }}>
-            <Img src={staticFile("host_photo.png")}
+            <Img src={staticFile(`host_photo_${(seed % 3) + 1}.png`)}
               style={{ width:"100%", height:"100%", objectFit:"cover",
                 objectPosition:"center top",
                 transform:`scale(${1.02 + Math.sin(frame*0.05)*0.015}) translateY(${Math.cos(frame*0.06)*3}px)` }} />
           </div>
           <div style={{
-
             fontFamily: HINDI_FONT, fontSize: 75, fontWeight: 700, color: "#FFFFFF",
-
-            textAlign: "center", lineHeight: 1.3, maxWidth: "90%"
-
+            textAlign: "center", lineHeight: 1.4, maxWidth: "90%"
           }}>
-
-            {script.authority_claim}
-
+            <BilingualText text={script.authority_claim} />
           </div>
 
         </AbsoluteFill>
@@ -495,95 +381,70 @@ export const MainVideo: React.FC<{
 
       {/* ── PHASE 4: STAGGERED NUMBERED LIST (p_l1 - p_proof) ───────── */}
 
-      {/* FIX: Safe padding 12% left/right prevents any card clipping at frame edge */}
+      {/* FIX: Safe padding 12% left/right prevents any card clipping at frame edge. Stop Rule 3 visually 0.5s before Proof. */}
 
-      <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof-p_l1)*fps)}>
+      <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof - 0.5 - p_l1)*fps)}>
 
         <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
-
-          {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item: string, i: number) => {
-
+          {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((itemRaw: any, i: number) => {
             const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
-
             if (t < itemTime) return null;
-
             const slideProgress = interpolate(frame, [Math.round(itemTime*fps), Math.round(itemTime*fps)+18], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+            const continuousScale = 1.0 + (frame - Math.round(itemTime*fps)) * 0.0003;
+            const pulseOpacity = 0.5 + Math.sin(frame * 0.05) * 0.3;
 
-            // FIX: Start translateX from -80 (well within safe margin) not -500
+            // Handle both legacy string arrays and new object arrays
+            const item = typeof itemRaw === 'string' ? { text: itemRaw, type: i === 2 ? "DATA" : "INSIGHT", source: i === 2 ? script.source_tag : "" } : itemRaw;
+            const isData = item.type === "DATA" || i === 2;
 
             return (
-
               <div key={i} style={{
-
                 display: "flex", alignItems: "center",
-
-                background: i === 2 ? `rgba(${parseInt(pal.p.slice(1,3),16)},${parseInt(pal.p.slice(3,5),16)},${parseInt(pal.p.slice(5,7),16)},0.15)` : "rgba(255,255,255,0.05)",
-
-                padding: "45px 50px", borderRadius: 35, marginBottom: 40,
-
-                border: i === 2 ? `2px solid ${pal.p}88` : "1px solid rgba(255,255,255,0.08)",
-
-                boxShadow: i === 2 ? `0 10px 40px ${pal.p}33` : "0 10px 30px rgba(0,0,0,0.5)",
-
+                background: isData ? `rgba(15,32,39,0.7)` : "rgba(255,255,255,0.05)",
+                padding: "35px 50px", borderRadius: 35, marginBottom: 40,
+                border: isData ? `2px solid rgba(0, 242, 254, ${pulseOpacity})` : "1px solid rgba(255,255,255,0.08)",
+                boxShadow: isData ? `0 10px 40px rgba(0,242,254,0.2)` : "0 10px 30px rgba(0,0,0,0.5)",
                 opacity: slideProgress,
-
-                transform: `translateX(${interpolate(slideProgress, [0, 1], [-80, 0])}px)`
-
+                transform: `translateX(${interpolate(slideProgress, [0, 1], [-80, 0])}px) scale(${continuousScale})`,
+                position: "relative"
               }}>
-
+                {/* Type Tag */}
                 <div style={{
-
-                  width: i === 2 ? 100 : 84, height: i === 2 ? 100 : 84, borderRadius: "50%",
-
-                  background: i === 2 ? pal.p : `${pal.p}20`,
-                  border: i === 2 ? "none" : `2px solid ${pal.p}55`,
-
-                  display: "flex", justifyContent: "center", alignItems: "center",
-
-                  fontFamily: TITLE_FONT, fontSize: i === 2 ? 70 : 60, fontWeight: 900,
-
-                  color: i === 2 ? pal.bg1 : pal.p,
-
-                  marginRight: 28, flexShrink: 0,
-
-                  boxShadow: i === 2 ? `0 0 30px ${pal.p}aa` : `0 0 8px ${pal.p}33`
-
+                  position: "absolute", top: -20, left: 50,
+                  background: isData ? "#00F2FE" : "#8A2387",
+                  color: isData ? "#0F2027" : "#FFFFFF",
+                  fontFamily: TITLE_FONT, fontSize: 22, fontWeight: 900,
+                  padding: "6px 16px", borderRadius: 12, letterSpacing: 2,
+                  boxShadow: `0 8px 20px ${isData ? "rgba(0,242,254,0.4)" : "rgba(138,35,135,0.4)"}`
                 }}>
-
+                  {isData ? "📊 DATA" : "💡 INSIGHT"}
+                </div>
+                <div style={{
+                  width: isData ? 100 : 84, height: isData ? 100 : 84, borderRadius: "50%",
+                  background: isData ? "#00F2FE" : `${pal.p}20`,
+                  border: isData ? "none" : `2px solid ${pal.p}55`,
+                  display: "flex", justifyContent: "center", alignItems: "center",
+                  fontFamily: TITLE_FONT, fontSize: isData ? 70 : 60, fontWeight: 900,
+                  color: isData ? "#0F2027" : pal.p,
+                  marginRight: 28, flexShrink: 0,
+                  boxShadow: isData ? `0 0 30px rgba(0,242,254,0.5)` : `0 0 8px ${pal.p}33`
+                }}>
                   {i + 1}
-
                 </div>
-
                 <div style={{ flex: 1 }}>
-
                   <div style={{
-
-                    fontFamily: HINDI_FONT, fontSize: i === 2 ? 75 : 65, fontWeight: i === 2 ? 700 : 600, color: i === 2 ? "#FFFFFF" : "rgba(255,255,255,0.88)", color: "#FFFFFF", lineHeight: 1.2
-
+                    fontFamily: HINDI_FONT, fontSize: isData ? 75 : 65, fontWeight: isData ? 700 : 600, color: "#FFFFFF", lineHeight: 1.4
                   }}>
-
-                    {item}
-
+                    <BilingualText text={item.text} />
                   </div>
-
-                  {/* Source tag only on Rule #3 (the most impactful one) */}
-
-                  {i === 2 && script.source_tag && (
-
-                    <div style={{ fontFamily: TITLE_FONT, fontSize: 28, color: `${pal.p}99`, marginTop: 10, letterSpacing: 1 }}>
-
-                      {script.source_tag}
-
+                  {item.source && (
+                    <div style={{ fontFamily: TITLE_FONT, fontSize: 26, color: isData ? "#00F2FE" : `${pal.p}ee`, marginTop: 12, letterSpacing: 1, opacity: 0.9 }}>
+                      {item.source}
                     </div>
-
                   )}
-
                 </div>
-
               </div>
-
             );
-
           })}
 
         </AbsoluteFill>
@@ -592,123 +453,88 @@ export const MainVideo: React.FC<{
 
 
 
-      {/* ── PHASE 5: PROOF/DEMO (p_proof - p_cta) ────────────────── */}
-
-      <Sequence from={Math.round(p_proof*fps)} durationInFrames={Math.round((p_cta-p_proof)*fps)}>
-
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "5% 8%", transform: `scale(${kenBurns(p_proof)})` }}>
-
-          <div style={{
-
-            border: `2px solid ${pal.p}66`, borderRadius: 30, padding: "60px 60px", width: "96%",
-
-            display: "flex", flexDirection: "column", alignItems: "center",
-
-            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(20px)",
-
-            boxShadow: `0 30px 60px rgba(0,0,0,0.8), 0 0 60px ${pal.p}22`
-
-          }}>
-
-            <div style={{ fontSize: 110, marginBottom: 30 }}>📊</div>
-
-            <div style={{
-
-              fontFamily: TITLE_FONT, fontSize: 44, fontWeight: 900,
-
-              color: "rgba(255,255,255,0.5)", letterSpacing: 4, marginBottom: 25
-
-            }}>
-
-              FACT CHECK
-
-            </div>
-
-            <div style={{
-
-              fontFamily: HINDI_FONT, fontSize: 70, fontWeight: 700,
-
-              color: pal.p, textAlign: "center", lineHeight: 1.3
-
-            }}>
-
-              {script.proof_demo}
-
-            </div>
-
-            {/* Credibility source tag */}
-
-            {script.proof_source && (
-
+      {/* ── PHASE 5: PROOF/DEMO (p_proof + 3.0s - p_cta) ────────────────── */}
+      <Sequence from={Math.round((p_proof + 3.0)*fps)} durationInFrames={Math.round((p_cta - (p_proof + 3.0))*fps)}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "5% 8%" }}>
+          {(() => {
+            const fcScale = 1.0 + (frame - Math.round((p_proof + 3.0)*fps)) * 0.0004;
+            const fcPulse = 0.6 + Math.sin(frame * 0.08) * 0.4;
+            return (
               <div style={{
-
-                fontFamily: TITLE_FONT, fontSize: 30, color: "rgba(255,255,255,0.4)",
-
-                marginTop: 25, letterSpacing: 1, textAlign: "center"
-
+                border: `3px solid rgba(0, 242, 254, ${fcPulse})`, borderRadius: 20, padding: "70px 60px", width: "96%",
+                display: "flex", flexDirection: "column", alignItems: "center",
+                background: "linear-gradient(135deg, rgba(15,32,39,0.95), rgba(32,58,67,0.95), rgba(44,83,100,0.95))", 
+                backdropFilter: "blur(20px)",
+                boxShadow: `0 30px 60px rgba(0,0,0,0.9), 0 0 80px rgba(0,242,254,0.15)`,
+                transform: `scale(${fcScale})`,
+                position: "relative"
               }}>
-
-                📚 {script.proof_source}
-
+                <div style={{
+                  position: "absolute", top: -30,
+                  background: "#00F2FE", color: "#0F2027",
+                  fontFamily: TITLE_FONT, fontSize: 32, fontWeight: 900,
+                  padding: "10px 40px", borderRadius: 12, letterSpacing: 3,
+                  boxShadow: `0 10px 30px rgba(0,242,254,0.5)`
+                }}>
+                  ✅ VERIFIED DATA
+                </div>
+                
+                <div style={{
+                  fontFamily: HINDI_FONT, fontSize: 75, fontWeight: 700,
+                  color: "#FFFFFF", textAlign: "center", lineHeight: 1.4,
+                  marginTop: 20
+                }}>
+                  <BilingualText text={script.proof_demo} />
+                </div>
+                {script.proof_source && (
+                  <div style={{
+                    fontFamily: TITLE_FONT, fontSize: 34, color: "#00F2FE",
+                    marginTop: 35, letterSpacing: 2, textAlign: "center",
+                    borderTop: "1px dashed rgba(0,242,254,0.3)", paddingTop: 20, width: "80%"
+                  }}>
+                    📚 {script.proof_source}
+                  </div>
+                )}
               </div>
-
-            )}
-
-          </div>
-
+            );
+          })()}
         </AbsoluteFill>
-
       </Sequence>
 
 
 
-      {/* ── PHASE 6: SAVE CARD & CTA (p_cta - end) ────────────────── */}
-
-      <Sequence from={Math.round(p_cta*fps)}>
-
+      {/* ── PHASE 5: SAVE CARD & CTA (p_cta - p_cta + 2.5s) ────────────────── */}
+      <Sequence from={Math.round(p_cta*fps)} durationInFrames={Math.round(2.5*fps)}>
         <AbsoluteFill style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 60, transform: `scale(${kenBurns(p_cta)})` }}>
-
           <div style={{
-
             border: `4px solid ${pal.p}`, borderRadius: 40, padding: "70px 60px", width: "95%",
-
             display: "flex", flexDirection: "column", alignItems: "center",
-
             boxShadow: `0 0 80px ${pal.p}44, 0 0 200px ${pal.p}22`,
-
             background: "rgba(0,0,0,0.5)"
-
           }}>
-
             <div style={{ fontSize: 110, marginBottom: 30 }}>🔖</div>
-
             <div style={{
-
               fontFamily: TITLE_FONT, fontSize: 75, fontWeight: 900,
-
               color: pal.p, letterSpacing: 4, marginBottom: 40, textAlign: "center"
-
             }}>
-
               SAVE KARO
-
             </div>
-
             
-
             <div style={{ 
               display: "flex", flexDirection: "column", gap: 15, width: "100%", alignItems: "flex-start", marginBottom: 40,
               opacity: interpolate(t - p_cta, [1.5, 2.5], [1, 0.4], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
             }}>
-              {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((item: string, i: number) => (
+              {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((itemRaw: any, i: number) => {
+                const item = typeof itemRaw === 'string' ? itemRaw : itemRaw.text;
+                return (
                 <div key={i} style={{
-                  fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.75)",
+                  fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.95)",
                   fontWeight: 600, display: "flex", alignItems: "center", gap: 18
                 }}>
                   <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 42 }}>{i + 1}.</span>
-                  {item}
+                  <BilingualText text={item} />
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* Content-specific comment driving question */}
@@ -732,9 +558,29 @@ export const MainVideo: React.FC<{
         </AbsoluteFill>
       </Sequence>
 
+      {/* ── PHASE 6: OUTRO (p_cta + 2.5s - end) ────────────────── */}
+      <Sequence from={Math.round((p_cta + 2.5)*fps)}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: pal.bg1 }}>
+          <div style={{
+            width: 250, height: 250, borderRadius: "50%", background: `${pal.p}22`,
+            display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 50,
+            border: `4px solid ${pal.p}`, boxShadow: `0 0 60px ${pal.p}66`,
+            transform: `scale(${interpolate(frame, [Math.round((p_cta + 2.5)*fps), Math.round((p_cta + 2.8)*fps)], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})})`
+          }}>
+            <Img src={staticFile(`host_photo_${(seed % 3) + 1}.png`)} style={{ width: 242, height: 242, borderRadius: "50%", objectFit: "cover" }} />
+          </div>
+          <div style={{ fontFamily: TITLE_FONT, fontSize: 60, fontWeight: 900, color: "#FFFFFF", letterSpacing: 3, marginBottom: 20 }}>
+            ADMIN AI
+          </div>
+          <div style={{ fontFamily: TITLE_FONT, fontSize: 35, fontWeight: 700, color: pal.p, letterSpacing: 2 }}>
+            Follow for daily money psychology
+          </div>
+        </AbsoluteFill>
+      </Sequence>
+
       {/* ── DYNAMIC SUBTITLES ────────────────────────────────────── */}
-      {/* We don't show subtitles during the Hook (too much text overlap) or the CTA */}
-      {phase > 1 && phase < 6 && activeChunk && (
+      {/* We don't show subtitles during the Hook (too much text overlap), or the CTA/Outro */}
+      {phase > 1 && phase < 5 && activeChunk && (
         <AbsoluteFill style={{ zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: 150 }}>
           <div style={{
             background: "rgba(0,0,0,0.85)", padding: "20px 40px", borderRadius: 20,
@@ -786,7 +632,7 @@ export const MainVideo: React.FC<{
 
       {/* 2. "Wait for it" Sticky Banner for the first 8 seconds */}
 
-      {t > 1.5 && t < 8.5 && (
+      {t > 1.5 && t < p_l3 && (
 
         <AbsoluteFill style={{ zIndex: 9999, justifyContent: "flex-start", alignItems: "center", paddingTop: 100 }}>
 
