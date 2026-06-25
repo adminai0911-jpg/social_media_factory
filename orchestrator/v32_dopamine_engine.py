@@ -1029,10 +1029,25 @@ def build_v32_payload():
     bgm_path = os.path.join(public_dir, "bgm.mp3")
     if not os.path.exists(bgm_path):
         logger.info("🎵 Downloading ambient BGM...")
-        subprocess.run([
-            "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
-            "-x", "--audio-format", "mp3", "-o", bgm_path
-        ], check=True)
+        try:
+            subprocess.run([
+                "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
+                "-x", "--audio-format", "mp3", "-o", bgm_path
+            ], check=True, timeout=60)
+        except Exception as e:
+            logger.warning(f"yt-dlp BGM download failed (likely bot protection): {e}. Using direct fallback.")
+            try:
+                # Direct unblockable Pixabay dark ambient MP3 fallback
+                res = requests.get("https://cdn.pixabay.com/audio/2022/10/25/audio_24e93fb276.mp3", timeout=15)
+                if res.status_code == 200:
+                    with open(bgm_path, "wb") as f:
+                        f.write(res.content)
+                else:
+                    raise Exception(f"HTTP {res.status_code}")
+            except Exception as e2:
+                logger.warning(f"Fallback download failed: {e2}. Proceeding with silent BGM.")
+                # Generate 1-second silence to prevent ffmpeg from crashing downstream
+                subprocess.run(["ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5", "-q:a", "9", "-acodec", "libmp3lame", bgm_path], check=True)
     
     mixed_file = out_file.replace(".mp4", "_mixed.mp4")
     
