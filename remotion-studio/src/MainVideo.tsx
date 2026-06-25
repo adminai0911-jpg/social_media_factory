@@ -684,5 +684,58 @@ export const MainVideo: React.FC<{
 
 };
 
+export const ThumbnailCover: React.FC<{
+  script: any;
+}> = ({ script }) => {
+  if (!script) return null;
 
+  const seed = script.style_seed || 1;
+  const pal = PALETTES[seed % PALETTES.length];
+  
+  const hook = script.hook || "Wealth Mindset";
+  const redKw = script.red_box_keyword ? script.red_box_keyword.toUpperCase().replace(/[^A-Z0-9]/g,"") : "WARNING";
+  const activeRedWords = [...RED_WORDS, redKw];
+  
+  const words = hook.split(/\s+/);
 
+  return (
+    <AbsoluteFill style={{ background: pal.bg1, justifyContent: 'center', alignItems: 'center', padding: 80 }}>
+      {/* Background Graphic/Glow */}
+      <div style={{ position: 'absolute', width: 800, height: 800, borderRadius: '50%', background: pal.p, filter: 'blur(300px)', opacity: 0.15 }} />
+      
+      {/* Small Corner Badge Profile Photo */}
+      <div style={{ position: 'absolute', top: 50, left: 50, display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${pal.p}`, boxShadow: `0 0 30px rgba(0,0,0,0.5)` }}>
+           <Img src={staticFile("profile.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+        <div style={{ fontFamily: TITLE_FONT, color: '#fff', fontSize: 28, fontWeight: 'bold', opacity: 0.8 }}>@WealthMatrixAI</div>
+      </div>
+
+      {/* Dominant Visual Text */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '30px 20px', width: '100%', zIndex: 10 }}>
+        {words.map((w: string, i: number) => {
+          const cleanW = w.toUpperCase().replace(/[^A-Z0-9]/g,"");
+          const isHighlight = activeRedWords.some(r => cleanW.includes(r)) || w.length > 8;
+          return (
+            <span key={i} style={{
+              fontFamily: TITLE_FONT,
+              fontSize: 110,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              color: isHighlight ? pal.bg1 : '#FFFFFF',
+              backgroundColor: isHighlight ? pal.p : 'transparent',
+              padding: isHighlight ? '10px 40px' : '0',
+              borderRadius: isHighlight ? 20 : 0,
+              boxShadow: isHighlight ? `0 20px 60px ${pal.p}88` : 'none',
+              transform: isHighlight ? 'scale(1.05) rotate(-2deg)' : 'none'
+            }}>
+              {w}
+            </span>
+          );
+        })}
+      </div>
+    </AbsoluteFill>
+  );
+};

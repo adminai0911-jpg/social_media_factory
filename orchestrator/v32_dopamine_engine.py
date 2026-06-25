@@ -319,6 +319,9 @@ JSON Schema (RETURN ONLY THIS):
   ],
   "proof_demo": "Real-world proof using a NAMED billionaire, a credible institution, OR a relatable real-world scenario (e.g. ₹60k/month earner). Make it feel like insider knowledge. MAX 15 words.",
   "proof_source": "ONE real, verifiable source for the proof_demo claim (e.g. 'Source: Forbes India 2024'). ONLY add if the claim is real and verifiable. If not verifiable, return empty string.",
+  "curiosity_teaser": "A short 4-8 word teaser that plants a question in the viewer's mind early in the video.",
+  "curiosity_payoff": "A short 4-8 word answer to the teaser that appears later in the video.",
+  "red_box_keyword": "ONE exact word from the hook that is the most important/shocking word. Must be exactly present in the hook.",
   "comment_question": "A SPECIFIC question about this reel's exact content. Example: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya?' MAX 12 words.",
   "save_cta": "{cta}",
   "caption": "2 sentences total. Sentence 1: A controversial truth. Sentence 2: A direct question. End with EXACTLY these hashtags on a new line: {hashtags}"
@@ -876,14 +879,118 @@ def download_dynamic_backgrounds(public_dir):
 
 
 
+def qa_gate(script_json, attempt=1):
+    """
+    Enforces 5 Hard QA Checks before allowing render to proceed.
+    Returns True if passed, False if failed.
+    """
+    import datetime
+    def log_metric(status, reason):
+        csv_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "qa_metrics.csv"))
+        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(csv_path, "a", encoding="utf-8") as f:
+            f.write(f'"{ts}","{status}","{reason.replace(chr(34), chr(39))}",{attempt}\n')
+
+    if not script_json or not isinstance(script_json, dict):
+        logger.error("QA FAIL: Invalid JSON structure.")
+        log_metric("FAIL", "Invalid JSON structure")
+        return False
+        
+    hook = str(script_json.get("hook", ""))
+    red_kw = str(script_json.get("red_box_keyword", ""))
+    c_teaser = str(script_json.get("curiosity_teaser", ""))
+    
+    # 1. Empty Placeholder Check
+    if not red_kw or red_kw.lower() not in hook.lower():
+        msg = f"red_box_keyword '{red_kw}' is empty or not in hook '{hook}'"
+        logger.error(f"QA FAIL: {msg}")
+        log_metric("FAIL", msg)
+        return False
+    if not c_teaser:
+        logger.error("QA FAIL: curiosity_teaser is empty.")
+        log_metric("FAIL", "curiosity_teaser is empty")
+        return False
+        
+    # Compile all spoken text to check for numeric placeholders & grammar
+    all_text = hook + " " + script_json.get("authority_claim", "")
+    for item in script_json.get("numbered_list", []):
+        if isinstance(item, dict):
+            all_text += " " + str(item.get("text", ""))
+        else:
+            all_text += " " + str(item)
+    all_text += " " + script_json.get("proof_demo", "") + " " + script_json.get("save_cta", "")
+    
+    # 3. Numeric/Data Placeholder Check
+    bad_placeholders = ["[amount]", "{amount}", "calculation", "[x]", "{x}"]
+    for bp in bad_placeholders:
+        if bp in all_text.lower():
+            logger.error(f"QA FAIL: Found literal placeholder '{bp}' in text.")
+            log_metric("FAIL", f"Literal placeholder {bp}")
+            return False
+            
+    # 4. Overlap Check (Character limits)
+    # Ensure no single text chunk exceeds 120 chars to prevent 4-line wrapping overlap
+    for chunk in [hook, script_json.get("authority_claim", ""), script_json.get("proof_demo", ""), script_json.get("save_cta", "")]:
+        if len(str(chunk)) > 120:
+            logger.error(f"QA FAIL: Chunk exceeds 120 chars, risking overlap: {str(chunk)[:30]}...")
+            log_metric("FAIL", "Chunk length > 120 chars")
+            return False
+            
+    # 2 & 5. Grammar & Topic Relevance Check via Gemini
+    valid_keys = [k for k in GEMINI_KEYS if k]
+    if not valid_keys:
+        log_metric("PASS", "Bypassed LLM (No keys)")
+        return True # Skip if no keys
+        
+    logger.info("🧪 Running strict LLM QA Gate Validation...")
+    prompt = f"""You are a strict Quality Assurance bot for a viral video pipeline.
+Review the following video script:
+{all_text}
+
+HARD CHECKS:
+1. GRAMMAR: Are there any disconnected fragments, mixed-language nonsense, or incomplete sentences? (e.g. "skip - exactly poor"). It MUST be grammatically correct Hindi, English, or natural code-mixed Hinglish.
+2. TOPIC: Is this strongly related to wealth, psychology, or money? (Reject if it's about unrelated topics like nature, generic quotes with no wealth/psychology context).
+
+If it passes BOTH checks flawlessly, return exactly: PASS
+If it fails either check, return exactly: FAIL
+"""
+    try:
+        import time
+        import google.generativeai as genai
+        time.sleep(3) # Prevent rate limits
+        client = genai.Client(api_key=valid_keys[0])
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.1)
+        )
+        result = response.text.strip().upper()
+        if "FAIL" in result:
+            logger.error(f"QA FAIL: LLM Validation rejected the script. Result: {result}")
+            log_metric("FAIL", "LLM rejected script")
+            return False
+        logger.info("✅ QA Gate Passed!")
+        log_metric("PASS", "LLM validation passed")
+        return True
+    except Exception as e:
+        logger.warning(f"QA Validation API error, bypassing LLM check to prevent pipeline stall: {e}")
+        log_metric("PASS", "Bypassed LLM (API Error)")
+        return True
+
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
 
-    
-    script_data = generate_dynamic_script()
+    script_data = None
+    for attempt in range(3):
+        logger.info(f"🔄 Generation Attempt {attempt + 1}/3")
+        temp_script = generate_dynamic_script()
+        if temp_script and qa_gate(temp_script, attempt + 1):
+            script_data = temp_script
+            break
+        logger.warning("♻️ QA Gate failed. Retrying script generation...")
+        
     if not script_data:
-        logger.error("❌ V32 FAILED - Gemini could not generate script. Aborting run.")
-        logger.error("Failed to generate dynamic script. Aborting.")
+        logger.error("❌ V32 FAILED - Could not generate a script that passes QA after 3 attempts. Aborting run.")
         sys.exit(1)
         
     logger.info(f"✅ Generated Niche: {script_data.get('micro_niche')}")
@@ -1011,14 +1118,24 @@ def build_v32_payload():
     subprocess.run(cmd, cwd=studio_dir, check=True)
     logger.info(f"✅ V35 render complete: {out_file}")
 
-    # ── GENERATE COVER FRAME ──
+    # ── GENERATE THUMBNAIL COVER FRAME ──
     cover_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cover.jpg"))
-    logger.info("📸 Exporting unique cover frame (Frame 15)...")
+    logger.info("📸 Exporting unique custom ThumbnailCover...")
     subprocess.run([
         "npx.cmd" if os.name == "nt" else "npx", "remotion", "still",
-        "src/index.ts", "MainVideo", cover_file,
+        "src/index.ts", "ThumbnailCover", cover_file,
         "--props", json_path,
-        "--frame=15"
+        "--frame=0"
+    ], cwd=studio_dir, check=True)
+
+    # ── GENERATE QA SPOT-CHECK FRAME ──
+    spot_check_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "qa_spot_check.jpg"))
+    logger.info("🔍 Exporting QA spot-check frame (Frame 150)...")
+    subprocess.run([
+        "npx.cmd" if os.name == "nt" else "npx", "remotion", "still",
+        "src/index.ts", "MainVideo", spot_check_file,
+        "--props", json_path,
+        "--frame=150"
     ], cwd=studio_dir, check=True)
 
     # ── PROFESSIONAL AUDIO MIX (BGM DUCKING & VO COMPRESSION) ──

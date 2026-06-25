@@ -1,5 +1,5 @@
 import { Composition } from "remotion";
-import { MainVideo } from "./MainVideo";
+import { MainVideo, ThumbnailCover } from "./MainVideo";
 import React from "react";
 
 const defaultProps = {
@@ -40,6 +40,24 @@ export const RemotionRoot: React.FC = () => {
             props
           };
         }}
+      />
+      <Composition
+        id="ThumbnailCover"
+        component={ThumbnailCover}
+        durationInFrames={1}
+        fps={25}
+        width={1080}
+        height={1920}
+        defaultProps={defaultProps}
+      />
+      <Composition
+        id="ThumbnailCover"
+        component={ThumbnailCover}
+        durationInFrames={1}
+        fps={25}
+        width={1080}
+        height={1920}
+        defaultProps={defaultProps}
       />
     </>
   );
