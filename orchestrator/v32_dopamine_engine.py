@@ -577,8 +577,11 @@ def clean_for_tts(text):
     """Pre-processes text to prevent TTS engine hallucination and symbol reading errors."""
     if not text:
         return text
-    # Fix Rupee symbol mispronounced as "R"
-    cleaned = text.replace("₹", " rupees ")
+    import re
+    # Fix Rupee symbol: move it after the amount (e.g. "₹ 10 lakh" -> "10 lakh rupees")
+    cleaned = re.sub(r'₹\s*([0-9.,]+\s*(?:lakh|crore|k|m|billion|million)?)', r'\1 rupees ', text, flags=re.IGNORECASE)
+    # Catch any remaining isolated ₹ symbols
+    cleaned = cleaned.replace("₹", " rupees ")
     # Fix % symbol mispronounced or causing number hallucinations
     cleaned = cleaned.replace("%", " percent ")
     # Basic cleanup for excessive whitespaces
