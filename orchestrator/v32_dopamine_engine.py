@@ -1178,6 +1178,7 @@ def build_v32_payload():
             "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
             "-map", "0:v",
             "-map", "[a_out]",
+            "-map_metadata", "-1",  # ANTI-BOT: Strip server metadata flags
             "-c:v", "copy",
             "-c:a", "aac", "-b:a", "192k",
             mixed_file

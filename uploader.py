@@ -274,16 +274,21 @@ def upload_to_facebook_story(video_path):
         logger.error(f"❌ Facebook Story failed: {e}")
     return False
 
+import re
+
 def upload_to_instagram_reels(video_url, description, cover_url=None):
     if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID:
         logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
         return False
     
+    # ANTI-SPAM: Remove raw URLs and replace with 'Link in Bio'
+    safe_description = re.sub(r'https?://[^\s]+', '🔗 Link in Bio!', description)
+    
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
     logger.info(f"📤 Starting Instagram Reel upload with URL")
     
     container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ACCOUNT_ID}/media"
-    container_payload = {"media_type": "REELS", "video_url": video_url, "caption": description, "access_token": page_token}
+    container_payload = {"media_type": "REELS", "video_url": video_url, "caption": safe_description, "access_token": page_token}
     if cover_url:
         container_payload["cover_url"] = cover_url
     
