@@ -478,14 +478,10 @@ async def _async_twitter_upload(video_path, caption, auth_token, ct0):
         if not twitter_cap: twitter_cap = "Must watch! 🚀"
         if len(twitter_cap) > 250: twitter_cap = twitter_cap[:247] + "..."
             
-        logger.info("Uploading video to X (Waiting for Twitter processing)...")
-        media_id = await client.upload_media(
-            video_path, 
-            media_category='tweet_video',
-            wait_for_completion=True
-        )
+        logger.info("Uploading video to X...")
+        media_id = await client.upload_media(video_path, media_category='tweet_video')
         
-        logger.info(f"Video processed with Media ID {media_id}. Posting tweet...")
+        logger.info(f"Video uploaded with Media ID {media_id}. Posting tweet...")
         await client.create_tweet(text=twitter_cap, media_ids=[media_id])
         logger.info("✅ Successfully published to X/Twitter!")
         return True

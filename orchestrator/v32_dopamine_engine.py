@@ -420,8 +420,6 @@ def generate_offline_script():
     templates = [
         {
           "hook": "90% log paise se darte hain. Tum nahi.",
-          "curiosity_teaser": "Sirf 1% jaante hain...",
-          "curiosity_payoff": "Yahi dar tumhe garib rakhta hai.",
           "split_screen": {
               "left": "Poor Mindset - Saves money",
               "right": "Rich Mindset - Invests money"
@@ -433,16 +431,11 @@ def generate_offline_script():
               "99% log EMI trap mein har saal 5 lakh khote hain"
           ],
           "proof_demo": "Proof: Mutual funds mein ₹10k/mo se tum 15 saal mein crorepati ho.",
-          "proof_source": "Source: Compound Interest Math",
-          "source_tag": "Source: RBI Data",
-          "comment_question": "Tum 1, 2 ya 3 ho? 👇",
           "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         },
         {
           "hook": "Why you are secretly sabotaging your own success...",
-          "curiosity_teaser": "The truth hurts...",
-          "curiosity_payoff": "You chose comfort.",
           "split_screen": {
               "left": "Poor Mindset - Blames others",
               "right": "Rich Mindset - Takes responsibility"
@@ -454,9 +447,6 @@ def generate_offline_script():
               "Average insaan scroll karta hai, top 1% create karta hai"
           ],
           "proof_demo": "Fact: Content creators make 5x more than average 9-to-5 workers in India.",
-          "proof_source": "Source: Creator Economy Report",
-          "source_tag": "Source: Forbes 2024",
-          "comment_question": "Do you scroll or create? 👇",
           "save_cta": "Save this rule before you forget! 📌 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "सच्चाई कड़वी है। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
         }
