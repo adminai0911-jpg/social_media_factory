@@ -303,8 +303,8 @@ export const MainVideo: React.FC<{
 
       {/* UPGRADE #4: CURIOSITY LOOP — planted early, exits 0.5s before Rule 1 to avoid numeric claims collision */}
       {t >= 2.0 && t < (p_l1 - 0.5) && script.curiosity_teaser && (
-        <AbsoluteFill style={{ zIndex: 9990, justifyContent: "flex-end",
-          alignItems: "center", paddingBottom: 380 }}>
+        <AbsoluteFill style={{ zIndex: 9997, justifyContent: "flex-end",
+          alignItems: "center", paddingBottom: 550 }}>
           <div style={{
             background: "rgba(12,20,32,0.97)",
             border: `2px solid ${pal.p}66`,
