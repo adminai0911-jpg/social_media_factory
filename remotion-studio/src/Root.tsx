@@ -50,15 +50,6 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={defaultProps}
       />
-      <Composition
-        id="ThumbnailCover"
-        component={ThumbnailCover}
-        durationInFrames={1}
-        fps={25}
-        width={1080}
-        height={1920}
-        defaultProps={defaultProps}
-      />
     </>
   );
 };
