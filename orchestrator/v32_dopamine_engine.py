@@ -899,7 +899,7 @@ If it fails either check, return exactly: FAIL
     try:
         import time
         time.sleep(3) # Prevent rate limits
-        client = genai.Client(api_key=valid_keys[0])
+        client = genai.Client(api_key=GEMINI_KEYS[0])
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
