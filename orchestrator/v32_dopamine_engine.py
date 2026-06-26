@@ -895,7 +895,15 @@ def qa_gate(script_json, attempt=1):
         logger.error("QA FAIL: Invalid JSON structure.")
         log_metric("FAIL", "Invalid JSON structure")
         return False
-        
+
+    # 0. Required Field Check
+    required_fields = ["hook", "save_cta", "caption", "numbered_list"]
+    for field in required_fields:
+        if not script_json.get(field):
+            logger.error(f"❌ QA FAIL: Script is missing required field '{field}'.")
+            log_metric("FAIL", f"Missing field: {field}")
+            return False
+            
     hook = str(script_json.get("hook", ""))
     red_kw = str(script_json.get("red_box_keyword", ""))
     c_teaser = str(script_json.get("curiosity_teaser", ""))
@@ -956,7 +964,6 @@ If it fails either check, return exactly: FAIL
 """
     try:
         import time
-        import google.generativeai as genai
         time.sleep(3) # Prevent rate limits
         client = genai.Client(api_key=valid_keys[0])
         response = client.models.generate_content(
@@ -973,9 +980,9 @@ If it fails either check, return exactly: FAIL
         log_metric("PASS", "LLM validation passed")
         return True
     except Exception as e:
-        logger.warning(f"QA Validation API error, bypassing LLM check to prevent pipeline stall: {e}")
-        log_metric("PASS", "Bypassed LLM (API Error)")
-        return True
+        logger.error(f"❌ QA Validation API error, FAILING check: {e}")
+        log_metric("FAIL", f"LLM API Error: {str(e)}")
+        return False
 
 def build_v32_payload():
     logger.info("⚡ INITIATING V32 ULTIMATE AESTHETIC ENGINE ⚡")
@@ -993,7 +1000,7 @@ def build_v32_payload():
         logger.error("❌ V32 FAILED - Could not generate a script that passes QA after 3 attempts. Aborting run.")
         sys.exit(1)
         
-    logger.info(f"✅ Generated Niche: {script_data.get('micro_niche')}")
+    logger.info(f"✅ Generated Hook: {script_data.get('hook')}")
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
 
     
@@ -1104,6 +1111,12 @@ def build_v32_payload():
 
     # Read REMOTION_CONCURRENCY from env, override default to 2
     concurrency = os.environ.get("REMOTION_CONCURRENCY", "2")
+    
+    # ── VALIDATE PROFILE PHOTO BEFORE RENDER ──
+    profile_photo_path = os.path.join(public_dir, "host_photo.png")
+    if not os.path.exists(profile_photo_path):
+        logger.error(f"❌ FATAL ERROR: Approved profile photo not found at {profile_photo_path}. Aborting.")
+        sys.exit(1)
 
     cmd = [
         "npx.cmd" if os.name == "nt" else "npx", "remotion", "render",
@@ -1140,51 +1153,37 @@ def build_v32_payload():
 
     # ── PROFESSIONAL AUDIO MIX (BGM DUCKING & VO COMPRESSION) ──
     logger.info("🎛️ Starting Professional Audio Mix...")
-    bgm_path = os.path.join(public_dir, "bgm.mp3")
+    bgm_path = os.path.join(public_dir, "hypno.wav")
+    
     try:
-        if not os.path.exists(bgm_path):
-            logger.info("🎵 Downloading ambient BGM...")
-            try:
-                subprocess.run([
-                    "yt-dlp", "ytsearch1:ambient cinematic drone background music royalty free",
-                    "-x", "--audio-format", "mp3", "-o", bgm_path
-                ], check=True, timeout=60)
-            except Exception as e:
-                logger.warning(f"yt-dlp BGM download failed (likely bot protection): {e}. Using direct fallback.")
-                try:
-                    # Direct unblockable Pixabay dark ambient MP3 fallback
-                    res = requests.get("https://cdn.pixabay.com/audio/2022/10/25/audio_24e93fb276.mp3", timeout=15)
-                    if res.status_code == 200:
-                        with open(bgm_path, "wb") as f:
-                            f.write(res.content)
-                    else:
-                        raise Exception(f"HTTP {res.status_code}")
-                except Exception as e2:
-                    logger.warning(f"Fallback download failed: {e2}. Proceeding with silent BGM.")
-                    subprocess.run(["ffmpeg", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "5", "-q:a", "9", "-acodec", "libmp3lame", bgm_path], check=True)
-        
         mixed_file = out_file.replace(".mp4", "_mixed.mp4")
         subprocess.run(["ffmpeg", "-y", "-i", out_file, "-q:a", "0", "-map", "a", "temp_vo.wav"], check=True)
         
-        mix_cmd = [
-            "ffmpeg", "-y",
-            "-i", out_file,
-            "-i", "temp_vo.wav",
-            "-stream_loop", "-1", "-i", bgm_path,
-            "-filter_complex",
-            "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
-            "[2:a]volume=0.06[bgm_vol];"
-            "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
-            "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
-            "-map", "0:v",
-            "-map", "[a_out]",
-            "-map_metadata", "-1",  # ANTI-BOT: Strip server metadata flags
-            "-c:v", "copy",
-            "-c:a", "aac", "-b:a", "192k",
-            mixed_file
-        ]
-        subprocess.run(mix_cmd, check=True)
-        os.replace(mixed_file, out_file)
+        if not os.path.exists(bgm_path):
+            logger.warning("⚠️ BGM file 'hypno.wav' missing! Skipping BGM mix. Video will have Voice-Over only to prevent mixing artifacts.")
+            # Simply retain the out_file since it already has the clean voice-over from Remotion.
+            pass
+        else:
+        
+            mix_cmd = [
+                "ffmpeg", "-y",
+                "-i", out_file,
+                "-i", "temp_vo.wav",
+                "-stream_loop", "-1", "-i", bgm_path,
+                "-filter_complex",
+                "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
+                "[2:a]volume=0.06[bgm_vol];"
+                "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
+                "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
+                "-map", "0:v",
+                "-map", "[a_out]",
+                "-map_metadata", "-1",  # ANTI-BOT: Strip server metadata flags
+                "-c:v", "copy",
+                "-c:a", "aac", "-b:a", "192k",
+                mixed_file
+            ]
+            subprocess.run(mix_cmd, check=True)
+            os.replace(mixed_file, out_file)
         try:
             os.remove("temp_vo.wav")
         except:
