@@ -412,6 +412,8 @@ def generate_offline_script():
           ],
           "proof_demo": "Proof: Mutual funds mein ₹10k/mo se tum 15 saal mein crorepati ho.",
           "proof_source": "Source: Compound Interest Math",
+          "curiosity_teaser": "Wait for rule 3",
+          "red_box_keyword": "dar",
           "comment_question": "Tum 1, 2 ya 3 ho? 👇",
           "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
@@ -426,6 +428,8 @@ def generate_offline_script():
           ],
           "proof_demo": "Fact: Content creators make 5x more than average 9-to-5 workers in India.",
           "proof_source": "Source: Creator Economy Report",
+          "curiosity_teaser": "The secret is simple",
+          "red_box_keyword": "sabotaging",
           "comment_question": "Do you scroll or create? 👇",
           "save_cta": "Follow for daily dopamine hits. 🚀",
           "caption": "Shift your perspective. #GrowthMindset #FinancialFreedom #ReelItFeelIt #Shorts"
