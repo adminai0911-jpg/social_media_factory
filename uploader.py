@@ -615,13 +615,12 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 
 <b>Caption Used:</b>
 {__import__('html').escape(injected_description)}
-
-📋 <b>COPY-PASTE FOR X & SNAPCHAT:</b>
-<pre>
-{__import__('html').escape(raw_description.split("#")[0].strip() + "\n\n🔗 Link in Bio! 🚀\n\n" + get_dynamic_hashtags())}
-</pre>
 """
     send_telegram_alert(status_msg)
+    
+    # Send a second, completely isolated message just for easy copy-pasting
+    copy_paste_text = raw_description.split("#")[0].strip() + "\n\n🔗 Link in Bio! 🚀\n\n" + get_dynamic_hashtags()
+    send_telegram_alert(copy_paste_text)
     
     return {
         "facebook": fb,
