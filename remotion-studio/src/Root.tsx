@@ -28,15 +28,15 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MainVideo"
         component={MainVideo}
-        durationInFrames={Math.ceil(30.0 * 25)}
-        fps={25}
+        durationInFrames={Math.ceil(30.0 * 30)}
+        fps={30}
         width={1080}
         height={1920}
         defaultProps={defaultProps}
         calculateMetadata={async ({ props }) => {
           const duration = props.total_duration || 30.0;
           return {
-            durationInFrames: Math.ceil(duration * 25),
+            durationInFrames: Math.ceil(duration * 30),
             props
           };
         }}
@@ -45,7 +45,7 @@ export const RemotionRoot: React.FC = () => {
         id="ThumbnailCover"
         component={ThumbnailCover}
         durationInFrames={1}
-        fps={25}
+        fps={30}
         width={1080}
         height={1920}
         defaultProps={defaultProps}

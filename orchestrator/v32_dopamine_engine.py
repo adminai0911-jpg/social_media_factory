@@ -868,12 +868,22 @@ def qa_gate(script_json, attempt=1):
             log_metric("FAIL", "Chunk length > 120 chars")
             return False
             
-    # 2 & 5. Grammar & Topic Relevance Check via Gemini
-    valid_keys = [k for k in GEMINI_KEYS if k]
-    if not valid_keys:
-        log_metric("PASS", "Bypassed LLM (No keys)")
-        return True # Skip if no keys
-        
+    # 5. Visual Contrast Configuration Check
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "remotion-studio", "src", "config.ts"))
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            config_text = f.read()
+            if "#F5F3EC" not in config_text or "#FAC775" not in config_text:
+                logger.error("QA FAIL: Visual contrast configuration is incorrect or missing required highlight colors (#F5F3EC, #FAC775).")
+                log_metric("FAIL", "Missing required contrast colors in config.ts")
+                return False
+    else:
+        logger.error("QA FAIL: config.ts not found. Visual consistency cannot be guaranteed.")
+        log_metric("FAIL", "config.ts missing")
+        return False
+            
+    # 6. Grammar & Topic Relevance Check via Gemini
+    # QA Gate re-enabled per user request to ensure hallucination-free output.
     logger.info("🧪 Running strict LLM QA Gate Validation...")
     prompt = f"""You are a strict Quality Assurance bot for a viral video pipeline.
 Review the following video script:
@@ -990,7 +1000,7 @@ def build_v32_payload():
                     "start": current_time + (j * word_duration),
                     "end": current_time + ((j + 1) * word_duration)
                 })
-        current_time += duration + 0.1
+        current_time += duration + 0.3
     
     # Ensure we have all 8 audio offsets for MainVideo.tsx
     while len(audio_offsets) < 8:
