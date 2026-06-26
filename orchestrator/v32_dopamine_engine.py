@@ -1186,8 +1186,22 @@ def build_v32_payload():
                 "-c:a", "aac", "-b:a", "192k",
                 mixed_file
             ]
+            logger.info(f"🎧 Executing FFmpeg Mix Command: {' '.join(mix_cmd)}")
             subprocess.run(mix_cmd, check=True)
             os.replace(mixed_file, out_file)
+            
+            # ── POST-MIX VALIDATION ──
+            logger.info("🔍 Validating final mixed MP4 audio streams...")
+            try:
+                ffprobe_cmd = ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "default=noprint_wrappers=1:nokey=1", out_file]
+                audio_check = subprocess.run(ffprobe_cmd, capture_output=True, text=True, check=True)
+                if not audio_check.stdout.strip():
+                    logger.error("❌ FINAL RENDER QA FAIL: Mixed MP4 contains NO audio stream! Aborting to prevent silent video upload.")
+                    sys.exit(1)
+                logger.info(f"✅ Final audio validation passed! Audio Codec: {audio_check.stdout.strip()}")
+            except Exception as e:
+                logger.error(f"❌ FINAL RENDER QA FAIL: ffprobe validation crashed: {e}")
+                sys.exit(1)
         try:
             os.remove("temp_vo.wav")
         except:
