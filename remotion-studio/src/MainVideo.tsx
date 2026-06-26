@@ -706,7 +706,7 @@ export const ThumbnailCover: React.FC<{
       {/* Small Corner Badge Profile Photo */}
       <div style={{ position: 'absolute', top: 50, left: 50, display: 'flex', alignItems: 'center', gap: 20 }}>
         <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${pal.p}`, boxShadow: `0 0 30px rgba(0,0,0,0.5)` }}>
-           <Img src={staticFile("profile.jpg")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+           <Img src={staticFile("host_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
         <div style={{ fontFamily: TITLE_FONT, color: '#fff', fontSize: 28, fontWeight: 'bold', opacity: 0.8 }}>@WealthMatrixAI</div>
       </div>
