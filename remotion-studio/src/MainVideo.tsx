@@ -116,8 +116,8 @@ export const MainVideo: React.FC<{
   const subtitleChunks = useMemo(() => {
     if (!timings) return [];
     const chunks = [];
-    for (let i = 0; i < timings.length; i += 5) {
-      const slice = timings.slice(i, i + 5);
+    for (let i = 0; i < timings.length; i += 4) {
+      const slice = timings.slice(i, i + 4);
       chunks.push({
         start: slice[0].start,
         end: slice[slice.length - 1].end + 0.1,
@@ -181,51 +181,16 @@ export const MainVideo: React.FC<{
       {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("v32_audio_5.mp3")} volume={1.6} /></Sequence>}
       {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("v32_audio_6.mp3")} volume={1.6} /></Sequence>}
 
-      {/* ── SFX ─────────────────────────────────────────────────── */}
-
-      <Sequence from={0}><Audio src={staticFile("hypno.wav")} volume={0.15} loop /></Sequence>
-
-      {/* Rising tension before Rule #3 reveal */}
-      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("riser.wav")} volume={0.7}/></Sequence>}
-
-      {/* Whoosh impact on every rule-card entrance */}
-
-      {p_l1 && <Sequence from={Math.round(p_l1*fps)}><Audio src={staticFile("impact.wav")} volume={1.2}/></Sequence>}
-
-      {p_l2 && <Sequence from={Math.round(p_l2*fps)}><Audio src={staticFile("impact.wav")} volume={1.2}/></Sequence>}
-
-      {p_l3 && <Sequence from={Math.round(p_l3*fps)}><Audio src={staticFile("impact.wav")} volume={1.5}/></Sequence>}
-
-      {/* Ticks confirm each rule */}
-
-      {p_l1 && <Sequence from={Math.round(p_l1*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
-
-      {p_l2 && <Sequence from={Math.round(p_l2*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
-
-      {p_l3 && <Sequence from={Math.round(p_l3*fps)+8}><Audio src={staticFile("ding.wav")} volume={1.2}/></Sequence>}
-
-      {/* Proof beat */}
-
-      {p_proof && <Sequence from={Math.round(p_proof*fps)}><Audio src={staticFile("impact.wav")} volume={1.8}/></Sequence>}
-
-      {/* Rewarding chime on save card */}
-
-      {p_cta && <Sequence from={Math.round(p_cta*fps)}><Audio src={staticFile("ding.wav")} volume={2.5}/></Sequence>}
-
-      {p_cta && <Sequence from={Math.round(p_cta*fps)+5}><Audio src={staticFile("impact.wav")} volume={1.5}/></Sequence>}
-
-
+      {/* Background Music directly in Remotion */}
+      <Audio src={staticFile("hypno.wav")} volume={0.10} />
 
       {/* ── PREMIUM BACKGROUND & DRIFTING GRAIN ────────────────────── */}
 
       <AbsoluteFill style={{ zIndex: 0, backgroundColor: pal.bg1 }}>
 
         <div style={{
-
           position: "absolute", inset: 0,
-
-          background: `radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)`,
-
+          background: `rgba(0,0,0,0.3)`,
         }}/>
 
         {/* Animated drifting grain — eliminates dead static frames */}
@@ -294,7 +259,7 @@ export const MainVideo: React.FC<{
           {/* Small Corner Badge Profile Photo */}
           <div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20 }}>
             <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: `4px solid ${pal.p}`, boxShadow: `0 10px 30px rgba(0,0,0,0.5)` }}>
-              <Img src={staticFile("host_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+              <Img src={staticFile("wealth_profile_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
             </div>
           </div>
         </AbsoluteFill>
@@ -303,8 +268,8 @@ export const MainVideo: React.FC<{
 
       {/* UPGRADE #4: CURIOSITY LOOP — planted early, exits 0.5s before Rule 1 to avoid numeric claims collision */}
       {t >= 2.0 && t < (p_l1 - 0.5) && script.curiosity_teaser && (
-        <AbsoluteFill style={{ zIndex: 9997, justifyContent: "flex-end",
-          alignItems: "center", paddingBottom: 550 }}>
+        <AbsoluteFill style={{ zIndex: 9997, justifyContent: "flex-start",
+          alignItems: "center", paddingTop: 250 }}>
           <div style={{
             background: "rgba(12,20,32,0.97)",
             border: `2px solid ${pal.p}66`,
@@ -381,14 +346,13 @@ export const MainVideo: React.FC<{
 
       {/* ── PHASE 4: STAGGERED NUMBERED LIST (p_l1 - p_proof) ───────── */}
 
-      {/* FIX: Safe padding 12% left/right prevents any card clipping at frame edge. Stop Rule 3 visually 0.5s before Proof. */}
+      <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof - p_l1)*fps)}>
 
-      <Sequence from={Math.round(p_l1*fps)} durationInFrames={Math.round((p_proof - 0.5 - p_l1)*fps)}>
-
-        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "4% 8%", transform: `scale(${kenBurns(p_l1)})` }}>
+        <AbsoluteFill style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", paddingTop: 180, gap: 30, transform: `scale(${kenBurns(p_l1)})` }}>
           {(Array.isArray(script.numbered_list) ? script.numbered_list : []).slice(0, 3).map((itemRaw: any, i: number) => {
             const itemTime = i === 0 ? p_l1 : i === 1 ? p_l2 : p_l3;
-            if (t < itemTime) return null;
+            const endTime = p_proof;
+            if (t < itemTime || t >= endTime) return null;
             const slideProgress = interpolate(frame, [Math.round(itemTime*fps), Math.round(itemTime*fps)+18], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
             const continuousScale = 1.0 + (frame - Math.round(itemTime*fps)) * 0.0003;
             const pulseOpacity = 0.5 + Math.sin(frame * 0.05) * 0.3;
@@ -399,14 +363,15 @@ export const MainVideo: React.FC<{
 
             return (
               <div key={i} style={{
-                display: "flex", alignItems: "center",
+                display: "flex", alignItems: "center", width: "90%",
                 background: isData ? `rgba(15,32,39,0.7)` : "rgba(255,255,255,0.05)",
-                padding: "35px 50px", borderRadius: 35, marginBottom: 40,
+                padding: "25px 40px", borderRadius: 30,
                 border: isData ? `2px solid rgba(0, 242, 254, ${pulseOpacity})` : "1px solid rgba(255,255,255,0.08)",
                 boxShadow: isData ? `0 10px 40px rgba(0,242,254,0.2)` : "0 10px 30px rgba(0,0,0,0.5)",
                 opacity: slideProgress,
-                transform: `translateX(${interpolate(slideProgress, [0, 1], [-80, 0])}px) scale(${continuousScale})`,
-                position: "relative"
+                transform: `translateX(${interpolate(slideProgress, [0, 1], [-80, 0])}px) scale(${continuousScale * 0.75})`,
+                position: "relative",
+                marginBottom: 20
               }}>
                 {/* Type Tag */}
                 <div style={{
@@ -529,10 +494,10 @@ export const MainVideo: React.FC<{
                 return (
                 <div key={i} style={{
                   fontFamily: HINDI_FONT, fontSize: 42, color: "rgba(255,255,255,0.95)",
-                  fontWeight: 600, display: "flex", alignItems: "center", gap: 18
+                  fontWeight: 600, display: "flex", alignItems: "flex-start", gap: 18
                 }}>
-                  <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 42 }}>{i + 1}.</span>
-                  <BilingualText text={item} />
+                  <span style={{ color: pal.p, fontFamily: TITLE_FONT, fontWeight: 900, fontSize: 42, flexShrink: 0, marginTop: 6 }}>{i + 1}.</span>
+                  <div style={{ lineHeight: 1.3 }}><BilingualText text={item} /></div>
                 </div>
               )})}
             </div>
@@ -570,10 +535,10 @@ export const MainVideo: React.FC<{
             <Img src={staticFile(`host_photo_${(seed % 3) + 1}.png`)} style={{ width: 242, height: 242, borderRadius: "50%", objectFit: "cover" }} />
           </div>
           <div style={{ fontFamily: TITLE_FONT, fontSize: 60, fontWeight: 900, color: "#FFFFFF", letterSpacing: 3, marginBottom: 20 }}>
-            ADMIN AI
+            Wealth_Matrix_Ai
           </div>
           <div style={{ fontFamily: TITLE_FONT, fontSize: 35, fontWeight: 700, color: pal.p, letterSpacing: 2 }}>
-            Follow for daily money psychology
+            Follow for daily money psychology ➡️
           </div>
         </AbsoluteFill>
       </Sequence>
@@ -581,22 +546,26 @@ export const MainVideo: React.FC<{
       {/* ── DYNAMIC SUBTITLES ────────────────────────────────────── */}
       {/* We don't show subtitles during the Hook (too much text overlap), or the CTA/Outro */}
       {phase > 1 && phase < 5 && activeChunk && (
-        <AbsoluteFill style={{ zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: 150 }}>
+        <AbsoluteFill style={{ zIndex: 9998, justifyContent: "flex-end", alignItems: "center", paddingBottom: "15%" }}>
           <div style={{
-            background: "rgba(0,0,0,0.85)", padding: "20px 40px", borderRadius: 20,
-            border: `2px solid ${pal.p}55`,
-            boxShadow: "0 10px 40px rgba(0,0,0,0.8)",
-            display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px 18px", maxWidth: "85%"
+            display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px 20px", maxWidth: "90%", padding: "0 5%"
           }}>
             {activeChunk.words.map((wObj: any, idx: number) => {
               const isActive = t >= wObj.start && t <= wObj.end + 0.1;
               const isHighlight = activeRedWords.some(r => wObj.word.toUpperCase().replace(/[^A-Z0-9]/g,"").includes(r));
-              const scale = isActive ? 1.05 : 1;
-              const color = isActive ? (isHighlight ? "#FF3366" : pal.p) : "#FFFFFF";
+              
+              // Pop-in scale from 90% to 100% when active
+              const scale = isActive ? 1.0 : 0.9;
+              
+              const color = isActive ? (isHighlight ? "#FFE600" : "#FFFFFF") : "rgba(255,255,255,0.4)";
               return (
                 <span key={idx} style={{ 
-                  fontFamily: HINDI_FONT, fontSize: 58, fontWeight: isActive ? 900 : 700, 
-                  color, transform: `scale(${scale})`, transition: "all 0.1s ease-out" 
+                  fontFamily: TITLE_FONT, fontSize: 55, fontWeight: 900, 
+                  color, 
+                  WebkitTextStroke: "2px black",
+                  textShadow: "0 6px 12px rgba(0,0,0,0.6)",
+                  transform: `scale(${scale})`, 
+                  transition: "transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.1s ease" 
                 }}>
                   {wObj.word.toUpperCase()}
                 </span>
@@ -634,7 +603,7 @@ export const MainVideo: React.FC<{
 
       {t > 1.5 && t < p_l3 && (
 
-        <AbsoluteFill style={{ zIndex: 9999, justifyContent: "flex-start", alignItems: "center", paddingTop: 100 }}>
+        <AbsoluteFill style={{ zIndex: 9999, justifyContent: "flex-start", alignItems: "center", paddingTop: 80 }}>
 
           <div style={{
 
@@ -660,11 +629,7 @@ export const MainVideo: React.FC<{
 
         </AbsoluteFill>
 
-      )}
-
-
-
-      {/* ── FADE OUT ────────────────────────────────────────────── */}
+      )}      {/* ── FADE OUT ────────────────────────────────────────────── */}
 
       {phase === 6 && (
 
@@ -706,7 +671,7 @@ export const ThumbnailCover: React.FC<{
       {/* Small Corner Badge Profile Photo */}
       <div style={{ position: 'absolute', top: 50, left: 50, display: 'flex', alignItems: 'center', gap: 20 }}>
         <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${pal.p}`, boxShadow: `0 0 30px rgba(0,0,0,0.5)` }}>
-           <Img src={staticFile("host_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+           <Img src={staticFile("wealth_profile_photo.png")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
         <div style={{ fontFamily: TITLE_FONT, color: '#fff', fontSize: 28, fontWeight: 'bold', opacity: 0.8 }}>@WealthMatrixAI</div>
       </div>

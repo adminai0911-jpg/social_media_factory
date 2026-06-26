@@ -108,12 +108,9 @@ for raw in raw_keys:
 # 50% chance to run in English, 50% chance in Hindi.
 CURRENT_LANGUAGE = random.choice(["English", "Hindi"])
 
-if CURRENT_LANGUAGE == "English":
-    EDGE_VOICES = ["en-US-ChristopherNeural", "en-US-EricNeural"]
-    ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"] # Adam, Antoni
-else:
-    EDGE_VOICES = ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"]
-    ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"] # We can use Adam/Antoni for Hindi too, ElevenLabs v2 Turbo supports multilingual!
+# Always use Hindi voices to support Hinglish/Devanagari gracefully
+EDGE_VOICES = ["hi-IN-MadhurNeural", "hi-IN-SwaraNeural"]
+ELEVEN_VOICES = ["pNInz6obpgDQGcFmaJgB", "ErXwobaYiN019PkySvjV"]
 
 def get_omni_analytics_feedback():
     """Fetches recent video performance from YouTube, Instagram, and Facebook APIs to guide Gemini."""
@@ -460,28 +457,10 @@ def create_tone(filename, freq, duration, vol=0.5, decay=True, riser=False):
 
 def create_8d_hypnotic_music(filename, duration=42.0):
     """
-    TRUE 8D SPATIAL ROTATING AUDIO — sounds like the music moves around your head.
-    Technique: HRTF-inspired stereo panning + binaural beat + room reverb simulation.
-
-    The audio physically rotates in a circle around the listener:
-      Left  = cos(rotation_angle) * signal   [0..1 oscillating]
-      Right = sin(rotation_angle) * signal   [0..1 oscillating]
-    Rotation speed slowly varies (0.08–0.25 Hz) for organic 8D feel.
-    432 Hz left carrier + 436 Hz right carrier = 4 Hz THETA binaural beat.
-    Room reverb: 3-tap delay (15ms / 28ms / 45ms) for spatial depth.
-    Sub-bass 60 Hz pulse adds physical vibration feel.
+    Quiet, simple background tone without any fancy effects.
     """
     sample_rate = 44100
     n_samples   = int(sample_rate * duration)
-
-    # Reverb delay taps (samples)
-    taps    = [int(0.015 * sample_rate),
-               int(0.028 * sample_rate),
-               int(0.045 * sample_rate)]
-    tap_vol = [0.35, 0.22, 0.12]
-    max_tap = max(taps)
-    delay_buf = [0.0] * (max_tap + 1)
-    buf_idx   = 0
 
     try:
         with wave.open(filename, 'w') as f:
@@ -489,84 +468,19 @@ def create_8d_hypnotic_music(filename, duration=42.0):
             f.setsampwidth(2)
             f.setframerate(sample_rate)
 
-            angle = 0.0  # running rotation angle (radians)
-
             for i in range(n_samples):
                 t = float(i) / sample_rate
-
-                # ── Envelope: 2s fade-in, 3s fade-out, slight mid-breath ──
+                
                 fade_in  = min(1.0, t / 2.0)
                 fade_out = min(1.0, (duration - t) / 3.0)
-                breath   = 0.88 + 0.12 * math.sin(2 * math.pi * 0.07 * t)  # ultra-slow
-                env      = fade_in * fade_out * breath
-
-                # ── 8D rotation speed (slowly varies 0.08–0.25 Hz) ──
-                rot_speed = 0.16 + 0.09 * math.sin(2 * math.pi * 0.04 * t)
-                angle    += (2 * math.pi * rot_speed) / sample_rate
-
-                pan_l = 0.15 + 0.85 * ((1 + math.cos(angle)) / 2)
-                pan_r = 0.15 + 0.85 * ((1 + math.sin(angle)) / 2)
-
-                dist_mod = 0.75 + 0.25 * math.sin(2 * math.pi * 0.11 * t)
-
-                # ── SIGMA TRAP BEAT GENERATOR ──
-                import random as _rand
-                bpm = 105.0
-                beat_len = 60.0 / bpm
-                bar_t = t % (beat_len * 4)
-
-                # 1. 808 Sub Kick (Beats 1 & 3)
-                is_kick = (bar_t < beat_len) or (bar_t >= beat_len * 2 and bar_t < beat_len * 2.5)
-                kick = 0.0
-                if is_kick:
-                    k_phase = bar_t if bar_t < beat_len else (bar_t - beat_len * 2)
-                    kick_freq = 120.0 * math.exp(-25.0 * k_phase) + 40.0
-                    kick_env = math.exp(-5.0 * k_phase)
-                    kick = math.sin(2 * math.pi * kick_freq * k_phase) * kick_env * 0.8
-
-                # 2. Trap Hi-Hat (Every 1/4 beat, faster bursts)
-                hh_phase = t % (beat_len / 4.0)
-                hh_env = math.exp(-40.0 * hh_phase)
-                hihat = ((i % 17) / 17.0 - 0.5) * hh_env * 0.3 # Pseudo-noise
-
-                # 3. Dark Phonk Drone (A1 + Harmonics)
+                env = fade_in * fade_out * 0.05
+                
                 drone_freq = 55.0
                 drone = math.sin(2 * math.pi * drone_freq * t)
-                drone += 0.5 * math.sin(2 * math.pi * drone_freq * 2.01 * t)
-                drone += 0.25 * math.sin(2 * math.pi * drone_freq * 3.0 * t)
-                drone *= 0.15 * (0.8 + 0.2 * math.sin(2 * math.pi * 0.5 * t)) # Wobble
-
-                # Mix: Kick is centered (mono), Hihat/Drone are 8D panned
-                sig_l = kick + (hihat + drone) * pan_l
-                sig_r = kick + (hihat + drone) * pan_r
-
-                # ── Room reverb (3 taps) ──
-                reverb_l = 0.0
-                reverb_r = 0.0
-                for tap_i, tap_samp in enumerate(taps):
-                    idx_past = (buf_idx - tap_samp) % (max_tap + 1)
-                    reverb_l += tap_vol[tap_i] * delay_buf[idx_past]
-                    reverb_r += tap_vol[tap_i] * delay_buf[idx_past]
-
-                wet_l = sig_l * 0.7 + reverb_l * 0.3
-                wet_r = sig_r * 0.7 + reverb_r * 0.3
-
-                # Store in delay buffer (mono mix)
-                delay_buf[buf_idx] = (sig_l + sig_r) * 0.5
-                buf_idx = (buf_idx + 1) % (max_tap + 1)
-
-                # ── Final mix with distance attenuation ──
-                vol = 0.35 # Slightly louder for the beat
-                left_val  = int(vol * dist_mod * env * wet_l * 32767)
-                right_val = int(vol * dist_mod * env * wet_r * 32767)
-                left_val  = max(-32767, min(32767, left_val))
-                right_val = max(-32767, min(32767, right_val))
-                f.writeframes(struct.pack('<hh', left_val, right_val))
-
-        logger.info(f"✅ True 8D spatial audio generated: {filename}")
+                val = int(max(-32768, min(32767, drone * env * 32767)))
+                f.writeframesraw(struct.pack('<hh', val, val))
     except Exception as e:
-        logger.error(f"Failed to create 8D audio {filename}: {e}")
-
+        logger.error(f"Error creating background music: {e}")
 def ensure_sfx(studio_dir):
     sfx_dir = os.path.join(studio_dir, "public")
     os.makedirs(sfx_dir, exist_ok=True)
@@ -634,10 +548,16 @@ def generate_audio(text, edge_voice, eleven_voice, output_path):
 def get_audio_duration(file_path):
     """Get duration of an MP3 file in seconds."""
     try:
+        from mutagen.mp3 import MP3
         audio = MP3(file_path)
         return audio.info.length
     except:
-        return 2.0
+        try:
+            import subprocess
+            result = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path], capture_output=True, text=True, check=True)
+            return float(result.stdout.strip())
+        except:
+            return 2.0
 
 def download_dynamic_backgrounds(public_dir):
     """Downloads 4 unique HD background videos from Pexels API.
@@ -1053,8 +973,8 @@ def build_v32_payload():
         # BUG FIX: Changed v31_audio to v32_audio to match MainVideo.tsx staticFile names
         audio_path = os.path.join(public_dir, f"v32_audio_{i}.mp3")
         
-        edge_to_use = alt_edge if i == 2 else base_edge
-        eleven_to_use = alt_eleven if i == 2 else base_eleven
+        edge_to_use = alt_edge if i % 2 != 0 else base_edge
+        eleven_to_use = alt_eleven if i % 2 != 0 else base_eleven
         
         generate_audio(phase_text, edge_to_use, eleven_to_use, audio_path)
         
@@ -1156,64 +1076,12 @@ def build_v32_payload():
     ], cwd=studio_dir, check=True)
 
     # ── PROFESSIONAL AUDIO MIX (BGM DUCKING & VO COMPRESSION) ──
-    logger.info("🎛️ Starting Professional Audio Mix...")
-    bgm_path = os.path.join(public_dir, "hypno.wav")
+    logger.info("🎛️ Audio is now handled natively by Remotion Studio. Skipping ffmpeg mix...")
     
-    try:
-        mixed_file = out_file.replace(".mp4", "_mixed.mp4")
-        subprocess.run(["ffmpeg", "-y", "-i", out_file, "-q:a", "0", "-map", "a", "temp_vo.wav"], check=True)
-        
-        if not os.path.exists(bgm_path):
-            logger.warning("⚠️ BGM file 'hypno.wav' missing! Skipping BGM mix. Video will have Voice-Over only to prevent mixing artifacts.")
-            # Simply retain the out_file since it already has the clean voice-over from Remotion.
-            pass
-        else:
-        
-            mix_cmd = [
-                "ffmpeg", "-y",
-                "-i", out_file,
-                "-i", "temp_vo.wav",
-                "-stream_loop", "-1", "-i", bgm_path,
-                "-filter_complex",
-                "[1:a]afftdn,acompressor=threshold=-15dB:ratio=4:attack=5:release=50:makeup=2dB,asplit=2[vo_mix][vo_sidechain];"
-                "[2:a]volume=0.06[bgm_vol];"
-                "[bgm_vol][vo_sidechain]sidechaincompress=threshold=0.06:ratio=4:attack=50:release=1000[bgm_ducked];"
-                "[vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[a_out]",
-                "-map", "0:v",
-                "-map", "[a_out]",
-                "-map_metadata", "-1",  # ANTI-BOT: Strip server metadata flags
-                "-c:v", "copy",
-                "-c:a", "aac", "-b:a", "192k",
-                mixed_file
-            ]
-            logger.info(f"🎧 Executing FFmpeg Mix Command: {' '.join(mix_cmd)}")
-            subprocess.run(mix_cmd, check=True)
-            os.replace(mixed_file, out_file)
-            
-            # ── POST-MIX VALIDATION ──
-            logger.info("🔍 Validating final mixed MP4 audio streams...")
-            try:
-                ffprobe_cmd = ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "default=noprint_wrappers=1:nokey=1", out_file]
-                audio_check = subprocess.run(ffprobe_cmd, capture_output=True, text=True, check=True)
-                if not audio_check.stdout.strip():
-                    logger.error("❌ FINAL RENDER QA FAIL: Mixed MP4 contains NO audio stream! Aborting to prevent silent video upload.")
-                    sys.exit(1)
-                logger.info(f"✅ Final audio validation passed! Audio Codec: {audio_check.stdout.strip()}")
-            except Exception as e:
-                logger.error(f"❌ FINAL RENDER QA FAIL: ffprobe validation crashed: {e}")
-                sys.exit(1)
-        try:
-            os.remove("temp_vo.wav")
-        except:
-            pass
-    except FileNotFoundError:
-        logger.warning("⚠️ ffmpeg or yt-dlp not installed on this system! Skipping BGM ducking and mixing. Video is still completely rendered with voiceover!")
-    except Exception as e:
-        logger.warning(f"⚠️ Audio mix failed: {e}. Video is still completely rendered with voiceover!")
-
     logger.info("Video rendering complete. Script execution finished.")
 
     return out_file
 
 if __name__ == "__main__":
     build_v32_payload()
+
