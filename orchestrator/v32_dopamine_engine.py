@@ -221,8 +221,8 @@ def generate_dynamic_script():
         "The financially free version of you is watching this. Will you listen?",
 
         # 🏆 CATEGORY 4: AUTHORITY + PROOF / RELATABLE REALITY — Mix billionaires with relatable scenarios
-        "Dhirubhai Ambani, Rakesh Jhunjhunwala — दोनों ने यह एक rule follow किया।",
-        "Harvard Business Study says: 92% of middle class makes THIS mistake before 35.",
+        "Self-made billionaires commonly follow this one counterintuitive rule.",
+        "Financial experts warn: 92% of the middle class makes THIS mistake before 35.",
         "Mere ek dost ki salary ₹60,000 hai phir bhi wo hamesha broke rehta hai. Kyun?",
         "Agar tumhari age 20s me hai aur bank balance ₹1 lakh se kam hai, toh yeh suno.",
 
@@ -284,12 +284,11 @@ def generate_dynamic_script():
 ═══════════════════════════════════════════════
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
 ═══════════════════════════════════════════════
-- Language: Natural Hinglish — the way a brilliant, wealthy friend speaks over chai. NOT formal textbook Hindi.
-- GRAMMAR QA PASS: Ensure every generated sentence is a complete, grammatically correct thought in either English or Hindi.
-- ZERO generic advice: Never say "work hard", "save money", "be disciplined." These are content killers.
-- Every insight MUST be counterintuitive.
-- The numbered list must teach a COMPLETE, ACTIONABLE mini-framework.
-- proof_demo MUST name a real person or a credible study OR be a highly relatable real-world scenario (e.g., a friend earning ₹60k/month).
+- Language: All on-screen text fields (hook, rules, claims, items) MUST be in Hindi/Hinglish (Devanagari script allowed). DO NOT use pure English.
+- NO REDUNDANCY: Do NOT prefix numbered_list items with "Rule 1:", "Fact:", or numbers like "1.". The UI automatically adds numbers! Just provide the raw text.
+- ANTI-HALLUCINATION: Do NOT invent fake studies or fake "Verified Data". Use "Many experts believe" framing if you don't have a real, verifiable source.
+- ZERO generic advice: Never say "work hard", "save money". Every insight MUST be counterintuitive.
+- The numbered_list must teach a COMPLETE, ACTIONABLE mini-framework.
 - Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
 Mandatory: hook MUST use this text exactly: {hook}
