@@ -37,7 +37,7 @@ const BilingualText: React.FC<{ text: string }> = ({ text }) => {
     <>
       {parts.map((part, i) => {
         if (/[a-zA-Z0-9₹%]/.test(part)) {
-          return <span key={i} style={{ margin: "0 6px", fontFamily: TITLE_FONT, fontWeight: 700, letterSpacing: 1 }}>{part}</span>;
+          return <span key={i} style={{ fontFamily: TITLE_FONT, fontWeight: 700, letterSpacing: 1 }}>{part}</span>;
         }
         return <span key={i}>{part}</span>;
       })}
@@ -217,9 +217,14 @@ export const MainVideo: React.FC<{
       <AbsoluteFill style={{ zIndex: 9999 }}>
 
         <div style={{ position: "absolute", bottom: 40, right: 40, fontFamily: TITLE_FONT, fontSize: 30, color: "rgba(255,255,255,0.2)", fontWeight: 900, letterSpacing: 2 }}>
-
           Wealth Matrix AI
-
+        </div>
+        
+        {/* Global Corner Badge Profile Photo */}
+        <div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20 }}>
+          <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: `4px solid ${pal.p}`, boxShadow: `0 10px 30px rgba(0,0,0,0.5)` }}>
+            <Img src={staticFile(CONFIG.ASSETS.logoPhoto)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
+          </div>
         </div>
 
       </AbsoluteFill>
@@ -256,13 +261,6 @@ export const MainVideo: React.FC<{
                   );
                 });
               })()}
-            </div>
-          </div>
-          
-          {/* Small Corner Badge Profile Photo */}
-          <div style={{ position: "absolute", bottom: 60, left: 60, display: "flex", alignItems: "center", gap: 20 }}>
-            <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", border: `4px solid ${pal.p}`, boxShadow: `0 10px 30px rgba(0,0,0,0.5)` }}>
-              <Img src={staticFile(CONFIG.ASSETS.logoPhoto)} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
             </div>
           </div>
         </AbsoluteFill>
@@ -594,9 +592,7 @@ export const MainVideo: React.FC<{
           }}>
 
             <span style={{ fontFamily: TITLE_FONT, fontSize: 45, fontWeight: 900, color: "#FFFFFF", letterSpacing: 2 }}>
-
-              WAIT FOR RULE #3 🚨
-
+              WAIT FOR #3 🚨
             </span>
 
           </div>
