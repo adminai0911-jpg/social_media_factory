@@ -17,10 +17,7 @@ import { loadFont as loadDevanagari } from "@remotion/google-fonts/NotoSansDevan
 import { loadFont as loadMontserrat } from "@remotion/google-fonts/Montserrat";
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
 
-const { fontFamily: devanagariFont } = loadDevanagari("normal", {
-  weights: ["700", "900"],
-  subsets: ["devanagari"],
-});
+const { fontFamily: devanagariFont } = loadDevanagari();
 const { fontFamily: montserratFont } = loadMontserrat("normal", { weights: ["900", "700", "600"] });
 const { fontFamily: playfairFont } = loadPlayfair("normal", { weights: ["900", "700"] });
 
@@ -29,9 +26,8 @@ const GlobalStyle = () => (
 );
 
 const HINDI_FONT = `${devanagariFont}, 'Mangal', 'Sanskrit Text', Arial, sans-serif`;
-const TITLE_FONT = `${montserratFont}, Impact, sans-serif`;
-
-const HOOK_FONT = `${playfairFont}, Georgia, serif`;
+const TITLE_FONT = `${montserratFont}, ${devanagariFont}, Impact, sans-serif`;
+const HOOK_FONT = `${playfairFont}, ${devanagariFont}, Georgia, serif`;
 
 const BilingualText: React.FC<{ text: string }> = ({ text }) => {
   if (!text) return null;
