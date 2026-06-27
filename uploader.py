@@ -120,6 +120,18 @@ def send_telegram_alert(message):
     except Exception as e:
         logger.error(f"Failed to send Telegram alert: {e}")
 
+def send_telegram_video(video_path, caption=""):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendVideo"
+    try:
+        with open(video_path, 'rb') as video_file:
+            files = {'video': video_file}
+            data = {'chat_id': TELEGRAM_CHAT_ID, 'caption': caption, 'parse_mode': 'HTML'}
+            requests.post(url, data=data, files=files, timeout=600)
+    except Exception as e:
+        logger.error(f"Failed to send Telegram video: {e}")
+
 def upload_to_telegram_channel(video_path, caption):
     # Sends the video directly to the public Telegram channel
     # Requires TELEGRAM_BOT_TOKEN and the channel username @wealth_Matrix_Ai
@@ -621,6 +633,9 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     # Send a second, completely isolated message just for easy copy-pasting
     copy_paste_text = raw_description.split("#")[0].strip() + "\n\n🔗 Link in Bio! 🚀\n\n" + get_dynamic_hashtags()
     send_telegram_alert(copy_paste_text)
+    
+    # Send the actual MP4 file so the user can easily share it to Pinterest/Snapchat from their phone
+    send_telegram_video(video_path, "📱 Here is your finalized MP4 file for manual upload to Pinterest/Snapchat!")
     
     return {
         "facebook": fb,
