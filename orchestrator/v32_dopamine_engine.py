@@ -542,7 +542,20 @@ def generate_audio(text, edge_voice, eleven_voice, output_path):
     # FALLBACK to edge-tts
     logger.info(f"🎙️ Using edge-tts fallback voice: {edge_voice}")
     cmd = [sys.executable, "-m", "edge_tts", "--text", text, "--voice", edge_voice, "--rate", "+10%", "--write-media", output_path]
-    subprocess.run(cmd, check=True)
+    
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            subprocess.run(cmd, check=True)
+            break
+        except subprocess.CalledProcessError as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"edge-tts failed (attempt {attempt+1}/{max_retries}). Retrying in 3 seconds...")
+                import time
+                time.sleep(3)
+            else:
+                logger.error(f"edge-tts failed after {max_retries} attempts.")
+                raise e
 
 def get_audio_duration(file_path):
     """Get duration of an MP3 file in seconds."""
