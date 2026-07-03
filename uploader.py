@@ -627,6 +627,8 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 
 <b>Caption Used:</b>
 {__import__('html').escape(injected_description)}
+
+⚠️ <b>Reminder:</b> verify bio link is live at instagram.com/wealth_matrix_ai before this reel reaches peak hours.
 """
     send_telegram_alert(status_msg)
     

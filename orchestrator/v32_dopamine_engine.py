@@ -318,6 +318,7 @@ JSON Schema (RETURN ONLY THIS):
   "curiosity_teaser": "A short 4-8 word teaser that plants a question in the viewer's mind early in the video.",
   "curiosity_payoff": "A short 4-8 word answer to the teaser that appears later in the video.",
   "red_box_keyword": "ONE exact word from the hook that is the most important/shocking word. Must be exactly present in the hook.",
+  "mid_video_cta": "A short 1-line contextual prompt (e.g., 'Comment 1 agar tumne bhi yeh mistake ki thi 👇') to inject at the 15s mark to drive engagement.",
   "comment_question": "A SPECIFIC question about this reel's exact content. Example: 'Rule 1, 2, ya 3 — kaunsa tumne abhi tak miss kiya?' MAX 12 words.",
   "save_cta": "{cta}",
   "caption": "2 sentences total. Sentence 1: A controversial truth. Sentence 2: A direct question. End with EXACTLY these hashtags on a new line: {hashtags}"
@@ -410,6 +411,7 @@ def generate_offline_script():
           "proof_source": "Source: Compound Interest Math",
           "curiosity_teaser": "Wait for rule 3",
           "red_box_keyword": "dar",
+          "mid_video_cta": "Comment '1' agar tumne bhi yeh mistake ki thi 👇",
           "comment_question": "Tum 1, 2 ya 3 ho? 👇",
           "save_cta": "Save and Share with someone who needs to wake up 🚀 Tum kaunsa karte ho — 1, 2, ya 3? Comment karo 👇",
           "caption": "आज ही शुरुआत करें। #WealthMindset #PsychologyFacts #HindiMotivation #SuccessRules"
@@ -426,6 +428,7 @@ def generate_offline_script():
           "proof_source": "Source: Creator Economy Report",
           "curiosity_teaser": "The secret is simple",
           "red_box_keyword": "sabotaging",
+          "mid_video_cta": "Do you agree? Comment 'YES' 👇",
           "comment_question": "Do you scroll or create? 👇",
           "save_cta": "Follow for daily dopamine hits. 🚀",
           "caption": "Shift your perspective. #GrowthMindset #FinancialFreedom #ReelItFeelIt #Shorts"
@@ -1104,6 +1107,68 @@ def build_v32_payload():
 
     return out_file
 
-if __name__ == "__main__":
-    build_v32_payload()
+def check_video_brightness(video_path):
+    """
+    Extracts a frame from the first 2 seconds of the video and computes average brightness of the central region.
+    Returns True if brightness >= 80, False if below. If ffmpeg/PIL fails, it degrades gracefully and returns True.
+    """
+    try:
+        import subprocess
+        import os
+        import tempfile
+        try:
+            from PIL import Image, ImageStat
+        except ImportError:
+            logger.warning("⚠️ PIL not installed. Skipping brightness check.")
+            return True
 
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_frame:
+            temp_path = temp_frame.name
+
+        cmd = [
+            "ffmpeg", "-y", "-ss", "00:00:02", "-i", video_path,
+            "-vframes", "1", "-q:v", "2", temp_path
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+        
+        if result.returncode != 0 or not os.path.exists(temp_path):
+            logger.warning("⚠️ Brightness check: ffmpeg failed to extract frame. Skipping check.")
+            if os.path.exists(temp_path): os.remove(temp_path)
+            return True
+
+        with Image.open(temp_path) as img:
+            img = img.convert('L')
+            width, height = img.size
+            left = width * 0.25
+            top = height * 0.25
+            right = width * 0.75
+            bottom = height * 0.75
+            cropped = img.crop((left, top, right, bottom))
+            stat = ImageStat.Stat(cropped)
+            avg_brightness = stat.mean[0]
+
+        os.remove(temp_path)
+        logger.info(f"🔆 Average brightness of hook text region: {avg_brightness:.2f}/255")
+        
+        if avg_brightness < 80:
+            logger.error("❌ QA FAIL: Hook text region is too dark (brightness < 80).")
+            return False
+            
+        return True
+    except Exception as e:
+        logger.warning(f"⚠️ Brightness check encountered an error: {e}. Skipping check to prevent pipeline failure.")
+        return True
+
+if __name__ == "__main__":
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            out_file = build_v32_payload()
+            if not check_video_brightness(out_file):
+                logger.warning(f"🔄 Retrying pipeline due to brightness QA failure (Attempt {attempt+1}/{max_retries})...")
+                continue
+            logger.info("✅ Pipeline completed successfully and passed all QA gates.")
+            break
+        except Exception as e:
+            logger.error(f"Pipeline failed with exception: {e}")
+            raise

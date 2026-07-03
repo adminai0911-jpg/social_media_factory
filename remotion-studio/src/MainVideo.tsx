@@ -130,7 +130,8 @@ export const MainVideo: React.FC<{
     return chunks;
   }, [timings]);
 
-  const activeChunk = subtitleChunks.find(c => t >= c.start && t <= c.end);
+  // Pre-calculate chunks for visual shattering
+  let _chunkIndex = 0;
 
 
 
@@ -250,7 +251,6 @@ export const MainVideo: React.FC<{
                 const words = hookText.split(/\s+/).filter(Boolean);
                 return words.map((w: string, i: number) => {
                   const hi = activeRedWords.some(r => w.toUpperCase().includes(r)) || i === 0 || i === Math.floor(words.length / 2);
-                  const isBgColor = (seed % 3) === 1;
                   return (
                     <span key={i} style={{ 
                       color: hi ? CONFIG.COLORS.hookHighlightText : CONFIG.COLORS.hookText,
@@ -414,8 +414,27 @@ export const MainVideo: React.FC<{
           })}
 
         </AbsoluteFill>
-
       </Sequence>
+
+      {/* UPGRADE #5: MID-VIDEO CTA */}
+      {script.mid_video_cta && p_l2 && (
+        <Sequence from={Math.max(0, Math.round((p_l2 - 2.0) * fps))} durationInFrames={Math.round(2.0 * fps)}>
+          <AbsoluteFill style={{ zIndex: 9995, justifyContent: "flex-end", alignItems: "center", paddingBottom: 350 }}>
+            <div style={{
+              background: CONFIG.COLORS.hookHighlightBg,
+              border: `2px solid #FFFFFF`,
+              borderRadius: 30, padding: "16px 40px",
+              boxShadow: `0 20px 40px rgba(0,0,0,0.5)`,
+              display: "flex", alignItems: "center", gap: 16
+            }}>
+              <span style={{ color: CONFIG.COLORS.hookHighlightText, fontSize: 40, fontFamily: TITLE_FONT, fontWeight: 900 }}>💬</span>
+              <span style={{ fontFamily: HINDI_FONT, fontSize: 36, color: CONFIG.COLORS.hookHighlightText, fontWeight: 800 }}>
+                {script.mid_video_cta}
+              </span>
+            </div>
+          </AbsoluteFill>
+        </Sequence>
+      )}
 
 
 
@@ -442,7 +461,7 @@ export const MainVideo: React.FC<{
                   padding: "10px 40px", borderRadius: 12, letterSpacing: 3,
                   boxShadow: `0 10px 30px rgba(0,242,254,0.5)`
                 }}>
-                  ✅ VERIFIED DATA
+                  📚 CASE STUDY
                 </div>
                 
                 <div style={{
@@ -659,11 +678,11 @@ export const ThumbnailCover: React.FC<{
               lineHeight: 1.1,
               textAlign: 'center',
               textTransform: 'uppercase',
-              color: isHighlight ? pal.bg1 : '#FFFFFF',
-              backgroundColor: isHighlight ? pal.p : 'transparent',
+              color: isHighlight ? CONFIG.COLORS.hookHighlightText : CONFIG.COLORS.hookText,
+              backgroundColor: isHighlight ? CONFIG.COLORS.hookHighlightBg : 'transparent',
               padding: isHighlight ? '10px 40px' : '0',
               borderRadius: isHighlight ? 20 : 0,
-              boxShadow: isHighlight ? `0 20px 60px ${pal.p}88` : 'none',
+              boxShadow: isHighlight ? `0 20px 60px ${CONFIG.COLORS.hookHighlightBg}88` : 'none',
               transform: isHighlight ? 'scale(1.05) rotate(-2deg)' : 'none'
             }}>
               {w}
