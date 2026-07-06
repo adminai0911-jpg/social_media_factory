@@ -353,7 +353,9 @@ JSON Schema (RETURN ONLY THIS):
                 if text.startswith("```json"): text = text[7:]
                 if text.startswith("```"): text = text[3:]
                 if text.endswith("```"): text = text[:-3]
-                return json.loads(text.strip())
+                parsed = json.loads(text.strip())
+                parsed["_source"] = "MAIN (Gemini)"
+                return parsed
                 
             except json.JSONDecodeError as e:
                 logger.warning(f"Gemini returned invalid JSON: {e}")
@@ -434,7 +436,9 @@ def generate_offline_script():
           "caption": "Shift your perspective. #GrowthMindset #FinancialFreedom #ReelItFeelIt #Shorts"
         }
     ]
-    return random.choice(templates)
+    selected = random.choice(templates)
+    selected["_source"] = "FALLBACK (Hardcoded)"
+    return selected
 
 def create_tone(filename, freq, duration, vol=0.5, decay=True, riser=False):
     sample_rate = 44100
@@ -949,6 +953,7 @@ def build_v32_payload():
         logger.error("❌ V32 FAILED - Could not generate a script that passes QA after 3 attempts. Aborting run.")
         sys.exit(1)
         
+    logger.info(f"✅ Render Path Used: {script_data.get('_source', 'MAIN (Gemini)')}")
     logger.info(f"✅ Generated Hook: {script_data.get('hook')}")
     logger.info(f"✅ Generated Caption: {script_data.get('caption')}")
 
@@ -1033,11 +1038,15 @@ def build_v32_payload():
             if skey in script_data["split_screen"] and not isinstance(script_data["split_screen"][skey], str):
                 script_data["split_screen"][skey] = str(script_data["split_screen"][skey])
         
+    bg_pool = ["gta.mp4", "sand.mp4", "bg3.mp4", "bg4.mp4"]
+    selected_bg = random.choice(bg_pool)
+        
     payload = {
         "script": script_data,
         "timings": timings,
         "audio_offsets": audio_offsets,
-        "total_duration": current_time
+        "total_duration": current_time,
+        "background_video": selected_bg
     }
     
     json_path = os.path.join(public_dir, "v32_script.json")
@@ -1109,57 +1118,84 @@ def build_v32_payload():
 
 def check_video_brightness(video_path):
     """
-    Extracts a frame from the first 2 seconds of the video and computes average brightness of the central region.
+    Extracts 10 frames from the first 3 seconds of the video and computes average brightness of the central region.
     Returns True if brightness >= 80, False if below. If ffmpeg/PIL fails, it degrades gracefully and returns True.
     """
     try:
         import subprocess
         import os
         import tempfile
+        import glob
         try:
             from PIL import Image, ImageStat
         except ImportError:
             logger.warning("⚠️ PIL not installed. Skipping brightness check.")
             return True
 
-        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_frame:
-            temp_path = temp_frame.name
-
-        cmd = [
-            "ffmpeg", "-y", "-ss", "00:00:02", "-i", video_path,
-            "-vframes", "1", "-q:v", "2", temp_path
-        ]
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
-        
-        if result.returncode != 0 or not os.path.exists(temp_path):
-            logger.warning("⚠️ Brightness check: ffmpeg failed to extract frame. Skipping check.")
-            if os.path.exists(temp_path): os.remove(temp_path)
-            return True
-
-        with Image.open(temp_path) as img:
-            img = img.convert('L')
-            width, height = img.size
-            left = width * 0.25
-            top = height * 0.25
-            right = width * 0.75
-            bottom = height * 0.75
-            cropped = img.crop((left, top, right, bottom))
-            stat = ImageStat.Stat(cropped)
-            avg_brightness = stat.mean[0]
-
-        os.remove(temp_path)
-        logger.info(f"🔆 Average brightness of hook text region: {avg_brightness:.2f}/255")
-        
-        if avg_brightness < 80:
-            logger.error("❌ QA FAIL: Hook text region is too dark (brightness < 80).")
-            return False
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cmd = [
+                "ffmpeg", "-y", "-i", video_path,
+                "-ss", "00:00:00", "-t", "00:00:03",
+                "-vf", "fps=10/3",
+                "-q:v", "2",
+                os.path.join(temp_dir, "frame_%02d.jpg")
+            ]
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
             
+            frames = glob.glob(os.path.join(temp_dir, "frame_*.jpg"))
+            if result.returncode != 0 or not frames:
+                logger.warning("⚠️ Brightness check: ffmpeg failed to extract frames. Skipping check.")
+                return True
+
+            total_brightness = 0
+            for frame_path in frames:
+                with Image.open(frame_path) as img:
+                    img = img.convert('L')
+                    width, height = img.size
+                    left = width * 0.25
+                    top = height * 0.25
+                    right = width * 0.75
+                    bottom = height * 0.75
+                    cropped = img.crop((left, top, right, bottom))
+                    stat = ImageStat.Stat(cropped)
+                    total_brightness += stat.mean[0]
+            
+            avg_brightness = total_brightness / len(frames)
+
+            logger.info(f"🔆 Average brightness of hook text region (10 frames): {avg_brightness:.2f}/255")
+            
+            if avg_brightness < 80:
+                logger.error("❌ QA FAIL: Hook text region is too dark (brightness < 80).")
+                return False
+                
         return True
     except Exception as e:
         logger.warning(f"⚠️ Brightness check encountered an error: {e}. Skipping check to prevent pipeline failure.")
         return True
 
 if __name__ == "__main__":
+    from datetime import datetime
+    import pytz
+    import json
+    import os
+    import sys
+    
+    # ── SCHEDULE GATE: ENFORCE DAILY POSTING CADENCE (IST) ──
+    tracker_file = os.path.join(os.path.dirname(__file__), "series_tracker.json")
+    if os.path.exists(tracker_file):
+        try:
+            with open(tracker_file, "r", encoding="utf-8") as f:
+                tracker_data = json.load(f)
+            last_run_str = tracker_data.get("last_run")
+            if last_run_str:
+                last_run_date = datetime.fromisoformat(last_run_str).astimezone(pytz.timezone('Asia/Kolkata')).date()
+                today_date = datetime.now(pytz.timezone('Asia/Kolkata')).date()
+                if last_run_date == today_date:
+                    logger.info("🛑 Daily quota met — next publish window: 9PM IST tomorrow. Exiting.")
+                    sys.exit(0)
+        except Exception as e:
+            logger.warning(f"Failed to read schedule gate: {e}")
+
     max_retries = 5
     for attempt in range(max_retries):
         try:

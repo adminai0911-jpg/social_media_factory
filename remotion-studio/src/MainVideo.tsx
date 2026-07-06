@@ -8,6 +8,7 @@ import {
   Img,
   random,
   Sequence,
+  Video,
 } from "remotion";
 
 import React, { useMemo } from "react";
@@ -192,10 +193,19 @@ export const MainVideo: React.FC<{
 
       <AbsoluteFill style={{ zIndex: 0, backgroundColor: pal.bg1 }}>
 
-        <div style={{
-          position: "absolute", inset: 0,
-          background: `rgba(0,0,0,0.3)`,
-        }}/>
+        {script.background_video && t < p_l1 && (
+          <>
+            <Video 
+              src={staticFile(script.background_video)} 
+              style={{ position: "absolute", width: "100%", height: "100%", objectFit: "cover", opacity: 1 }} 
+              muted 
+            />
+            <div style={{
+              position: "absolute", inset: 0,
+              background: `rgba(12,20,32,0.85)`, // Dark navy overlay 85%
+            }}/>
+          </>
+        )}
 
         {/* Animated drifting grain — eliminates dead static frames */}
 
@@ -244,7 +254,7 @@ export const MainVideo: React.FC<{
              opacity: 1, // Fixed: Removed slow fade-in to ensure immediate readability
              transform: `translateY(${interpolate(frame, [0, 15], [20, 0], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})}px)`
           }}>
-            <div style={{ fontFamily: HOOK_FONT, fontSize: 100, fontWeight: 900, color: "#FFFFFF", textAlign: "center", lineHeight: 1.15 }}>
+            <div style={{ fontFamily: HOOK_FONT, fontSize: 100, fontWeight: 900, color: CONFIG.COLORS.hookText, textAlign: "center", lineHeight: 1.15 }}>
               {(() => {
                 const hookText = script.hook || script.phase_1 || "";
                 if (!hookText.trim()) throw new Error("Render Validation Failed: Hook text is completely empty.");
@@ -266,6 +276,26 @@ export const MainVideo: React.FC<{
         </AbsoluteFill>
       </Sequence>
 
+
+      {/* ── UPGRADE #2: MID-VIDEO COMMENT PROMPT (15s mark) ── */}
+      {t >= 15.0 && t < 17.0 && script.mid_video_cta && (
+        <AbsoluteFill style={{ zIndex: 9995, justifyContent: "flex-end", alignItems: "center", paddingBottom: 250 }}>
+          <div style={{
+            background: "rgba(12,20,32,0.95)",
+            border: `3px solid ${CONFIG.COLORS.hookHighlightBg}`,
+            borderRadius: 24, padding: "20px 40px",
+            boxShadow: `0 15px 40px rgba(0,0,0,0.7)`,
+            display: "flex", alignItems: "center", gap: 20,
+            transform: `translateY(${interpolate(frame, [15*fps, 15*fps+10], [50, 0], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})}px)`,
+            opacity: interpolate(frame, [15*fps, 15*fps+10], [0, 1], {extrapolateLeft:"clamp", extrapolateRight:"clamp"})
+          }}>
+            <span style={{ fontSize: 50 }}>💬</span>
+            <span style={{ fontFamily: HINDI_FONT, fontSize: 45, color: CONFIG.COLORS.hookHighlightBg, fontWeight: 900 }}>
+              {script.mid_video_cta}
+            </span>
+          </div>
+        </AbsoluteFill>
+      )}
 
       {/* UPGRADE #4: CURIOSITY LOOP — planted early, exits 0.5s before Rule 1 to avoid numeric claims collision */}
       {t >= 2.0 && t < (p_l1 - 0.5) && script.curiosity_teaser && (
