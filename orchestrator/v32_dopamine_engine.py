@@ -79,7 +79,9 @@ def get_series_part():
             part = 1
         next_part = (part % 3) + 1  # cycles 1 → 2 → 3 → 1 → ...
         with open(SERIES_TRACKER_FILE, "w") as f:
-            json.dump({"current_part": next_part, "last_run": datetime.now().isoformat()}, f)
+            import pytz
+            ist_now = datetime.now(pytz.timezone('Asia/Kolkata'))
+            json.dump({"current_part": next_part, "last_run": ist_now.isoformat()}, f)
         return part
     except Exception:
         return random.randint(1, 3)
