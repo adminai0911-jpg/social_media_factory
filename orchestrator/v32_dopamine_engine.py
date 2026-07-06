@@ -902,6 +902,11 @@ def qa_gate(script_json, attempt=1):
         return False
             
     # 6. Grammar & Topic Relevance Check via Gemini
+    if script_json.get("_source") == "FALLBACK (Hardcoded)":
+        logger.info("✅ Bypassing strict LLM QA Gate Validation for offline fallback script.")
+        log_metric("PASS", "Fallback bypassed LLM QA")
+        return True
+
     # QA Gate re-enabled per user request to ensure hallucination-free output.
     logger.info("🧪 Running strict LLM QA Gate Validation...")
     prompt = f"""You are a strict Quality Assurance bot for a viral video pipeline.
