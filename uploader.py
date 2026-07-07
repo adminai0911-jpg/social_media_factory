@@ -581,21 +581,6 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
         fb_story = upload_to_facebook_story(video_path)
         time.sleep(5)
         buffer_bridge = trigger_make_webhook(video_url, injected_description)
-        
-        from twikit_uploader import upload_to_x_twikit
-        logger.info("🤖 Launching Twikit X Uploader for Cloud...")
-        
-        # SPAM PROTECTION: Do not post the exact same affiliate link 3 times a day on X.
-        # X is very strict about repetitive links and will shadowban the account.
-        # Instead, we just post the base description and say "Link in Bio!"
-        
-        base_desc = raw_description.split("#")[0].strip()
-        twitter_cap = f"{base_desc}\n\n🔗 Link in Bio! 🚀"
-        
-        if len(twitter_cap) > 250:
-            twitter_cap = twitter_cap[:247] + "..."
-            
-        x_upload = upload_to_x_twikit(video_path, twitter_cap)
     else:
         logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
         
@@ -612,7 +597,6 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 🟥 YouTube Shorts: {'✅' if yt else '❌'}
 🟦 Facebook Reels: {'✅' if fb else '❌'}
 🟪 Instagram Reels: {'✅' if ig else '❌'}
-🐦 X (Twikit): {'✅' if x_upload else '❌'}
 ✈️ Telegram Channel: {'✅' if tg_channel else '❌'}
 
 <b>Secondary Distribution:</b>
