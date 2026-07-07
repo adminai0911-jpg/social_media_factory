@@ -18,9 +18,9 @@ name: V35 Ultra HD Autopilot (Minutes-Optimized)
 # ────────────────────────────────────────────────────────────────────────────
 
 on:
-  schedule:
-    # 15:00 UTC = 8:30 PM IST
-    - cron: '0 15 * * *'
+  # schedule:
+  #   # 15:00 UTC = 8:30 PM IST
+  #   - cron: '0 15 * * *'
   repository_dispatch:
     types: [factory-wakeup]
   workflow_dispatch:     # Manual trigger — zero jitter, instant run
@@ -93,7 +93,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip --quiet
-          pip install google-genai python-dotenv requests mutagen edge-tts requests-oauthlib --quiet
+          pip install google-genai python-dotenv requests mutagen edge-tts requests-oauthlib pytz --quiet
           pip install --upgrade --no-cache-dir git+https://github.com/d60/twikit.git --quiet
           pip install -U yt-dlp --quiet
 

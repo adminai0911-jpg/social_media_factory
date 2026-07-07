@@ -6,3 +6,5 @@ requests
 requests-oauthlib
 yt-dlp
 playwright
+
+pytz
