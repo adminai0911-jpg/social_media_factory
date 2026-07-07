@@ -18,12 +18,10 @@ name: V35 Ultra HD Autopilot (Minutes-Optimized)
 # ────────────────────────────────────────────────────────────────────────────
 
 on:
-  # schedule:
-  #   # 15:00 UTC = 8:30 PM IST
-  #   - cron: '0 15 * * *'
-  repository_dispatch:
-    types: [factory-wakeup]
-  workflow_dispatch:     # Manual trigger — zero jitter, instant run
+  schedule:
+    # 15:00 UTC = exactly 8:30 PM IST
+    - cron: '0 15 * * *'
+  workflow_dispatch:     # Manual trigger via GitHub UI
 
 
 jobs:
