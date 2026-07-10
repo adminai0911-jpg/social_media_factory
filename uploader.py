@@ -176,7 +176,20 @@ def get_facebook_page_token(user_token, page_id):
     return user_token
 
 def upload_to_temp_host(file_path):
-    logger.info("Uploading video to temporary public host (tmpfiles.org)...")
+    logger.info("Uploading video to temporary public host (uguu.se)...")
+    try:
+        with open(file_path, 'rb') as f:
+            res = requests.post("https://uguu.se/upload", files={'files[]': f}, timeout=120)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('success'):
+                    url = data['files'][0]['url']
+                    logger.info(f"✅ Video uploaded to public URL: {url}")
+                    return url
+    except Exception as e:
+        logger.error(f"uguu.se upload failed: {e}")
+
+    logger.info("Fallback 1: Uploading to tmpfiles.org...")
     try:
         with open(file_path, 'rb') as f:
             res = requests.post('https://tmpfiles.org/api/v1/upload', files={'file': f}, timeout=120)
@@ -189,19 +202,6 @@ def upload_to_temp_host(file_path):
                     return direct_url
     except Exception as e:
         logger.error(f"tmpfiles.org failed: {e}")
-
-    logger.info("Fallback 1: Uploading to uguu.se...")
-    try:
-        with open(file_path, 'rb') as f:
-            res = requests.post("https://uguu.se/upload", files={'files[]': f}, timeout=120)
-            if res.status_code == 200:
-                data = res.json()
-                if data.get('success'):
-                    url = data['files'][0]['url']
-                    logger.info(f"✅ Video uploaded to public URL: {url}")
-                    return url
-    except Exception as e:
-        logger.error(f"uguu.se upload failed: {e}")
         
     logger.info("Fallback 2: Uploading to catbox.moe...")
     try:
