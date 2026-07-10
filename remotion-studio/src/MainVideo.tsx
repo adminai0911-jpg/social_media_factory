@@ -142,7 +142,7 @@ export const MainVideo: React.FC<{
 
 
 
-  const shakeAmt = isRed ? 14 : shatterActive ? 35 : (isVHS ? 4 : 0);
+  const shakeAmt = phase === 1 ? (Math.sin(frame * 0.8) > 0 ? 15 : 0) : isRed ? 14 : shatterActive ? 35 : (isVHS ? 4 : 0);
 
   const sx = shakeAmt > 0 ? (random(frame)     - 0.5) * shakeAmt : 0;
 
@@ -204,6 +204,13 @@ export const MainVideo: React.FC<{
               position: "absolute", inset: 0,
               background: `rgba(12,20,32,0.85)`, // Dark navy overlay 85%
             }}/>
+            {phase === 1 && (
+              <div style={{
+                position: "absolute", inset: 0,
+                background: `rgba(255, 0, 0, ${Math.sin(frame * 0.8) > 0 ? 0.25 : 0})`,
+                mixBlendMode: "overlay"
+              }}/>
+            )}
           </>
         )}
 

@@ -1,6 +1,9 @@
 import os
 import time
 import json
+from linkedin_uploader import upload_to_linkedin
+from pinterest_uploader import upload_to_pinterest
+
 import requests
 import logging
 from dotenv import load_dotenv
@@ -603,8 +606,10 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 📘 Facebook Story: {'✅' if fb_story else '❌'}
 📸 Instagram Story: {'✅' if ig_story else '❌'}
 
-<b>Buffer Bridge (Pinterest / LinkedIn):</b>
-🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
+<b>Direct API Integrations (New Handler):</b>
+💼 LinkedIn Profile: {'✅' if li else '❌'}
+📌 Pinterest Board: {'✅' if pin else '❌'}
+🚀 Make.com Webhook (Legacy): {'✅' if buffer_bridge else '❌'}
 
 
 <b>Caption Used:</b>
@@ -627,7 +632,9 @@ ACTION: Confirm bio link is live at instagram.com/wealth_matrix_ai before peak h
         "youtube": yt,
         "fb_story": fb_story,
         "ig_story": ig_story,
-        "buffer_bridge": buffer_bridge
+        "buffer_bridge": buffer_bridge,
+        "linkedin": li,
+        "pinterest": pin
     }
 
 if __name__ == "__main__":
