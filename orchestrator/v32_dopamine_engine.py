@@ -193,6 +193,26 @@ def get_omni_analytics_feedback():
     return ""
 
 
+
+def get_daily_trend():
+    """Asks Gemini for today's most controversial Indian financial trend/news."""
+    logger.info("📰 Fetching today's controversial financial trend...")
+    valid_keys = [k for k in GEMINI_KEYS if k]
+    if not valid_keys: return ""
+    try:
+        client = genai.Client(api_key=valid_keys[0])
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents="What is the most controversial, FOMO-inducing, or fearful financial news/trend in India today (e.g. taxes, stock market crash, inflation, job losses)? Reply with one short, aggressive sentence. Do not use markdown.",
+            config=types.GenerateContentConfig(temperature=0.7)
+        )
+        trend = response.text.strip()
+        logger.info(f"🔥 Daily Trend Acquired: {trend}")
+        return f"CRITICAL CONTEXT FOR THIS SCRIPT: The video MUST be built around this trending news/fear: '{trend}'. Tie the advice back to this current event to induce FOMO and urgency."
+    except Exception as e:
+        logger.warning(f"Failed to fetch daily trend: {e}")
+        return ""
+
 def generate_dynamic_script():
     """Call Gemini to generate a fresh, unique, dopamine-triggering script JSON."""
     valid_keys = [k for k in GEMINI_KEYS if k]
@@ -272,11 +292,15 @@ def generate_dynamic_script():
 
     # Analytics Feedback
     analytics_text = get_omni_analytics_feedback()
+    
+    # Daily Viral Trend Injection
+    trend_text = get_daily_trend()
 
     prompt = f"""You are an elite TikTok/Reels/Shorts growth expert and dopamine-engineering copywriter.
     Your sole purpose is to write highly viral, 15-30 second scripts about wealth, dark psychology, or deep success.
 
     {analytics_text}
+    {trend_text}
 
     LANGUAGE REQUIREMENT:
     The entire script MUST be written in {CURRENT_LANGUAGE}. If Hindi, use Devanagari script. If English, use English.
@@ -290,6 +314,7 @@ CONTENT QUALITY RULES (NON-NEGOTIABLE):
 - NO REDUNDANCY: Do NOT prefix numbered_list items with "Rule 1:", "Fact:", or numbers like "1.". The UI automatically adds numbers! Just provide the raw text.
 - ANTI-HALLUCINATION: Do NOT invent fake studies or fake "Verified Data". Use "Many experts believe" framing if you don't have a real, verifiable source.
 - ZERO generic advice: Never say "work hard", "save money". Every insight MUST be counterintuitive.
+- DOOM-SCROLL AGGRESSION: Ban all generic advice. Use "Us vs. Them" psychology (e.g. Banks vs You, Rich vs Middle Class, Secret Trap). Make the viewer feel intense urgency and FOMO.
 - The numbered_list must teach a COMPLETE, ACTIONABLE mini-framework.
 - Return ONLY raw JSON. No markdown. No backticks. No explanation text.
 
