@@ -133,7 +133,7 @@ jobs:
           python orchestrator/v32_dopamine_engine.py
 
       # ── STEP 12: Upload to 4 Platforms ────────────────────────────────────
-      - name: Upload to 4 Platforms
+      - name: Upload to 6 Platforms (Omni-Channel)
         env:
           AFFILIATE_LINK: ${{ secrets.AFFILIATE_LINK }}
           AMAZON_AFFILIATE_LINK: ${{ secrets.AMAZON_AFFILIATE_LINK }}
@@ -145,6 +145,9 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           PINTEREST_BOARD_ID: ${{ secrets.PINTEREST_BOARD_ID }}
+          PINTEREST_ACCESS_TOKEN: ${{ secrets.PINTEREST_ACCESS_TOKEN }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
