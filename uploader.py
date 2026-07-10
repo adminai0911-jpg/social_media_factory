@@ -606,8 +606,6 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 <b>Buffer Bridge (Pinterest / LinkedIn):</b>
 🚀 Make.com Webhook: {'✅' if buffer_bridge else '❌'}
 
-<b>X (Twitter) Ghost Browser:</b>
-🐦 X.com Direct Upload: {'✅' if x_upload else '❌'}
 
 <b>Caption Used:</b>
 {__import__('html').escape(injected_description)}
