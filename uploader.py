@@ -69,8 +69,8 @@ def get_random_cta():
         
     if not options:
         return {
-            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{add_random_param('https://groww.in')}\nZero commission. Aaj hi shuru karo.",
-            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {add_random_param('https://groww.in')}"
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo."
         }
         
     return _rand.choice(options)
