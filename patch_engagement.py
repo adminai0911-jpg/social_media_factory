@@ -38,13 +38,16 @@ def generate_reply(comment_text, platform):
         
         Write a short, friendly, and appreciative reply (under 150 characters).
         Keep it conversational and natural. Do NOT sound like a robot.
-        If appropriate, kindly mention: "Check out the free Demat link in the bio to get started!"
+        If appropriate, kindly mention: "Don't forget to follow for more daily value!"
+        
+        System prompt:
+        You are Wealth Matrix AI. Reply to this comment in a helpful, friendly, and engaging way. Keep it under 2 sentences. Include an emoji.
         '''
         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         return response.text.strip()
     except Exception as e:
         logger.error(f"Gemini reply generation failed: {e}")
-        return "Thanks for watching! 🙌 Check out the link in the bio to start your wealth journey."
+        return "Thanks for watching! 🙌 Don't forget to follow for more daily value!"
 
 # ==========================================
 # YOUTUBE
