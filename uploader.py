@@ -577,10 +577,13 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     ig, ig_story, fb_story, buffer_bridge, x_upload = False, False, False, False, False
     li, pin = False, False
     
-    # Direct API integrations for LinkedIn
+    # Direct API integrations for LinkedIn and Pinterest
     from linkedin_uploader import upload_to_linkedin
+    from pinterest_uploader import upload_to_pinterest
     
     li = upload_to_linkedin(video_path, injected_description)
+    time.sleep(5)
+    pin = upload_to_pinterest(video_url if video_url else video_path, injected_description)
     time.sleep(5)
     
     if video_url:
@@ -614,6 +617,7 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 
 <b>Direct API Integrations (New Handler):</b>
 💼 LinkedIn Profile: {'✅' if li else '❌'}
+📌 Pinterest Board: {'✅' if pin else '❌'}
 
 
 <b>Caption Used:</b>
@@ -634,7 +638,8 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
         "youtube": yt,
         "fb_story": fb_story,
         "ig_story": ig_story,
-        "linkedin": li
+        "linkedin": li,
+        "pinterest": pin
     }
 
 if __name__ == "__main__":
