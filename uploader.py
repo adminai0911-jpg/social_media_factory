@@ -575,6 +575,16 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
     video_url = upload_to_temp_host(video_path)
     cover_url = upload_to_temp_host(cover_path) if cover_path and os.path.exists(cover_path) else None
     ig, ig_story, fb_story, buffer_bridge, x_upload = False, False, False, False, False
+    li, pin = False, False
+    
+    # Direct API integrations for LinkedIn and Pinterest
+    from linkedin_uploader import upload_to_linkedin
+    from pinterest_uploader import upload_to_pinterest
+    
+    li = upload_to_linkedin(video_path, injected_description)
+    time.sleep(5)
+    pin = upload_to_pinterest(video_url if video_url else video_path, injected_description)
+    time.sleep(5)
     
     if video_url:
         ig = upload_to_instagram_reels(video_url, injected_description, cover_url)
@@ -583,9 +593,8 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
         time.sleep(5)
         fb_story = upload_to_facebook_story(video_path)
         time.sleep(5)
-        buffer_bridge = trigger_make_webhook(video_url, injected_description)
     else:
-        logger.error("❌ Skipping Instagram/Stories/Buffer because public video URL generation failed.")
+        logger.error("❌ Skipping Instagram/Stories because public video URL generation failed.")
         
     # Send to Telegram Channel (always runs, doesn't need public URL)
     tg_channel = upload_to_telegram_channel(video_path, injected_description)
@@ -609,18 +618,15 @@ def distribute_to_all_platforms(video_path, description, cover_path=None):
 <b>Direct API Integrations (New Handler):</b>
 💼 LinkedIn Profile: {'✅' if li else '❌'}
 📌 Pinterest Board: {'✅' if pin else '❌'}
-🚀 Make.com Webhook (Legacy): {'✅' if buffer_bridge else '❌'}
 
 
 <b>Caption Used:</b>
 {__import__('html').escape(injected_description)}
-
-ACTION: Confirm bio link is live at instagram.com/wealth_matrix_ai before peak hours.
 """
     send_telegram_alert(status_msg)
     
     # Send a second, completely isolated message just for easy copy-pasting
-    copy_paste_text = raw_description.split("#")[0].strip() + "\n\n🔗 Link in Bio! 🚀\n\n" + get_dynamic_hashtags()
+    copy_paste_text = raw_description.split("#")[0].strip() + "\n\n" + get_dynamic_hashtags()
     send_telegram_alert(copy_paste_text)
     
     # Send the actual MP4 file so the user can easily share it to Pinterest/Snapchat from their phone
@@ -632,7 +638,6 @@ ACTION: Confirm bio link is live at instagram.com/wealth_matrix_ai before peak h
         "youtube": yt,
         "fb_story": fb_story,
         "ig_story": ig_story,
-        "buffer_bridge": buffer_bridge,
         "linkedin": li,
         "pinterest": pin
     }
