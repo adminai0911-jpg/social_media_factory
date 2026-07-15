@@ -32,7 +32,7 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 # ══════════════════════════════════════════════════════════════════════════════
 AFFILIATE_LINK = os.environ.get("AFFILIATE_LINK", "")
 AMAZON_AFFILIATE_LINK = os.environ.get("AMAZON_AFFILIATE_LINK", "")
-OUTLIER_LINK = os.environ.get("OUTLIER_LINK", "")
+OUTLIER_LINK = os.environ.get("OUTLIER_LINK", "https://app.outlier.ai/expert/referrals/link/fxAzgLAKmOOzaiWJBFuF4SHTZeA")
 
 def add_random_param(url):
     import random
