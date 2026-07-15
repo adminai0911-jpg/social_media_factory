@@ -47,24 +47,21 @@ def get_random_cta():
     options = []
     
     if AFFILIATE_LINK:
-        safe_link = add_random_param(AFFILIATE_LINK)
         options.append({
-            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\n{safe_link}\nZero commission. Aaj hi shuru karo.",
-            "caption": f"📈 Free Demat Account — Zero Commission Invest karo: {safe_link}"
+            "text": f"📈 INVEST KARNA SEEKHO — FREE DEMAT ACCOUNT:\nZero commission. Aaj hi shuru karo.",
+            "caption": f"📈 Free Demat Account — Zero Commission Invest karo."
         })
         
     if AMAZON_AFFILIATE_LINK:
-        safe_link = add_random_param(AMAZON_AFFILIATE_LINK)
         options.append({
-            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\n{safe_link}\nHar ameer insaan ne yeh book padhi hai.",
-            "caption": f"📚 Yeh book padho — Wealth Psychology: {safe_link}"
+            "text": f"📚 YEH BOOK PADHO — WEALTH PSYCHOLOGY:\nHar ameer insaan ne yeh book padhi hai.",
+            "caption": f"📚 Yeh book padho — Wealth Psychology."
         })
         
     if OUTLIER_LINK:
-        safe_link = add_random_param(OUTLIER_LINK)
         options.append({
-            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\n{safe_link}\nAI ko train karo aur dollars mein earn karo.",
-            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour: {safe_link}"
+            "text": f"💵 GHAR BAITHE USD KAMAO — $15–50/HOUR:\nAI ko train karo aur dollars mein earn karo.",
+            "caption": f"💵 Ghar baithe USD Kamao — $15–50/hour."
         })
         
     if not options:
