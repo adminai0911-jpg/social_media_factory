@@ -197,7 +197,7 @@ def upload_to_temp_host(file_path):
                 data = res.json()
                 if data.get('status') == 'success':
                     url = data['data']['url']
-                    direct_url = url.replace('tmpfiles.org/', 'tmpfiles.org/dl/')
+                    direct_url = url.replace('tmpfiles.org/', 'tmpfiles.org/api/v1/dl/')
                     logger.info(f"✅ Video uploaded to public URL: {direct_url}")
                     return direct_url
     except Exception as e:

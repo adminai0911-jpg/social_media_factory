@@ -22,7 +22,7 @@ def upload_to_linkedin(video_path, caption):
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "X-Restli-Protocol-Version": "2.0.0",
-        "LinkedIn-Version": "202401"
+        "LinkedIn-Version": "202405"
     }
     
     # 1. Initialize Upload
