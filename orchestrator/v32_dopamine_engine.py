@@ -203,7 +203,7 @@ def get_daily_trend():
         client = genai.Client(api_key=valid_keys[0])
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents="What is the most controversial, FOMO-inducing, or fearful financial news/trend in India today (e.g. taxes, stock market crash, inflation, job losses)? Reply with one short, aggressive sentence. Do not use markdown.",
+            contents="What is the most controversial, FOMO-inducing psychological truth about money, wealth creation, or human behavior today? Avoid just talking about the stock market. Focus on mindset and wealth psychology. Reply with one short, aggressive sentence. Do not use markdown.",
             config=types.GenerateContentConfig(temperature=0.7)
         )
         trend = response.text.strip()
