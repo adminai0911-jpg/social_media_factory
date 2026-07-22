@@ -43,24 +43,33 @@ def upload_to_linkedin(video_path, caption):
         return False
         
     data = res.json()
-    upload_url = data["value"]["uploadInstructions"][0]["uploadUrl"]
     video_urn = data["value"]["video"]
     
     # 2. Upload Video
     logger.info(f"Uploading video to LinkedIn ({video_urn})...")
-    upload_headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/octet-stream"
-    }
     
     with open(video_path, "rb") as f:
         video_data = f.read()
         
-    upload_res = requests.put(upload_url, headers=upload_headers, data=video_data, timeout=300)
-    
-    if upload_res.status_code not in [200, 201]:
-        logger.error(f"Failed to upload video bytes to LinkedIn: {upload_res.status_code} {upload_res.text}")
-        return False
+    for instruction in data["value"]["uploadInstructions"]:
+        upload_url = instruction["uploadUrl"]
+        first_byte = instruction["firstByte"]
+        last_byte = instruction["lastByte"]
+        
+        # Extract the exact byte range for this chunk
+        chunk = video_data[first_byte:last_byte + 1]
+        
+        upload_headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/octet-stream",
+            "Content-Length": str(len(chunk))
+        }
+        
+        upload_res = requests.put(upload_url, headers=upload_headers, data=chunk, timeout=300)
+        
+        if upload_res.status_code not in (200, 201):
+            logger.error(f"Failed to upload video chunk to LinkedIn: {upload_res.status_code} {upload_res.text}")
+            return False
         
     logger.info("Video uploaded successfully. Creating post...")
     
