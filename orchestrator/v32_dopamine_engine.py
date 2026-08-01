@@ -296,6 +296,13 @@ def generate_dynamic_script():
     # Daily Viral Trend Injection
     trend_text = get_daily_trend()
 
+    personas = [
+        "You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video.",
+        "You are a ruthless, data-driven financial analyst who exposes the dark secrets of the middle-class trap. You speak with cold, hard facts, using aggressive 'Us vs. Them' psychology to wake people up.",
+        "You are a mysterious, contrarian millionaire who drops brutal, unfiltered truths about money and human behavior. Your tone is calm, almost arrogant, but undeniably accurate. You make the viewer question everything they were taught."
+    ]
+    chosen_persona = random.choice(personas)
+
     prompt = f"""You are an elite TikTok/Reels/Shorts growth expert and dopamine-engineering copywriter.
     Your sole purpose is to write highly viral, 15-30 second scripts about wealth, dark psychology, or deep success.
 
@@ -305,7 +312,7 @@ def generate_dynamic_script():
     LANGUAGE REQUIREMENT:
     The entire script MUST be written in {CURRENT_LANGUAGE}. If Hindi, use Devanagari script. If English, use English.
 
-    You are the world's most elite viral content strategist — combining the psychological precision of Robert Cialdini, the storytelling of Gary Vee, and the wealth knowledge of Naval Ravikant — specifically optimized for Indian short-form video (Instagram Reels, YouTube Shorts, Facebook Reels).
+    {chosen_persona}
 
 ═══════════════════════════════════════════════
 CONTENT QUALITY RULES (NON-NEGOTIABLE):
@@ -361,12 +368,16 @@ JSON Schema (RETURN ONLY THIS):
         
         for attempt in range(2):  # Retry up to 2 times per key
             try:
+                # Randomize temperature for extreme script variety
+                run_temp = round(random.uniform(0.65, 0.95), 2)
+                logger.info(f"🧠 Generating script with Persona: '{chosen_persona[:50]}...' and Temp: {run_temp}")
+                
                 response = client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
-                        temperature=1.0
+                        temperature=run_temp
                     )
                 )
                 
@@ -628,21 +639,12 @@ def download_dynamic_backgrounds(public_dir):
 
     output_names = ["gta", "sand", "bg3", "bg4"]
 
-    satisfying_queries = [
-        "luxury car moving",
-        "dubai skyline night",
-        "rolex watch luxury",
-        "private jet flying",
-        "stock market trading screen",
-        "supercar slow motion",
-        "mansion luxury estate",
-        "miami beach penthouse",
-        "crypto trading chart",
-        "business man walking suit",
-        "money falling slow motion",
-        "gold bars wealth",
-        "yacht ocean aerial"
-    ]
+    adjectives = ["luxury", "dark", "cinematic", "fast", "slow motion", "neon", "abstract", "minimalist", "wealth"]
+    nouns = ["car", "skyline night", "watch", "private jet", "trading screen", "mansion", "penthouse", "crypto chart", "businessman", "money falling", "gold bars", "yacht ocean", "city traffic"]
+    
+    # Generate combinatorial queries
+    satisfying_queries = [f"{adj} {noun}" for adj in adjectives for noun in nouns]
+    random.shuffle(satisfying_queries)
 
 
     # Pick 4 different queries for variety
@@ -664,7 +666,7 @@ def download_dynamic_backgrounds(public_dir):
                     "per_page": 30,
                     "orientation": "portrait",
                     "size": "large",
-                    "page": random.randint(1, 3),  # rotate pages for variety
+                    "page": random.randint(1, 10),  # Dig deeper into Pexels library for rare clips
                 }
                 resp = requests.get(
                     "https://api.pexels.com/videos/search",

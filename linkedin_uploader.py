@@ -6,6 +6,23 @@ import time
 
 logger = logging.getLogger("LinkedInUploader")
 
+def with_retry(max_retries=3, base_delay=2):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        logger.error(f"❌ Final attempt failed for {func.__name__}: {str(e)}")
+                        raise e
+                    wait_time = base_delay * (2 ** attempt)
+                    logger.warning(f"⚠️ {func.__name__} failed (Attempt {attempt+1}/{max_retries}): {str(e)}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+        return wrapper
+    return decorator
+
+@with_retry(max_retries=3)
 def upload_to_linkedin(video_path, caption):
     """
     Uploads a video to LinkedIn using the v2 API (Posts API).

@@ -13,6 +13,22 @@ logger = logging.getLogger("Uploader")
 
 load_dotenv()
 
+def with_retry(max_retries=3, base_delay=2):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        logger.error(f"❌ Final attempt failed for {func.__name__}: {str(e)}")
+                        raise e
+                    wait_time = base_delay * (2 ** attempt)
+                    logger.warning(f"⚠️ {func.__name__} failed (Attempt {attempt+1}/{max_retries}): {str(e)}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+        return wrapper
+    return decorator
+
 # Meta credentials
 PAGE_ACCESS_TOKEN = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN", "")
 PAGE_ID = os.environ.get("FACEBOOK_PAGE_ID", "")
@@ -132,6 +148,7 @@ def send_telegram_video(video_path, caption=""):
     except Exception as e:
         logger.error(f"Failed to send Telegram video: {e}")
 
+@with_retry(max_retries=3)
 def upload_to_telegram_channel(video_path, caption):
     # Sends the video directly to the public Telegram channel
     # Requires TELEGRAM_BOT_TOKEN and the channel username @wealth_Matrix_Ai
@@ -240,6 +257,7 @@ def wait_for_ig_media_ready(creation_id, access_token):
         time.sleep(10)
     return False
 
+@with_retry(max_retries=3)
 def upload_to_facebook_reels(video_path, description):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID:
         logger.warning("⏭️ Skipping Facebook Reels (Missing Credentials)")
@@ -278,6 +296,7 @@ def upload_to_facebook_reels(video_path, description):
         logger.error(f"FB Upload Exception: {e}")
     return False
 
+@with_retry(max_retries=3)
 def upload_to_facebook_story(video_path):
     if not PAGE_ACCESS_TOKEN or not PAGE_ID: return False
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
@@ -315,6 +334,7 @@ def upload_to_facebook_story(video_path):
 
 import re
 
+@with_retry(max_retries=3)
 def upload_to_instagram_reels(video_url, description, cover_url=None):
     if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID:
         logger.warning("⏭️ Skipping Instagram Reels (Missing Credentials)")
@@ -356,6 +376,7 @@ def upload_to_instagram_reels(video_url, description, cover_url=None):
         logger.error(f"IG Upload Exception: {e}")
     return False
 
+@with_retry(max_retries=3)
 def upload_to_instagram_story(video_url):
     if not PAGE_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID or not PAGE_ID: return False
     page_token = get_facebook_page_token(PAGE_ACCESS_TOKEN, PAGE_ID)
@@ -381,6 +402,7 @@ def upload_to_instagram_story(video_url):
         logger.error(f"❌ Instagram Story failed: {e}")
     return False
 
+@with_retry(max_retries=3)
 def upload_to_youtube_shorts(video_path, description):
     if not YOUTUBE_CLIENT_ID or not YOUTUBE_CLIENT_SECRET or not YOUTUBE_REFRESH_TOKEN:
         logger.warning("⏭️ Skipping YouTube Shorts (Missing Credentials)")
